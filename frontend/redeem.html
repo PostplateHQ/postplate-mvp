@@ -1,1 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redeem Offer</title>
+</head>
+<body>
 
+<h1>🎉 Special Offer</h1>
+<p>Get 10% OFF your order</p>
+
+<button onclick="redeem()">Redeem Now</button>
+
+<script>
+async function redeem() {
+  const response = await fetch("http://localhost:3000/redeem", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ store: "taco123" })
+  });
+
+  const data = await response.json();
+
+  window.location.href = "success.html?code=" + data.code;
+}
+</script>
+
+</body>
+</html>

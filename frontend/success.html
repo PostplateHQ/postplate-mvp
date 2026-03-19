@@ -1,1 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Success</title>
+</head>
+<body>
 
+<h1>✅ Show this at counter</h1>
+<h2 id="code"></h2>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+document.getElementById("code").innerText = params.get("code");
+</script>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generate QR | PostPlate</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="reward-card">
+      <div class="brand-pill">PostPlate Owner Tool</div>
+
+      <div class="hero-copy left-align">
+        <h1>Generate Offer QR</h1>
+        <p>
+          Create a QR code for any restaurant offer and send customers straight
+          to the claim page.
+        </p>
+      </div>
+
+      <p id="qrModeNote" class="micro-copy left-align hidden"></p>
+
+      <div class="form-card">
+        <label for="store">Store ID</label>
+        <input id="store" type="text" value="taco123" placeholder="taco123" />
+
+        <label for="restaurant">Restaurant</label>
+        <input id="restaurant" type="text" value="Spice Taco House" placeholder="Spice Taco House" />
+
+        <label for="offer">Offer</label>
+        <input id="offer" type="text" value="10% OFF Tacos" placeholder="10% OFF Tacos" />
+
+        <button class="primary-btn" onclick="generateQr()">Generate QR</button>
+      </div>
+
+      <div id="qrResult" class="qr-result hidden">
+        <div class="qr-preview-wrap">
+          <img id="qrImage" class="qr-image" alt="Offer QR code" />
+        </div>
+
+        <div class="url-card">
+          <p class="code-label">Redeem URL</p>
+          <p id="redeemUrl" class="redeem-url"></p>
+        </div>
+
+        <a id="downloadQr" class="secondary-btn download-link" download="postplate-qr.png">
+          Download QR
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const storeParam = params.get("store") || "taco123";
+    const restaurantParam = params.get("restaurant") || "Spice Taco House";
+    const offerParam = params.get("offer") || "10% OFF Tacos";
+    const initialOfferId = params.get("offerId") || "";
+    let boundOfferId = initialOfferId;
+
+    document.getElementById("store").value = storeParam;
+    document.getElementById("restaurant").value = restaurantParam;
+    document.getElementById("offer").value = offerParam;
+    updateQrModeNote();
+
+    function updateQrModeNote() {
+      const note = document.getElementById("qrModeNote");
+      note.classList.remove("hidden");
+      note.innerText = boundOfferId
+        ? "This QR is linked to a saved offer. Editing the fields below will switch to a custom one-off QR."
+        : "This QR will use the values shown below as a custom one-off redeem link.";
+    }
+
+    function unbindSavedOfferIfEdited() {
+      if (!boundOfferId) {
+        return;
+      }
+      const store = document.getElementById("store").value.trim();
+      const restaurant = document.getElementById("restaurant").value.trim();
+      const offer = document.getElementById("offer").value.trim();
+
+      if (store !== storeParam || restaurant !== restaurantParam || offer !== offerParam) {
+        boundOfferId = "";
+        updateQrModeNote();
+      }
+    }
+
+    async function generateQr() {
+      unbindSavedOfferIfEdited();
+      const store = document.getElementById("store").value.trim();
+      const restaurant = document.getElementById("restaurant").value.trim();
+      const offer = document.getElementById("offer").value.trim();
+
+      if (!store || !restaurant || !offer) {
+        alert("Store, restaurant, and offer are required.");
+        return;
+      }
+
+      try {
+        const query = new URLSearchParams({ store, restaurant, offer });
+        if (boundOfferId) {
+          query.set("offerId", boundOfferId);
+        }
+        const response = await fetch(`/qr?${query.toString()}`);
+
+        if (!response.ok) {
+          throw new Error("QR request failed");
+        }
+
+        const data = await response.json();
+        const qrResult = document.getElementById("qrResult");
+        const qrImage = document.getElementById("qrImage");
+        const redeemUrl = document.getElementById("redeemUrl");
+        const downloadQr = document.getElementById("downloadQr");
+
+        qrImage.src = data.qrDataUrl;
+        redeemUrl.innerText = data.redeemUrl;
+        downloadQr.href = data.qrDataUrl;
+        downloadQr.download = `${store}-offer-qr.png`;
+        qrResult.classList.remove("hidden");
+      } catch (error) {
+        alert("Something went wrong while generating the QR code.");
+      }
+    }
+
+    document.getElementById("store").addEventListener("input", unbindSavedOfferIfEdited);
+    document.getElementById("restaurant").addEventListener("input", unbindSavedOfferIfEdited);
+    document.getElementById("offer").addEventListener("input", unbindSavedOfferIfEdited);
+
+    if (initialOfferId || offerParam) {
+      generateQr();
+    }
+  </script>
+</body>
+</html>

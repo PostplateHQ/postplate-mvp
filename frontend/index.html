@@ -1,1 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostPlate | Restaurant Growth Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="landing-shell">
+    <section class="landing-hero-card">
+      <div class="landing-copy">
+        <div class="brand-pill">PostPlate Sprint 1</div>
+        <h1>Launch an offer, generate a QR, and watch redemptions land in one place.</h1>
+        <p>
+          Start here to create one live offer, generate its QR, and verify the full redemption flow without bouncing between tools.
+        </p>
 
+        <div class="landing-cta-row">
+          <button class="primary-btn landing-cta-btn" onclick="openDashboard('overview')">Open Dashboard</button>
+          <button class="secondary-btn landing-cta-btn" onclick="openDashboard('offers')">Open Offers</button>
+        </div>
+
+        <div class="landing-status-strip">
+          <div class="landing-status-inline">
+            <span class="landing-status-inline-label">Store</span>
+            <strong id="landingStoreName">taco123</strong>
+            <small id="landingRestaurantName">Spice Taco House</small>
+          </div>
+          <div class="landing-status-inline">
+            <span class="landing-status-inline-label">Active Offer</span>
+            <strong id="landingOfferName">Loading...</strong>
+            <small id="landingOfferMeta">Checking live offer status</small>
+          </div>
+          <div class="landing-status-inline">
+            <span class="landing-status-inline-label">Redemptions</span>
+            <strong id="landingRedemptionCount">--</strong>
+            <small id="landingRedemptionMeta">Live offer activity</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="landing-focus-card">
+        <p class="panel-eyebrow">Start Here</p>
+        <h2 id="landingFocusTitle">Create or refine your live offer</h2>
+        <p id="landingFocusCopy">Use the Offers module to save one clear promotion, then generate the QR and test the customer flow.</p>
+        <button id="landingFocusButton" class="primary-btn landing-focus-btn" onclick="openDashboard('offers')">Go to Offers</button>
+      </div>
+    </section>
+
+    <section class="landing-actions-grid">
+      <button class="landing-action-card" onclick="openDashboard('offers')">
+        <span class="landing-action-mark"></span>
+        <strong>Create or Edit Offer</strong>
+        <p>Open the Offers module and save the live promotion for this store.</p>
+      </button>
+
+      <button id="generateQrAction" class="landing-action-card" onclick="openQrFlow()">
+        <span class="landing-action-mark"></span>
+        <strong>Generate QR</strong>
+        <p id="generateQrCopy">Create a QR for the current saved offer and customer flow.</p>
+      </button>
+
+      <button id="testCustomerAction" class="landing-action-card" onclick="openCustomerFlow()">
+        <span class="landing-action-mark"></span>
+        <strong>Test Customer Flow</strong>
+        <p id="testCustomerCopy">Open the live redeem page exactly how a customer would see it.</p>
+      </button>
+    </section>
+  </div>
+
+  <script>
+    const STORE_ID = "taco123";
+    const BACKEND_BASE = "http://localhost:3000";
+    const state = {
+      activeOffer: null,
+      stats: null,
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    async function fetchJson(path) {
+      const response = await fetch(`${BACKEND_BASE}${path}`);
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    function buildOfferQuery(offer) {
+      if (!offer) {
+        return `store=${encodeURIComponent(STORE_ID)}`;
+      }
+
+      return [
+        `store=${encodeURIComponent(offer.store)}`,
+        `restaurant=${encodeURIComponent(offer.restaurant || "Restaurant Name")}`,
+        `offer=${encodeURIComponent(offer.name)}`,
+        offer.id ? `offerId=${encodeURIComponent(offer.id)}` : "",
+      ].filter(Boolean).join("&");
+    }
+
+    function openDashboard(section = "overview") {
+      const query = new URLSearchParams({ section });
+      if (state.activeOffer?.restaurant) {
+        query.set("restaurant", state.activeOffer.restaurant);
+      }
+      window.location.href = `dashboard.html?${query.toString()}`;
+    }
+
+    function openQrFlow() {
+      if (!state.activeOffer) {
+        openDashboard("offers");
+        return;
+      }
+      window.location.href = `qr.html?${buildOfferQuery(state.activeOffer)}`;
+    }
+
+    function openCustomerFlow() {
+      if (!state.activeOffer) {
+        openDashboard("offers");
+        return;
+      }
+      window.location.href = `redeem.html?${buildOfferQuery(state.activeOffer)}`;
+    }
+
+    function renderLanding() {
+      const offer = state.activeOffer;
+      const stats = state.stats || { totalRedemptions: 0, pendingCount: 0 };
+
+      document.getElementById("landingRestaurantName").innerText = offer?.restaurant || "Save an offer in the dashboard to get started.";
+      document.getElementById("landingOfferName").innerText = offer?.name || "No live offer yet";
+      document.getElementById("landingOfferMeta").innerText = offer
+        ? `${offer.type} • ${offer.status === "active" ? "Live now" : "Saved"}`
+        : "Open Offers to create and save the first promotion";
+      document.getElementById("landingRedemptionCount").innerText = stats.totalRedemptions ?? 0;
+      document.getElementById("landingRedemptionMeta").innerText = stats.totalRedemptions
+        ? `${stats.pendingCount} still pending counter redemption`
+        : "No claims yet. Generate a QR to start activity.";
+
+      document.getElementById("generateQrCopy").innerText = offer
+        ? `Generate a QR for "${offer.name}" and publish the live redeem flow.`
+        : "No active offer yet. Create one first, then generate the QR.";
+      document.getElementById("testCustomerCopy").innerText = offer
+        ? `Open the customer flow for "${offer.name}" and verify the code logic end-to-end.`
+        : "Once an offer is saved, this will open the live customer journey.";
+
+      const focusTitle = document.getElementById("landingFocusTitle");
+      const focusCopy = document.getElementById("landingFocusCopy");
+      const focusButton = document.getElementById("landingFocusButton");
+
+      if (!offer) {
+        focusTitle.innerText = "Create your first live offer";
+        focusCopy.innerText = "Start in the Offers module, save one clear promotion, then come back to generate the QR.";
+        focusButton.innerText = "Create Offer";
+        focusButton.onclick = () => openDashboard("offers");
+      } else if (!stats.totalRedemptions) {
+        focusTitle.innerText = "Your offer is saved. Now make it visible.";
+        focusCopy.innerText = "Generate the QR and place it at the counter or tables so customers can start claiming it.";
+        focusButton.innerText = "Generate QR";
+        focusButton.onclick = () => openQrFlow();
+      } else {
+        focusTitle.innerText = "Your offer is live and collecting activity";
+        focusCopy.innerText = "Run the customer flow or review the dashboard to confirm the full loop from scan to redemption is working.";
+        focusButton.innerText = "Test Customer Flow";
+        focusButton.onclick = () => openCustomerFlow();
+      }
+    }
+
+    async function loadLandingData() {
+      try {
+        const [offers, stats] = await Promise.all([
+          fetchJson(`/offers/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/stats/${encodeURIComponent(STORE_ID)}`),
+        ]);
+
+        state.activeOffer = Array.isArray(offers)
+          ? offers.find((offer) => offer.status === "active") || offers[0] || null
+          : null;
+        state.stats = stats;
+      } catch (error) {
+        state.activeOffer = null;
+        state.stats = {
+          totalRedemptions: 0,
+          pendingCount: 0,
+        };
+      }
+
+      renderLanding();
+    }
+
+    loadLandingData();
+  </script>
+</body>
+</html>

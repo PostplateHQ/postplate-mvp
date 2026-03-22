@@ -1,30 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Redeem Offer</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unlock Offer | PostPlate</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="page-shell">
+    <div class="reward-card">
+      <div class="brand-pill">Powered by PostPlate</div>
 
-<h1>🎉 Special Offer</h1>
-<p>Get 10% OFF your order</p>
+      <div class="restaurant-block">
+        <div class="restaurant-logo">🍽️</div>
+        <p class="restaurant-name" id="restaurantName">Restaurant Name</p>
+        <p class="restaurant-subtitle">Exclusive in-store reward</p>
+      </div>
 
-<button onclick="redeem()">Redeem Now</button>
+      <div class="hero-copy">
+        <h1>You unlocked today’s special 🎉</h1>
+        <p>
+          Enjoy a limited-time offer from <strong id="restaurantHighlight">Restaurant Name</strong>.
+          Claim your reward and show your code at the counter before the offer expires.
+        </p>
+      </div>
 
-<script>
-async function redeem() {
-  const response = await fetch("http://localhost:3000/redeem", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ store: "taco123" })
-  });
+      <div class="offer-panel">
+        <span class="offer-badge">Today’s Offer</span>
+        <h2 id="offerName">Special Offer</h2>
+        <p>Available for dine-in and pickup orders.</p>
+      </div>
 
-  const data = await response.json();
+      <button class="primary-btn" onclick="goToClaim()">Claim My Offer</button>
 
-  window.location.href = "success.html?code=" + data.code;
-}
-</script>
+      <p class="micro-copy">
+        Quick, simple, and no app download required.
+      </p>
 
+      <div id="postplate-bot"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const store = params.get("store") || "store123";
+    const restaurant = params.get("restaurant") || "Restaurant Name";
+    const offer = params.get("offer") || "Special Offer";
+    const offerId = params.get("offerId") || "";
+
+    document.getElementById("restaurantName").innerText = restaurant;
+    document.getElementById("restaurantHighlight").innerText = restaurant;
+    document.getElementById("offerName").innerText = offer;
+
+    function goToClaim() {
+      window.location.href =
+        `capture.html?restaurant=${encodeURIComponent(restaurant)}&offer=${encodeURIComponent(offer)}&store=${encodeURIComponent(store)}` +
+        (offerId ? `&offerId=${encodeURIComponent(offerId)}` : "");
+    }
+
+    window.botpress.init({
+      botId: "YOUR_BOT_ID",
+      clientId: "YOUR_CLIENT_ID",
+      selector: "#postplate-bot",
+      configuration: {
+        color: "#ea580c",
+        variant: "solid",
+        themeMode: "light",
+        radius: 16
+      }
+    });
+  </script>
 </body>
 </html>

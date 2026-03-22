@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claim Offer | PostPlate</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="reward-card">
+      <div class="brand-pill">Powered by PostPlate</div>
+      <div class="progress-text">Step 2 of 2</div>
+
+      <div class="restaurant-block compact">
+        <div class="restaurant-logo">🍽️</div>
+        <p class="restaurant-name" id="restaurantName">Restaurant Name</p>
+      </div>
+
+      <div class="hero-copy left-align">
+        <h1>Where should we send your code?</h1>
+        <p>
+          Add your details below and we'll send your reward code by email.
+          You can still continue without filling these fields.
+        </p>
+      </div>
+
+      <div class="form-card">
+        <label for="name">Name <span>(optional)</span></label>
+        <input id="name" type="text" placeholder="Your name" />
+
+        <label for="email">Email <span>(optional)</span></label>
+        <input id="email" type="email" placeholder="you@example.com" />
+
+        <p class="micro-copy left-align">
+          We may send your code and occasional restaurant offers. No spam.
+        </p>
+
+        <button class="primary-btn" onclick="redeemOffer()">Get My Code</button>
+        <button class="secondary-btn" onclick="redeemOffer(true)">Skip for now</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const restaurant = params.get("restaurant") || "Restaurant Name";
+    const offer = params.get("offer") || "Special Offer";
+    const store = params.get("store") || "store123";
+    const offerId = params.get("offerId") || "";
+
+    document.getElementById("restaurantName").innerText = restaurant;
+
+    async function redeemOffer(skipCapture = false) {
+      const name = skipCapture ? "" : document.getElementById("name").value.trim();
+      const email = skipCapture ? "" : document.getElementById("email").value.trim();
+
+      try {
+        const response = await fetch("/redeem", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            store,
+            restaurant,
+            offerId,
+            offer,
+            name,
+            email
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error("Redeem request failed");
+        }
+
+        const data = await response.json();
+        const nextUrl =
+          `success.html?code=${encodeURIComponent(data.code)}` +
+          `&redemptionId=${encodeURIComponent(data.redemptionId)}` +
+          `&store=${encodeURIComponent(store)}` +
+          `&restaurant=${encodeURIComponent(restaurant)}` +
+          `&offer=${encodeURIComponent(offer)}` +
+          (offerId ? `&offerId=${encodeURIComponent(offerId)}` : "") +
+          `&email=${encodeURIComponent(email)}`;
+
+        window.location.href = nextUrl;
+      } catch (error) {
+        alert("Something went wrong. Please try again.");
+      }
+    }
+  </script>
+</body>
+</html>

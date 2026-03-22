@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostPlate Platform</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="pp-shell">
+    <aside class="pp-sidebar">
+      <div class="pp-business-switcher">
+        <div class="pp-business-avatar">ST</div>
+        <div class="pp-business-copy">
+          <p class="pp-business-label">Business</p>
+          <button class="pp-business-name" type="button">Spice Taco House</button>
+          <p class="pp-business-location"><span class="pp-status-dot live"></span> Downtown location</p>
+        </div>
+      </div>
+
+      <nav class="pp-sidebar-nav">
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Core</p>
+          <button class="pp-nav-link active" data-page="dashboard" type="button">
+            <span class="pp-nav-icon">◫</span>
+            <span>Dashboard</span>
+          </button>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Marketing</p>
+          <button class="pp-nav-link" data-page="content-studio" type="button">
+            <span class="pp-nav-icon">✦</span>
+            <span>Content Studio</span>
+            <span class="pp-nav-badge">12</span>
+          </button>
+          <a class="pp-nav-link" href="offers.html">
+            <span class="pp-nav-icon">◌</span>
+            <span>Offers</span>
+            <span class="pp-nav-badge success">3 live</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Performance</p>
+          <button class="pp-nav-link" data-page="analytics" type="button">
+            <span class="pp-nav-icon">▣</span>
+            <span>Analytics</span>
+          </button>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Customers</p>
+          <button class="pp-nav-link" data-page="customer-capture" type="button">
+            <span class="pp-nav-icon">◎</span>
+            <span>Customer Capture</span>
+            <span class="pp-nav-badge info">28 new</span>
+          </button>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Integrations</p>
+          <button class="pp-nav-link" data-page="social-accounts" type="button">
+            <span class="pp-nav-icon">⟲</span>
+            <span>Social Accounts</span>
+          </button>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Settings</p>
+          <button class="pp-nav-link" data-page="business-profile" type="button">
+            <span class="pp-nav-icon">⌂</span>
+            <span>Business Profile</span>
+          </button>
+          <button class="pp-nav-link" data-page="billing" type="button">
+            <span class="pp-nav-icon">◍</span>
+            <span>Billing</span>
+          </button>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Support</p>
+          <button class="pp-nav-link" data-page="help-demo" type="button">
+            <span class="pp-nav-icon">?</span>
+            <span>Help / Demo</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="pp-main">
+      <header class="pp-topbar">
+        <div class="pp-topbar-search">
+          <span class="pp-search-icon">⌕</span>
+          <input type="search" placeholder="Search campaigns, offers, customers..." />
+        </div>
+        <div class="pp-topbar-actions">
+          <button class="pp-icon-btn" type="button">◔</button>
+          <button class="pp-icon-btn" type="button">⚑</button>
+          <button id="globalCreateButton" class="pp-primary-btn" type="button">Create</button>
+          <button class="pp-avatar-btn" type="button">VD</button>
+        </div>
+      </header>
+
+      <div class="pp-page-stack">
+        <section class="pp-page active" data-page="dashboard">
+          <div class="pp-page-header">
+            <div>
+              <p class="pp-breadcrumb">Core / Dashboard</p>
+              <div class="pp-title-row">
+                <h1>Dashboard</h1>
+                <span class="pp-page-badge positive">Healthy</span>
+              </div>
+              <p class="pp-page-subtitle">The business summary page owners should want to check first.</p>
+            </div>
+            <div class="pp-page-actions">
+              <select class="pp-select">
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
+                <option>This month</option>
+              </select>
+              <select class="pp-select">
+                <option>Downtown location</option>
+              </select>
+              <button class="pp-primary-btn" type="button" onclick="window.location.href='offers.html'">Launch Offer</button>
+            </div>
+          </div>
+
+          <div class="pp-kpi-row">
+            <article class="pp-kpi-card">
+              <span class="pp-kpi-label">Posts Created</span>
+              <strong id="dashboardPostsCreated">24</strong>
+              <p>6 waiting for approval this week</p>
+            </article>
+            <article class="pp-kpi-card">
+              <span class="pp-kpi-label">Offers Active</span>
+              <strong id="dashboardOffersActive">--</strong>
+              <p>Campaigns currently driving visits</p>
+            </article>
+            <article class="pp-kpi-card">
+              <span class="pp-kpi-label">Redemptions</span>
+              <strong id="dashboardRedemptions">--</strong>
+              <p>Customer claims and in-store use</p>
+            </article>
+            <article class="pp-kpi-card">
+              <span class="pp-kpi-label">Revenue Influenced</span>
+              <strong id="dashboardRevenue">--</strong>
+              <p>Estimated impact from live offers</p>
+            </article>
+            <article class="pp-kpi-card">
+              <span class="pp-kpi-label">Customer Growth</span>
+              <strong id="dashboardGrowth">--</strong>
+              <p>New guests captured into retention</p>
+            </article>
+            <article class="pp-kpi-card">
+              <span class="pp-kpi-label">Engagement Rate</span>
+              <strong id="dashboardEngagement">18%</strong>
+              <p>Content interactions across channels</p>
+            </article>
+          </div>
+
+          <div class="pp-grid pp-grid-2-1">
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <div>
+                  <p class="pp-card-kicker">Performance snapshot</p>
+                  <h3>Offer performance</h3>
+                </div>
+                <span class="pp-card-chip">This week</span>
+              </div>
+              <div class="pp-chart-area pp-bar-chart" id="dashboardOfferBars"></div>
+            </article>
+
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <div>
+                  <p class="pp-card-kicker">Suggested action</p>
+                  <h3 id="dashboardSuggestedTitle">Send reminder emails</h3>
+                </div>
+                <span class="pp-card-chip accent">High impact</span>
+              </div>
+              <p id="dashboardSuggestedCopy" class="pp-muted-copy">There are pending claims waiting at the counter. Send a reminder and recover more redemptions this week.</p>
+              <button id="dashboardSuggestedButton" class="pp-primary-btn pp-inline-btn" type="button">Open Offers</button>
+            </article>
+          </div>
+
+          <div class="pp-grid pp-grid-2">
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <div>
+                  <p class="pp-card-kicker">Business proof</p>
+                  <h3>Customer growth</h3>
+                </div>
+              </div>
+              <div class="pp-line-chart">
+                <span style="height:40%"></span>
+                <span style="height:56%"></span>
+                <span style="height:48%"></span>
+                <span style="height:70%"></span>
+                <span style="height:88%"></span>
+                <span style="height:82%"></span>
+                <span style="height:100%"></span>
+              </div>
+              <p class="pp-muted-copy">Steady increase in captured customers from offers and content-linked campaigns.</p>
+            </article>
+
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <div>
+                  <p class="pp-card-kicker">Top performing asset</p>
+                  <h3>Best-performing campaign</h3>
+                </div>
+              </div>
+              <div class="pp-highlight-panel">
+                <strong>Lunch Combo QR</strong>
+                <p>Most redemptions and best email capture performance in the last 7 days.</p>
+                <div class="pp-highlight-meta">
+                  <span>18 redemptions</span>
+                  <span>9 captured guests</span>
+                  <span>$320 influenced</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="pp-grid pp-grid-3">
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <h3>Recent activity</h3>
+              </div>
+              <div id="dashboardRecentActivity" class="pp-feed-list"></div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <h3>Pending approvals</h3>
+              </div>
+              <div class="pp-task-list">
+                <div class="pp-task-item">
+                  <strong>3 posts need approval</strong>
+                  <p>Content Studio / Draft queue</p>
+                </div>
+                <div class="pp-task-item">
+                  <strong>1 offer draft needs review</strong>
+                  <p>Offers / Saved drafts</p>
+                </div>
+                <div class="pp-task-item">
+                  <strong>2 failed publishes need retry</strong>
+                  <p>Social Accounts / Publishing</p>
+                </div>
+              </div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head">
+                <h3>Upcoming tasks</h3>
+              </div>
+              <div class="pp-task-list">
+                <div class="pp-task-item">
+                  <strong>Send comeback campaign</strong>
+                  <p>28 captured guests are ready for follow-up</p>
+                </div>
+                <div class="pp-task-item">
+                  <strong>Refresh weekend special</strong>
+                  <p>Duplicate the top offer for Saturday traffic</p>
+                </div>
+                <div class="pp-task-item">
+                  <strong>Reconnect Facebook page</strong>
+                  <p>Posting health warning from yesterday</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pp-page" data-page="content-studio">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Marketing / Content Studio</p>
+              <div class="pp-title-row">
+                <h1>Content Studio</h1>
+                <span class="pp-page-badge info">Active workflow</span>
+              </div>
+              <p class="pp-page-subtitle">Create posts, reels, captions, and scheduled assets from one structured workspace.</p>
+            </div>
+            <div class="pp-page-actions">
+              <button class="pp-secondary-btn" type="button">Import Assets</button>
+              <button class="pp-primary-btn" type="button">Create Content</button>
+            </div>
+          </div>
+
+          <div class="pp-kpi-row pp-kpi-row-small">
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Posts Generated</span><strong>38</strong><p>Ready for review</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Reels Generated</span><strong>12</strong><p>Short-form video ideas</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Approved Assets</span><strong>21</strong><p>Ready to publish</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Scheduled Assets</span><strong>9</strong><p>Planned across channels</p></article>
+          </div>
+
+          <div class="pp-tabbar">
+            <button class="pp-tab active" type="button">Overview</button>
+            <button class="pp-tab" type="button">Images</button>
+            <button class="pp-tab" type="button">Captions</button>
+            <button class="pp-tab" type="button">Reels</button>
+            <button class="pp-tab" type="button">Scheduled</button>
+            <button class="pp-tab" type="button">Brand Kit</button>
+          </div>
+
+          <div class="pp-filterbar">
+            <input class="pp-filter-search" type="search" placeholder="Search posts, captions, or assets" />
+            <select class="pp-select"><option>All channels</option></select>
+            <select class="pp-select"><option>Needs approval</option></select>
+            <button class="pp-secondary-btn" type="button">Bulk approve</button>
+          </div>
+
+          <div class="pp-grid pp-grid-3">
+            <article class="pp-card pp-content-card">
+              <div class="pp-content-thumb gradient-a"></div>
+              <div class="pp-content-meta">
+                <span class="pp-card-chip">Instagram</span>
+                <span class="pp-status-badge review">Needs review</span>
+              </div>
+              <strong>Weekend Taco Special</strong>
+              <p>Static promo asset built from last week’s best-performing offer.</p>
+              <div class="pp-inline-actions">
+                <button class="pp-secondary-btn" type="button">Edit</button>
+                <button class="pp-primary-btn" type="button">Approve</button>
+              </div>
+            </article>
+            <article class="pp-card pp-content-card">
+              <div class="pp-content-thumb gradient-b"></div>
+              <div class="pp-content-meta">
+                <span class="pp-card-chip">Story</span>
+                <span class="pp-status-badge ready">Ready</span>
+              </div>
+              <strong>Lunch Reel Cutdown</strong>
+              <p>Fast-paced vertical promo with counter placement reminder.</p>
+              <div class="pp-inline-actions">
+                <button class="pp-secondary-btn" type="button">Preview</button>
+                <button class="pp-primary-btn" type="button">Schedule</button>
+              </div>
+            </article>
+            <article class="pp-card pp-content-card">
+              <div class="pp-content-thumb gradient-c"></div>
+              <div class="pp-content-meta">
+                <span class="pp-card-chip">WhatsApp</span>
+                <span class="pp-status-badge draft">Draft</span>
+              </div>
+              <strong>Comeback Caption Pack</strong>
+              <p>Caption set designed for recent customers who captured their email.</p>
+              <div class="pp-inline-actions">
+                <button class="pp-secondary-btn" type="button">Regenerate</button>
+                <button class="pp-primary-btn" type="button">Approve</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pp-page" data-page="analytics">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Performance / Analytics</p>
+              <div class="pp-title-row">
+                <h1>Analytics</h1>
+                <span class="pp-page-badge positive">Owner friendly</span>
+              </div>
+              <p class="pp-page-subtitle">Proof-of-value reporting designed for non-technical restaurant owners.</p>
+            </div>
+            <div class="pp-page-actions">
+              <select class="pp-select"><option>Last 30 days</option></select>
+              <button class="pp-primary-btn" type="button">Export Report</button>
+            </div>
+          </div>
+
+          <div class="pp-kpi-row pp-kpi-row-small">
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Total Views</span><strong>12.4K</strong><p>Reach across posts and stories</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Redemptions</span><strong id="analyticsRedemptions">--</strong><p>Offer activity from scans to counter use</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Customer Growth</span><strong id="analyticsGrowth">--</strong><p>New guests captured into the list</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Revenue Influenced</span><strong id="analyticsRevenue">--</strong><p>Estimated impact from campaigns and offers</p></article>
+          </div>
+
+          <div class="pp-tabbar">
+            <button class="pp-tab active" type="button">Overview</button>
+            <button class="pp-tab" type="button">Content Performance</button>
+            <button class="pp-tab" type="button">Offer Performance</button>
+            <button class="pp-tab" type="button">Customer Growth</button>
+            <button class="pp-tab" type="button">Trends</button>
+          </div>
+
+          <div class="pp-grid pp-grid-2">
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Redemption trends</h3></div>
+              <div id="analyticsTrendBars" class="pp-bar-chart"></div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Best offer breakdown</h3></div>
+              <div class="pp-insight-stack">
+                <div class="pp-insight-row"><span>Best-performing offer</span><strong id="analyticsBestOffer">Lunch Combo QR</strong></div>
+                <div class="pp-insight-row"><span>Email capture rate</span><strong id="analyticsCaptureRate">--</strong></div>
+                <div class="pp-insight-row"><span>Best day to run offers</span><strong id="analyticsBestDay">Friday</strong></div>
+                <div class="pp-insight-row"><span>Repeat customer lift</span><strong>14%</strong></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pp-page" data-page="customer-capture">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Customers / Customer Capture</p>
+              <div class="pp-title-row">
+                <h1>Customer Capture</h1>
+                <span class="pp-page-badge info">Retention ready</span>
+              </div>
+              <p class="pp-page-subtitle">See captured leads, segments, and follow-up readiness from offers and engagement loops.</p>
+            </div>
+            <div class="pp-page-actions">
+              <button class="pp-secondary-btn" type="button">Export</button>
+              <button class="pp-primary-btn" type="button">Create Segment</button>
+            </div>
+          </div>
+
+          <div class="pp-kpi-row pp-kpi-row-small">
+            <article class="pp-kpi-card"><span class="pp-kpi-label">New Customers</span><strong id="customersNewCount">--</strong><p>Fresh contacts captured</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Returning Customers</span><strong>14</strong><p>Guests with repeat activity</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Email Captures</span><strong id="customersEmailCount">--</strong><p>Ready for re-engagement</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Phone Captures</span><strong>6</strong><p>SMS-ready profiles</p></article>
+          </div>
+
+          <div class="pp-tabbar">
+            <button class="pp-tab active" type="button">Overview</button>
+            <button class="pp-tab" type="button">Leads</button>
+            <button class="pp-tab" type="button">Redemptions</button>
+            <button class="pp-tab" type="button">Segments</button>
+            <button class="pp-tab" type="button">Retention</button>
+          </div>
+
+          <div class="pp-filterbar">
+            <input class="pp-filter-search" type="search" placeholder="Search customers" />
+            <select class="pp-select"><option>All lead sources</option></select>
+            <select class="pp-select"><option>Recently captured</option></select>
+          </div>
+
+          <article class="pp-card">
+            <div class="pp-card-head">
+              <h3>Customer list</h3>
+            </div>
+            <div class="pp-table-wrap">
+              <table class="pp-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Lead source</th>
+                    <th>Offer</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="customerTableRows"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="pp-page" data-page="social-accounts">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Integrations / Social Accounts</p>
+              <div class="pp-title-row">
+                <h1>Social Accounts</h1>
+                <span class="pp-page-badge neutral">Trust layer</span>
+              </div>
+              <p class="pp-page-subtitle">Keep publishing connected, healthy, and ready for scheduled content.</p>
+            </div>
+            <div class="pp-page-actions">
+              <button class="pp-primary-btn" type="button">Connect Account</button>
+            </div>
+          </div>
+
+          <div class="pp-kpi-row pp-kpi-row-small">
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Connected Accounts</span><strong>4</strong><p>Instagram, Facebook, WhatsApp, Google</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Scheduled Posts</span><strong>9</strong><p>Queued and ready to publish</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Failed Syncs</span><strong>1</strong><p>Needs attention</p></article>
+            <article class="pp-kpi-card"><span class="pp-kpi-label">Last Publish Activity</span><strong>2h ago</strong><p>Instagram Reel</p></article>
+          </div>
+
+          <div class="pp-tabbar">
+            <button class="pp-tab active" type="button">Overview</button>
+            <button class="pp-tab" type="button">Instagram</button>
+            <button class="pp-tab" type="button">Facebook</button>
+            <button class="pp-tab" type="button">Publishing</button>
+            <button class="pp-tab" type="button">Connection Status</button>
+          </div>
+
+          <div class="pp-grid pp-grid-2">
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Connected channels</h3></div>
+              <div class="pp-connection-list">
+                <div class="pp-connection-item"><strong>Instagram</strong><span class="pp-status-badge ready">Connected</span></div>
+                <div class="pp-connection-item"><strong>Facebook</strong><span class="pp-status-badge ready">Connected</span></div>
+                <div class="pp-connection-item"><strong>WhatsApp</strong><span class="pp-status-badge review">Needs review</span></div>
+                <div class="pp-connection-item"><strong>Google Business Profile</strong><span class="pp-status-badge draft">Coming soon</span></div>
+              </div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Publishing health</h3></div>
+              <div class="pp-task-list">
+                <div class="pp-task-item"><strong>Instagram posting healthy</strong><p>All recent posts published successfully</p></div>
+                <div class="pp-task-item"><strong>Facebook token expires soon</strong><p>Reconnect before next scheduled publish</p></div>
+                <div class="pp-task-item"><strong>WhatsApp media sync delayed</strong><p>Retry asset sync after reconnect</p></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pp-page" data-page="business-profile">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Settings / Business Profile</p>
+              <div class="pp-title-row">
+                <h1>Business Profile</h1>
+                <span class="pp-page-badge info">Identity</span>
+              </div>
+              <p class="pp-page-subtitle">Keep restaurant identity, hours, locations, and brand tone in one consistent place.</p>
+            </div>
+            <div class="pp-page-actions">
+              <button class="pp-primary-btn" type="button">Save Changes</button>
+            </div>
+          </div>
+
+          <div class="pp-grid pp-grid-2">
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Business details</h3></div>
+              <div class="pp-form-grid">
+                <label><span>Restaurant name</span><input type="text" value="Spice Taco House" /></label>
+                <label><span>Category</span><input type="text" value="Fast casual tacos" /></label>
+                <label><span>Business hours</span><input type="text" value="11:00 AM - 10:00 PM" /></label>
+                <label><span>Brand tone</span><input type="text" value="Friendly, fast, local" /></label>
+              </div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Brand kit</h3></div>
+              <div class="pp-insight-stack">
+                <div class="pp-insight-row"><span>Primary color</span><strong>Warm orange</strong></div>
+                <div class="pp-insight-row"><span>Secondary color</span><strong>Deep teal</strong></div>
+                <div class="pp-insight-row"><span>Logo</span><strong>Uploaded</strong></div>
+                <div class="pp-insight-row"><span>Locations</span><strong>1 active</strong></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pp-page" data-page="billing">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Settings / Billing</p>
+              <div class="pp-title-row">
+                <h1>Billing</h1>
+                <span class="pp-page-badge positive">Growth plan</span>
+              </div>
+              <p class="pp-page-subtitle">Simple subscription visibility, invoices, usage, and upgrade moments.</p>
+            </div>
+            <div class="pp-page-actions">
+              <button class="pp-primary-btn" type="button">Upgrade Plan</button>
+            </div>
+          </div>
+
+          <div class="pp-grid pp-grid-2">
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Current plan</h3></div>
+              <div class="pp-highlight-panel">
+                <strong>Growth Plan</strong>
+                <p>Renews April 18, 2026 · Includes content generation, offers, and analytics.</p>
+                <div class="pp-highlight-meta">
+                  <span>$149/mo</span>
+                  <span>1 location</span>
+                  <span>Priority support</span>
+                </div>
+              </div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Usage summary</h3></div>
+              <div class="pp-insight-stack">
+                <div class="pp-insight-row"><span>Assets generated</span><strong>86 / 200</strong></div>
+                <div class="pp-insight-row"><span>Scheduled posts</span><strong>9 / 25</strong></div>
+                <div class="pp-insight-row"><span>Captured customers</span><strong>42</strong></div>
+                <div class="pp-insight-row"><span>Invoices</span><strong>3 paid</strong></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="pp-page" data-page="help-demo">
+          <div class="pp-module-head">
+            <div>
+              <p class="pp-breadcrumb">Support / Help / Demo</p>
+              <div class="pp-title-row">
+                <h1>Help / Demo</h1>
+                <span class="pp-page-badge neutral">Support</span>
+              </div>
+              <p class="pp-page-subtitle">Give owners a fast way to get unstuck, learn the system, or book a guided walkthrough.</p>
+            </div>
+            <div class="pp-page-actions">
+              <button class="pp-primary-btn" type="button">Book a Demo</button>
+            </div>
+          </div>
+
+          <div class="pp-grid pp-grid-3">
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Onboarding checklist</h3></div>
+              <div class="pp-task-list">
+                <div class="pp-task-item"><strong>Create first offer</strong><p>Launch a live promotion customers can claim</p></div>
+                <div class="pp-task-item"><strong>Connect social accounts</strong><p>Enable scheduling and publishing</p></div>
+                <div class="pp-task-item"><strong>Capture first 10 customers</strong><p>Build the retention loop</p></div>
+              </div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Help shortcuts</h3></div>
+              <div class="pp-task-list">
+                <div class="pp-task-item"><strong>How to launch a QR offer</strong><p>Step-by-step guide</p></div>
+                <div class="pp-task-item"><strong>How to approve content</strong><p>Fast review flow</p></div>
+                <div class="pp-task-item"><strong>How to export customers</strong><p>Retention and reporting basics</p></div>
+              </div>
+            </article>
+            <article class="pp-card">
+              <div class="pp-card-head"><h3>Need a walkthrough?</h3></div>
+              <div class="pp-highlight-panel">
+                <strong>Book a 20-minute live demo</strong>
+                <p>We’ll help set up offers, content, integrations, and your first campaign.</p>
+                <div class="pp-inline-actions">
+                  <button class="pp-primary-btn" type="button">Schedule Demo</button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const STORE_ID = "taco123";
+    const BACKEND_BASE = "http://localhost:3000";
+    const state = {
+      stats: null,
+      offers: [],
+      redemptions: [],
+    };
+
+    function money(value) {
+      if (value === null || value === undefined || value === "") return "--";
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0);
+    }
+
+    function formatDate(value) {
+      if (!value) return "--";
+      return new Date(value).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    async function fetchJson(path) {
+      const response = await fetch(`${BACKEND_BASE}${path}`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    function getLiveOffer() {
+      return state.offers.find((offer) => (offer.statusDisplay || offer.status) === "live" || offer.status === "active") || state.offers[0] || null;
+    }
+
+    function renderDashboard() {
+      const stats = state.stats || {};
+      const liveOffer = getLiveOffer();
+      const captured = Number(stats.emailsCaptured || 0);
+      const redemptions = Number(stats.totalRedemptions || state.redemptions.length || 0);
+      const revenue = liveOffer?.estimatedNetImpact ?? stats.estimatedNetImpact ?? 0;
+      const activeOffers = Number(stats.activeOffers || (liveOffer ? 1 : 0));
+      const growth = captured ? `+${captured}` : "0";
+
+      document.getElementById("dashboardOffersActive").innerText = activeOffers;
+      document.getElementById("dashboardRedemptions").innerText = redemptions;
+      document.getElementById("dashboardRevenue").innerText = money(revenue);
+      document.getElementById("dashboardGrowth").innerText = growth;
+      document.getElementById("analyticsRedemptions").innerText = redemptions;
+      document.getElementById("analyticsGrowth").innerText = growth;
+      document.getElementById("analyticsRevenue").innerText = money(revenue);
+      document.getElementById("analyticsCaptureRate").innerText = redemptions ? `${Math.round((captured / redemptions) * 100)}%` : "--";
+      document.getElementById("customersNewCount").innerText = captured;
+      document.getElementById("customersEmailCount").innerText = captured;
+      document.getElementById("analyticsBestOffer").innerText = liveOffer?.name || "No live offer yet";
+
+      const suggestionTitle = document.getElementById("dashboardSuggestedTitle");
+      const suggestionCopy = document.getElementById("dashboardSuggestedCopy");
+      if (!liveOffer) {
+        suggestionTitle.innerText = "Launch a simple offer";
+        suggestionCopy.innerText = "No live offer is running right now. Start one offer and use the dashboard to track proof-of-value.";
+      } else if ((stats.pendingCount || 0) > 0) {
+        suggestionTitle.innerText = "Recover pending redemptions";
+        suggestionCopy.innerText = `${stats.pendingCount} claims still need action. Open Offers and send reminder emails to bring guests back.`;
+      } else {
+        suggestionTitle.innerText = "Duplicate your best offer";
+        suggestionCopy.innerText = `${liveOffer.name} is doing well. Create a second variation for a different time window.`;
+      }
+
+      document.getElementById("dashboardOfferBars").innerHTML = [14, 18, 12, 22, 28, 20, 26].map((value, index) => `
+        <div class="pp-bar-col">
+          <span style="height:${value * 3}px"></span>
+          <small>${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}</small>
+        </div>
+      `).join("");
+
+      document.getElementById("analyticsTrendBars").innerHTML = [10, 16, 18, 12, 20, 24, 22].map((value, index) => `
+        <div class="pp-bar-col">
+          <span style="height:${value * 3}px"></span>
+          <small>${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}</small>
+        </div>
+      `).join("");
+
+      const recent = state.redemptions.slice(0, 4);
+      document.getElementById("dashboardRecentActivity").innerHTML = recent.length ? recent.map((item) => `
+        <div class="pp-feed-item">
+          <strong>${item.name || "Walk-in guest"} claimed ${item.offer || "an offer"}</strong>
+          <p>${item.email || "No email"} · ${formatDate(item.createdAt)}</p>
+        </div>
+      `).join("") : '<div class="pp-empty-inline">No recent activity yet.</div>';
+
+      document.getElementById("customerTableRows").innerHTML = recent.length ? recent.map((item) => `
+        <tr>
+          <td>${item.name || "-"}</td>
+          <td>${item.email || "-"}</td>
+          <td>Offer QR</td>
+          <td>${item.offer || "Special Offer"}</td>
+          <td>${item.redeemed ? "Redeemed" : "Pending"}</td>
+        </tr>
+      `).join("") : '<tr><td colspan="5" class="pp-table-empty">No captured customers yet.</td></tr>';
+    }
+
+    function setPage(page) {
+      document.querySelectorAll(".pp-page").forEach((section) => {
+        section.classList.toggle("active", section.dataset.page === page);
+      });
+      document.querySelectorAll(".pp-nav-link[data-page]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.page === page);
+      });
+
+      const button = document.getElementById("globalCreateButton");
+      button.innerText = page === "content-studio" ? "Create Content"
+        : page === "customer-capture" ? "Create Segment"
+        : page === "analytics" ? "Export"
+        : "Create";
+      const query = new URLSearchParams(window.location.search);
+      query.set("page", page);
+      history.replaceState(null, "", `?${query.toString()}`);
+    }
+
+    async function loadData() {
+      try {
+        const [stats, offers, redemptions] = await Promise.all([
+          fetchJson(`/stats/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/offers/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/redemptions/${encodeURIComponent(STORE_ID)}`),
+        ]);
+        state.stats = stats;
+        state.offers = Array.isArray(offers) ? offers : [];
+        state.redemptions = Array.isArray(redemptions) ? redemptions : [];
+      } catch (error) {
+        state.stats = {};
+        state.offers = [];
+        state.redemptions = [];
+      }
+      renderDashboard();
+    }
+
+    document.querySelectorAll(".pp-nav-link[data-page]").forEach((button) => {
+      button.addEventListener("click", () => setPage(button.dataset.page));
+    });
+
+    document.getElementById("dashboardSuggestedButton").addEventListener("click", () => {
+      window.location.href = "offers.html";
+    });
+
+    const requestedPage = new URLSearchParams(window.location.search).get("page") || "dashboard";
+    setPage(requestedPage);
+    loadData();
+  </script>
+</body>
+</html>

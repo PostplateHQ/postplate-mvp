@@ -1,17 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Success</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offer Claimed | PostPlate</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="confetti-wrap" aria-hidden="true">
+    <span class="confetti c1"></span>
+    <span class="confetti c2"></span>
+    <span class="confetti c3"></span>
+    <span class="confetti c4"></span>
+    <span class="confetti c5"></span>
+    <span class="confetti c6"></span>
+    <span class="confetti c7"></span>
+    <span class="confetti c8"></span>
+  </div>
 
-<h1>✅ Show this at counter</h1>
-<h2 id="code"></h2>
+  <div class="page-shell">
+    <div class="reward-card success-card">
+      <div class="brand-pill">Powered by PostPlate</div>
+      <div class="success-icon">🎉</div>
 
-<script>
-const params = new URLSearchParams(window.location.search);
-document.getElementById("code").innerText = params.get("code");
-</script>
+      <div class="hero-copy">
+        <h1>You’re all set</h1>
+        <p id="successText">
+          Show this code at the counter before the offer expires.
+        </p>
+      </div>
 
+      <div class="code-card">
+        <p class="code-label">Your redemption code</p>
+        <h2 id="codeValue">CODE-0000</h2>
+        <p class="restaurant-name" id="restaurantName">Restaurant Name</p>
+        <p class="offer-note" id="offerName">Special Offer</p>
+        <div id="redeemState" class="redeem-state pending">Pending Counter Check</div>
+      </div>
+
+      <p class="micro-copy" id="emailNote"></p>
+
+      <button id="redeemButton" class="secondary-btn" onclick="markRedeemed()">
+        Mark As Redeemed
+      </button>
+      <button class="primary-btn" onclick="goBack()">Done</button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code") || "CODE-0000";
+    const redemptionId = params.get("redemptionId") || "";
+    const store = params.get("store") || "store123";
+    const restaurant = params.get("restaurant") || "Restaurant Name";
+    const offer = params.get("offer") || "Special Offer";
+    const offerId = params.get("offerId") || "";
+    const email = params.get("email") || "";
+
+    document.getElementById("codeValue").innerText = code;
+    document.getElementById("restaurantName").innerText = restaurant;
+    document.getElementById("offerName").innerText = offer;
+
+    if (email) {
+      document.getElementById("emailNote").innerText =
+        `We’ve also sent your code to ${email}.`;
+    } else {
+      document.getElementById("emailNote").innerText =
+        "Keep this page open so you can show the code at the counter.";
+    }
+
+    if (!redemptionId) {
+      document.getElementById("redeemButton").style.display = "none";
+    }
+
+    async function markRedeemed() {
+      if (!redemptionId) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/redeem/${encodeURIComponent(redemptionId)}/use`, {
+          method: "PUT"
+        });
+
+        if (!response.ok) {
+          throw new Error("Redeem update failed");
+        }
+
+        const data = await response.json();
+        const state = document.getElementById("redeemState");
+        state.innerText = "Redeemed";
+        state.classList.remove("pending");
+        state.classList.add("used");
+        document.getElementById("redeemButton").innerText = "Redeemed";
+        document.getElementById("redeemButton").disabled = true;
+        document.getElementById("successText").innerText =
+          `Redeemed at ${new Date(data.redemption.redeemedAt).toLocaleString()}.`;
+      } catch (error) {
+        alert("Could not mark this code as redeemed.");
+      }
+    }
+
+    function goBack() {
+      window.location.href =
+        `redeem.html?store=${encodeURIComponent(store)}` +
+        `&restaurant=${encodeURIComponent(restaurant)}` +
+        `&offer=${encodeURIComponent(offer)}` +
+        (offerId ? `&offerId=${encodeURIComponent(offerId)}` : "");
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,3483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostPlate Offers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="pp-shell">
+    <aside class="pp-sidebar">
+      <div class="pp-business-switcher">
+        <div class="pp-business-avatar">ST</div>
+        <div class="pp-business-copy">
+          <p class="pp-business-label">Business</p>
+          <button class="pp-business-name" type="button">Spice Taco House</button>
+          <p class="pp-business-location"><span class="pp-status-dot live"></span> Downtown location</p>
+        </div>
+      </div>
+
+      <nav class="pp-sidebar-nav">
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Core</p>
+          <a class="pp-nav-link" href="dashboard.html?page=dashboard">
+            <span class="pp-nav-icon">◫</span>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Marketing</p>
+          <a class="pp-nav-link" href="dashboard.html?page=content-studio">
+            <span class="pp-nav-icon">✦</span>
+            <span>Content Studio</span>
+            <span class="pp-nav-badge">12</span>
+          </a>
+          <a class="pp-nav-link active" href="offers.html">
+            <span class="pp-nav-icon">◌</span>
+            <span>Offers</span>
+            <span class="pp-nav-badge success">3 live</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Performance</p>
+          <a class="pp-nav-link" href="dashboard.html?page=analytics">
+            <span class="pp-nav-icon">▣</span>
+            <span>Analytics</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Customers</p>
+          <a class="pp-nav-link" href="dashboard.html?page=customer-capture">
+            <span class="pp-nav-icon">◎</span>
+            <span>Customer Capture</span>
+            <span class="pp-nav-badge info">28 new</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Integrations</p>
+          <a class="pp-nav-link" href="dashboard.html?page=social-accounts">
+            <span class="pp-nav-icon">⟲</span>
+            <span>Social Accounts</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Settings</p>
+          <a class="pp-nav-link" href="dashboard.html?page=business-profile">
+            <span class="pp-nav-icon">⌂</span>
+            <span>Business Profile</span>
+          </a>
+          <a class="pp-nav-link" href="dashboard.html?page=billing">
+            <span class="pp-nav-icon">◍</span>
+            <span>Billing</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Support</p>
+          <a class="pp-nav-link" href="dashboard.html?page=help-demo">
+            <span class="pp-nav-icon">?</span>
+            <span>Help / Demo</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="pp-main">
+      <header class="pp-topbar">
+        <div class="pp-topbar-search">
+          <span class="pp-search-icon">⌕</span>
+          <input type="search" placeholder="Search offers, customers, templates..." />
+        </div>
+        <div class="pp-topbar-actions">
+          <button class="pp-icon-btn" type="button">◔</button>
+          <button class="pp-icon-btn" type="button">⚑</button>
+          <button class="pp-primary-btn" type="button">Launch Offer</button>
+          <button class="pp-avatar-btn" type="button">VD</button>
+        </div>
+      </header>
+
+      <section class="pp-page active pp-offers-page">
+        <div class="pp-module-head pp-offers-head">
+          <div>
+            <p class="pp-breadcrumb">Dashboard / Offers</p>
+            <div class="pp-title-row">
+              <h1>Offers</h1>
+            </div>
+            <div class="pp-offers-filter-pills">
+              <button class="pp-filter-pill active" type="button">Active</button>
+              <button class="pp-filter-pill" type="button">All</button>
+              <button class="pp-filter-pill" type="button">Draft</button>
+              <span id="offersLiveCountPill" class="pp-filter-pill pp-filter-pill-live">3 Live</span>
+            </div>
+          </div>
+          <div class="pp-page-actions">
+            <button class="pp-secondary-btn" type="button">Duplicate Best Offer</button>
+            <button id="createOfferOpenButton" class="pp-primary-btn" type="button">Create Offer</button>
+          </div>
+        </div>
+
+        <article class="pp-card pp-next-action-card">
+          <div class="pp-next-action-copy">
+            <div class="pp-next-action-icon">🌮</div>
+            <div>
+              <p class="pp-card-kicker">Next Best Action</p>
+              <h3>Taco Tuesday is performing well!</h3>
+              <p>Consider boosting this offer to maximize redemptions.</p>
+            </div>
+          </div>
+          <button id="boostOfferButton" class="pp-primary-btn" type="button">Boost this Offer</button>
+        </article>
+
+        <div class="pp-grid pp-grid-2-1">
+          <article class="pp-card pp-offers-analytics-card">
+            <div class="pp-card-head">
+              <div>
+                <h3>Offer Redemption Analytics</h3>
+              </div>
+              <button id="analyticsBoostButton" class="pp-secondary-btn pp-quiet-action" type="button">Boost this Offer</button>
+            </div>
+
+            <div class="pp-offers-analytics-stats">
+              <div class="pp-analytics-stat">
+                <span>Revenue From Offers</span>
+                <strong id="offersRevenueStat">$2,940</strong>
+              </div>
+              <div class="pp-analytics-stat">
+                <span>Redemptions (This Week)</span>
+                <strong id="offersWeekRedemptionsStat">138</strong>
+              </div>
+              <div class="pp-analytics-stat">
+                <span>Repeat Customers</span>
+                <strong id="offersRepeatCustomersStat">41</strong>
+              </div>
+            </div>
+
+            <div id="offersPerformanceBars" class="pp-bar-chart pp-offers-mini-chart"></div>
+            <p class="pp-muted-copy">Friday performs 32% better. Consider running offers on weekends.</p>
+          </article>
+
+          <article class="pp-card pp-response-card">
+            <div class="pp-card-head">
+              <h3>Customer Response Insights</h3>
+            </div>
+
+            <div class="pp-response-list">
+              <button class="pp-response-row" type="button">
+                <div>
+                  <strong>Email capture rate</strong>
+                  <p id="offersCaptureRate">42%</p>
+                </div>
+                <span>Improve</span>
+              </button>
+
+              <button class="pp-response-row" type="button">
+                <div>
+                  <strong>Pending claims</strong>
+                  <p id="offersPendingClaims">17 customers waiting</p>
+                </div>
+                <span>Send Reminders</span>
+              </button>
+
+              <button class="pp-response-row" type="button">
+                <div>
+                  <strong>Best performing offer</strong>
+                  <p id="offersBestOffer">Taco Tuesday</p>
+                </div>
+                <span>Duplicate</span>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <section class="pp-card pp-top-actions-card">
+          <div class="pp-card-head compact">
+            <h3>Top Actions</h3>
+          </div>
+          <div class="pp-top-actions-row">
+            <button id="createOfferTopActionButton" class="pp-action-pill" type="button">Create New</button>
+            <button class="pp-action-pill" type="button">Duplicate Best Offer</button>
+            <button class="pp-action-pill" type="button">Schedule Offer</button>
+            <button class="pp-action-pill" type="button">Send Reminder</button>
+            <button class="pp-action-pill pp-action-pill-more" type="button">•••</button>
+          </div>
+        </section>
+
+        <section class="pp-card">
+          <div class="pp-card-head">
+            <h3>Active Offers and Recent Customer Activity</h3>
+          </div>
+
+          <div id="offersActiveCards" class="pp-active-offers-row"></div>
+
+          <div class="pp-table-wrap">
+            <table class="pp-table">
+              <thead>
+                <tr>
+                  <th>Offer</th>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody id="offersHistoryRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="boostOfferModal" class="pp-modal-backdrop hidden" aria-hidden="true">
+    <div class="pp-modal-shell">
+      <div class="pp-modal-head">
+        <div>
+          <h3 id="boostModalHeading"><span class="pp-modal-title-icon success">✓</span>Your Taco Tuesday Offer is Ready!</h3>
+          <p id="boostModalDescription">You have successfully boosted your Taco Tuesday offer. All set to bring in more customers!</p>
+        </div>
+        <button id="boostModalCloseTop" class="pp-modal-close" type="button">×</button>
+      </div>
+
+      <div id="boostModalStateSetup" class="pp-modal-state">
+        <div class="pp-modal-stack">
+          <section class="pp-modal-section">
+            <h4>Share On Social Media</h4>
+            <p>Select the social media platforms to promote your offer.</p>
+            <div class="pp-platform-list">
+              <label class="pp-platform-item">
+                <div>
+                  <strong>Instagram</strong>
+                  <p>Open app</p>
+                </div>
+                <input type="checkbox" checked />
+              </label>
+              <label class="pp-platform-item">
+                <div>
+                  <strong>Facebook</strong>
+                  <p>Open app</p>
+                </div>
+                <input type="checkbox" checked />
+              </label>
+              <label class="pp-platform-item">
+                <div>
+                  <strong>WhatsApp</strong>
+                  <p>Open app</p>
+                </div>
+                <input type="checkbox" />
+              </label>
+            </div>
+            <div class="pp-modal-estimate">Reach New Customers: 1,600+ (Estimated)</div>
+          </section>
+
+          <section class="pp-modal-section">
+            <h4>Download In-Store Promo</h4>
+            <p>Download a poster with a QR code to promote in your store.</p>
+            <button id="generateContentButton" class="pp-secondary-btn" type="button">Generate Content</button>
+          </section>
+
+          <section class="pp-modal-section">
+            <h4>Send Reminder</h4>
+            <p>Use SMS and email reminders to reach customers who showed interest but have not redeemed yet.</p>
+            <div class="pp-modal-estimate">17 reminders left</div>
+          </section>
+        </div>
+
+        <div class="pp-modal-footer">
+          <button id="boostSetupBack" class="pp-secondary-btn" type="button">Back</button>
+          <button id="boostSetupCancel" class="pp-secondary-btn" type="button">Cancel</button>
+          <button id="boostSetupPromote" class="pp-primary-btn" type="button">Promote</button>
+        </div>
+      </div>
+
+      <div id="boostModalStatePreview" class="pp-modal-state hidden">
+        <section class="pp-modal-section">
+          <h4>Social Media Content Preview</h4>
+          <p class="pp-modal-preview-copy">Review your generated content for the Taco Tuesday offer. You can edit before posting or continue to share as is.</p>
+
+          <div id="boostPreviewEditor" class="pp-preview-editor hidden">
+            <div class="pp-preview-editor-grid">
+              <label>
+                <span>Offer title</span>
+                <input id="boostEditTitle" type="text" value="Taco Tuesday" />
+              </label>
+              <label>
+                <span>Offer reward</span>
+                <input id="boostEditReward" type="text" value="10% OFF Tacos" />
+              </label>
+              <label class="full">
+                <span>Offer details</span>
+                <input id="boostEditMeta" type="text" value="Every Tuesday – In-Store Only" />
+              </label>
+            </div>
+            <div class="pp-preview-editor-actions">
+              <button id="boostApplyEdits" class="pp-secondary-btn" type="button">Apply changes</button>
+            </div>
+          </div>
+
+          <div class="pp-social-preview-card">
+            <div class="pp-social-preview-head">
+              <div class="pp-social-brand-mark">ST</div>
+              <div class="pp-social-brand-copy">
+                <strong>Spice Taco House</strong>
+                <span>@spicetacohouse</span>
+              </div>
+              <button class="pp-social-dots" type="button">•••</button>
+            </div>
+
+            <div class="pp-social-poster">
+              <div class="pp-social-poster-copy">
+                <div id="boostPreviewTitle" class="pp-social-poster-title">Taco Tuesday</div>
+                <div id="boostPreviewReward" class="pp-social-poster-subtitle">10% OFF Tacos</div>
+                <div id="boostPreviewMeta" class="pp-social-poster-meta">Every Tuesday – In-Store Only</div>
+                <div class="pp-social-poster-scan">SCAN TO REDEEM</div>
+                <div class="pp-social-poster-bottom">
+                  <div id="posterQrPreview" class="pp-poster-qr pp-poster-qr-lg"></div>
+                  <div id="boostPreviewBrandline" class="pp-social-poster-brandline">🌮 Spice Taco House</div>
+                </div>
+              </div>
+              <div class="pp-social-poster-art">
+                <div class="pp-photo-glow"></div>
+                <div class="pp-taco-scene">
+                  <div class="pp-taco taco-top">
+                    <span class="pp-taco-shell"></span>
+                    <span class="pp-taco-filling"></span>
+                  </div>
+                  <div class="pp-taco taco-main">
+                    <span class="pp-taco-shell"></span>
+                    <span class="pp-taco-filling"></span>
+                  </div>
+                  <div class="pp-taco taco-side">
+                    <span class="pp-taco-shell"></span>
+                    <span class="pp-taco-filling"></span>
+                  </div>
+                  <div class="pp-salsa-bowl"></div>
+                  <div class="pp-lime lime-a"></div>
+                  <div class="pp-lime lime-b"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pp-preview-platforms">
+            <span>This will be shared on:</span>
+            <div class="pp-preview-platform-icons">
+              <span>📷 Instagram</span>
+              <span>f Facebook</span>
+            </div>
+          </div>
+          <p class="pp-preview-note">Generate even better content by integrating your social accounts</p>
+        </section>
+
+        <div class="pp-modal-footer">
+          <button id="boostPreviewEdit" class="pp-secondary-btn" type="button">Edit</button>
+          <button id="boostPreviewContinue" class="pp-primary-btn" type="button">Continue</button>
+        </div>
+      </div>
+
+      <div id="boostModalStateSuccess" class="pp-modal-state hidden">
+        <section class="pp-modal-section">
+          <div class="pp-success-panel">
+            <article class="pp-success-feature-block">
+              <div>
+                <h5>Store Poster</h5>
+                <p>Download and print your promotional poster for in-store display.</p>
+              </div>
+              <div class="pp-success-panel-grid">
+                <div class="pp-success-poster-thumb">
+                  <div class="pp-success-poster-copy">
+                    <strong id="boostSuccessTitle">Taco Tuesday</strong>
+                    <span id="boostSuccessReward">10% OFF Tacos</span>
+                    <small id="boostSuccessMeta">Every Tuesday – In-Store Only</small>
+                  </div>
+                  <div class="pp-success-thumb-qr-wrap">
+                    <div id="successPosterQr" class="pp-success-thumb-qr"></div>
+                  </div>
+                </div>
+                <div class="pp-success-action-column">
+                  <button id="downloadPosterButton" class="pp-primary-btn pp-success-primary" type="button">Download Poster</button>
+                  <small>Estimated Size: 8.7 MB</small>
+                </div>
+              </div>
+            </article>
+
+            <article class="pp-success-feature-block">
+              <div>
+                <h5>Send Reminders</h5>
+                <p>Reach out to your interested customers via SMS and email reminders.</p>
+              </div>
+              <div id="successReminderAction">
+                <button id="sendRemindersInlineButton" class="pp-primary-btn pp-success-primary" type="button">Send Reminders</button>
+              </div>
+            </article>
+          </div>
+
+          <div class="pp-success-strip">
+            <span class="pp-success-check">✓</span>
+            <p>All Set! Here’s to a successful Taco Tuesday promo!</p>
+          </div>
+        </section>
+
+        <div class="pp-modal-footer">
+          <button id="boostSuccessEdit" class="pp-secondary-btn" type="button" disabled>Edit</button>
+          <button id="boostSuccessCancel" class="pp-secondary-btn" type="button">Cancel</button>
+          <button id="boostSuccessGoLive" class="pp-primary-btn" type="button">Let’s Go Live</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createOfferModal" class="pp-modal-backdrop hidden" aria-hidden="true">
+    <div class="pp-modal-shell pp-create-modal-shell">
+      <div class="pp-modal-head">
+        <div>
+          <h3 id="createOfferModalTitle">Create an Offer</h3>
+          <p id="createOfferModalCopy">What do you want to do today?</p>
+        </div>
+        <button id="createOfferCloseTop" class="pp-modal-close" type="button">×</button>
+      </div>
+
+      <div class="pp-create-progress-wrap">
+        <div class="pp-create-progress-copy">
+          <span id="createOfferProgressLabel">Step 0 of 5</span>
+          <strong id="createOfferStepTitle">Choose your path</strong>
+        </div>
+        <div class="pp-create-progress-bar">
+          <span id="createOfferProgressBar"></span>
+        </div>
+      </div>
+
+      <div id="createOfferStep0" class="pp-create-step">
+        <div class="pp-create-entry-grid">
+          <button class="pp-create-entry-card active" type="button" data-path="new">
+            <strong>Create New Offer</strong>
+            <p>Start from scratch.</p>
+          </button>
+          <button class="pp-create-entry-card" type="button" data-path="duplicate">
+            <strong>Duplicate Previous Offer</strong>
+            <p>Fastest way to relaunch.</p>
+          </button>
+          <button class="pp-create-entry-card" type="button" data-path="template">
+            <strong>Use Template</strong>
+            <p>Best for quick ideas.</p>
+          </button>
+        </div>
+
+        <div id="createPathDuplicatePicker" class="pp-create-path-panel hidden">
+          <label class="pp-create-field">
+            <span>Choose an offer to duplicate</span>
+            <select id="duplicateOfferSelect"></select>
+          </label>
+        </div>
+
+        <div id="createPathTemplatePicker" class="pp-create-path-panel hidden">
+          <div id="templateOfferGrid" class="pp-create-template-grid"></div>
+        </div>
+      </div>
+
+      <div id="createOfferStep1" class="pp-create-step hidden">
+        <div class="pp-create-step-section">
+          <h4>Offer Basics</h4>
+          <div class="pp-create-form-grid">
+            <label class="pp-create-field full">
+              <span>Offer Name</span>
+              <input id="offerNameInput" type="text" placeholder="Taco Tuesday" />
+            </label>
+          </div>
+          <div class="pp-create-type-grid">
+            <button class="pp-type-card" type="button" data-offer-type="Percentage Off">
+              <strong>% Off</strong>
+              <p>Simple and easy to honor</p>
+            </button>
+            <button class="pp-type-card" type="button" data-offer-type="Buy 1 Get 1">
+              <strong>Buy 1 Get 1</strong>
+              <p>Great for traffic and sharing</p>
+            </button>
+            <button class="pp-type-card" type="button" data-offer-type="Free Item">
+              <strong>Free Item</strong>
+              <p>Add value without changing price</p>
+            </button>
+            <button class="pp-type-card" type="button" data-offer-type="Combo Deal">
+              <strong>Combo Deal</strong>
+              <p>Good for higher basket size</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="createOfferStep2" class="pp-create-step hidden">
+        <div class="pp-create-step-section">
+          <h4>Offer Details</h4>
+          <div class="pp-create-form-grid">
+            <label class="pp-create-field">
+              <span>Offer Discount</span>
+              <input id="offerDiscountInput" type="text" placeholder="10% off taco combo" />
+            </label>
+            <label class="pp-create-field">
+              <span>Eligible Item (optional)</span>
+              <input id="offerEligibleItemInput" type="text" placeholder="Taco combo" />
+            </label>
+            <label class="pp-create-field">
+              <span>Minimum Spend (optional)</span>
+              <input id="offerMinSpendInput" type="number" min="0" step="0.01" placeholder="25" />
+            </label>
+            <label class="pp-create-field full">
+              <span>Terms (optional)</span>
+              <input id="offerTermsInput" type="text" placeholder="Valid for dine-in and pickup. One redemption per guest." />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div id="createOfferStep3" class="pp-create-step hidden">
+        <div class="pp-create-step-section">
+          <h4>Schedule</h4>
+          <div class="pp-create-schedule-presets">
+            <button class="pp-schedule-pill active" type="button" data-schedule-type="today">Today</button>
+            <button class="pp-schedule-pill" type="button" data-schedule-type="weekend">This weekend</button>
+            <button class="pp-schedule-pill" type="button" data-schedule-type="this-week">This week</button>
+            <button class="pp-schedule-pill" type="button" data-schedule-type="custom">Custom dates</button>
+          </div>
+          <div class="pp-create-form-grid">
+            <label class="pp-create-field">
+              <span>Start Date</span>
+              <input id="offerStartDateInput" type="date" />
+            </label>
+            <label class="pp-create-field">
+              <span>End Date</span>
+              <input id="offerEndDateInput" type="date" />
+            </label>
+            <label class="pp-create-field">
+              <span>Start Time</span>
+              <input id="offerStartTimeInput" type="time" />
+            </label>
+            <label class="pp-create-field">
+              <span>End Time</span>
+              <input id="offerEndTimeInput" type="time" />
+            </label>
+          </div>
+          <label class="pp-toggle-row pp-schedule-toggle-row">
+            <span>
+              <strong>All Day</strong>
+              <small>Keep the offer available all day.</small>
+            </span>
+            <span class="pp-switch-wrap">
+              <input id="offerAllDayInput" type="checkbox" checked />
+              <span class="pp-switch-track"><span class="pp-switch-knob"></span></span>
+            </span>
+          </label>
+          <div class="pp-day-toggle-grid">
+            <label class="pp-day-chip"><input type="checkbox" value="mon" /><span>Mon</span></label>
+            <label class="pp-day-chip"><input type="checkbox" value="tue" /><span>Tue</span></label>
+            <label class="pp-day-chip"><input type="checkbox" value="wed" /><span>Wed</span></label>
+            <label class="pp-day-chip"><input type="checkbox" value="thu" /><span>Thu</span></label>
+            <label class="pp-day-chip"><input type="checkbox" value="fri" /><span>Fri</span></label>
+            <label class="pp-day-chip"><input type="checkbox" value="sat" /><span>Sat</span></label>
+            <label class="pp-day-chip"><input type="checkbox" value="sun" /><span>Sun</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div id="createOfferStep4" class="pp-create-step hidden">
+        <div class="pp-create-step-section">
+          <h4>Promotion Setup</h4>
+          <p class="pp-create-help">You can fine tune these options after launching the offer.</p>
+          <div class="pp-promo-option-grid">
+            <label class="pp-promo-option-card">
+              <div class="pp-promo-option-head">
+                <div class="pp-promo-icon qr">⌁</div>
+                <div>
+                  <strong>In-Store QR Code</strong>
+                  <p>Generate a QR so guests can scan at the counter or table.</p>
+                </div>
+                <span class="pp-promo-chip good">Recommended</span>
+              </div>
+              <div class="pp-promo-option-foot">
+                <small>Expected reach: High in-store visibility</small>
+                <span class="pp-switch-wrap">
+                  <input id="offerQrEnabledInput" type="checkbox" checked />
+                  <span class="pp-switch-track"><span class="pp-switch-knob"></span></span>
+                </span>
+              </div>
+            </label>
+
+            <label class="pp-promo-option-card disabled">
+              <div class="pp-promo-option-head">
+                <div class="pp-promo-icon social">◎</div>
+                <div>
+                  <strong>Share on Social Media</strong>
+                  <p>Push this offer to connected channels for wider local reach.</p>
+                </div>
+                <span class="pp-promo-chip muted">Coming soon</span>
+              </div>
+              <div class="pp-promo-option-foot">
+                <small>Available after social integrations are connected</small>
+                <span class="pp-switch-wrap">
+                  <input id="offerSocialEnabledInput" type="checkbox" disabled />
+                  <span class="pp-switch-track"><span class="pp-switch-knob"></span></span>
+                </span>
+              </div>
+            </label>
+
+            <label class="pp-promo-option-card">
+              <div class="pp-promo-option-head">
+                <div class="pp-promo-icon reminder">↺</div>
+                <div>
+                  <strong>Send Reminders</strong>
+                  <p>Follow up with customers who claimed but have not redeemed yet.</p>
+                </div>
+                <span class="pp-promo-chip info">Retention boost</span>
+              </div>
+              <div class="pp-promo-option-foot">
+                <small>Turns pending claims into completed redemptions</small>
+                <span class="pp-switch-wrap">
+                  <input id="offerReminderEnabledInput" type="checkbox" checked />
+                  <span class="pp-switch-track"><span class="pp-switch-knob"></span></span>
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <div class="pp-promo-creative-card">
+            <div class="pp-promo-creative-head">
+              <h5>Add an offer image (recommended)</h5>
+              <p>Use one great food photo and we will enhance it into a poster-ready visual.</p>
+            </div>
+            <div class="pp-promo-creative-grid">
+              <div class="pp-promo-image-tips">
+                <strong>Get the best result</strong>
+                <ul>
+                  <li>Use bright, natural lighting</li>
+                  <li>Keep one hero item centered</li>
+                  <li>Avoid blurry or dark photos</li>
+                  <li>Prefer close-up food shots</li>
+                </ul>
+              </div>
+              <div class="pp-promo-upload-panel">
+                <label class="pp-upload-dropzone" for="createPosterImageInput">
+                  <input id="createPosterImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
+                  <span class="pp-upload-title">Upload image</span>
+                  <small>PNG, JPG, or WEBP up to 12 MB</small>
+                  <em id="createPosterUploadName">No image selected</em>
+                </label>
+                <div class="pp-upload-actions">
+                  <button id="createEnhancePosterImageButton" class="pp-primary-btn" type="button" disabled>Enhance for Poster</button>
+                  <button id="createClearPosterImageButton" class="pp-secondary-btn hidden" type="button">Remove</button>
+                </div>
+                <p id="createPosterUploadStatus" class="pp-upload-status">No image added yet. We will use your offer details with QR in a clean social-friendly poster.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="createOfferStep5" class="pp-create-step hidden">
+        <div class="pp-create-step-section">
+          <h4>Preview Your Offer</h4>
+          <p class="pp-create-help">This is what your customers will see before you make it live.</p>
+          <div class="pp-create-preview-toolbar">
+            <button id="createRegenerateDesignsButton" class="pp-secondary-btn" type="button">Regenerate Designs</button>
+            <button id="createDownloadPosterButton" class="pp-secondary-btn" type="button">Download In-Store Poster (QR)</button>
+            <button id="createDownloadSocialButton" class="pp-secondary-btn" type="button">Download Social Version</button>
+            <button id="createCopyShareButton" class="pp-secondary-btn" type="button">Copy Share Image</button>
+          </div>
+          <div id="createPosterVariantGallery" class="pp-poster-variant-gallery"></div>
+          <div class="pp-create-preview-shell">
+            <div id="createPosterCanvas" class="pp-create-poster">
+              <div class="pp-create-poster-copy">
+                <div class="pp-poster-kicker-row">
+                  <span id="createPreviewTemplateBadge" class="pp-poster-template-badge">Best for Print</span>
+                  <span id="createPreviewTemplateName" class="pp-poster-template-name">Hero Food Focus</span>
+                </div>
+                <span id="createPreviewUrgency" class="pp-poster-urgency-badge">🔥 TODAY ONLY</span>
+                <strong id="createPreviewTitle">Taco Tuesday</strong>
+                <span id="createPreviewReward">10% off taco combo</span>
+                <small id="createPreviewMeta">This week • In-Store Only</small>
+                <em id="createPreviewCta">SCAN & SAVE NOW</em>
+              </div>
+              <div id="createPosterVisual" class="pp-create-poster-visual">
+                <img id="createPosterEnhancedImage" alt="Enhanced offer visual" class="hidden" />
+                <div id="createPosterFallbackArt" class="pp-create-poster-fallback-art">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+              <div class="pp-create-poster-qr">
+                <div id="createPosterQr" class="pp-create-poster-qr-box">
+                  <img id="createPosterQrImage" alt="Offer QR code" class="hidden" />
+                  <div id="createPosterQrFallback" class="pp-create-poster-qr-fallback"></div>
+                </div>
+              </div>
+            </div>
+            <div class="pp-create-preview-details">
+              <div class="pp-preview-chip-row">
+                <span id="createPreviewQrChip" class="pp-card-chip accent">QR Ready</span>
+                <span id="createPreviewReminderChip" class="pp-card-chip">Reminders On</span>
+                <span id="createPreviewImageChip" class="pp-card-chip">No image</span>
+              </div>
+              <ul class="pp-preview-summary-list">
+                <li><strong>Offer Type</strong><span id="createPreviewType">Percentage Off</span></li>
+                <li><strong>Schedule</strong><span id="createPreviewSchedule">This week</span></li>
+                <li><strong>Eligible Item</strong><span id="createPreviewItem">Any taco combo</span></li>
+                <li><strong>Minimum Spend</strong><span id="createPreviewSpend">None</span></li>
+              </ul>
+              <p id="createPreviewWelcome" class="pp-preview-welcome-copy">Welcome in and enjoy today’s offer. Scan to redeem in seconds.</p>
+              <p id="createPreviewTemplateDescription" class="pp-preview-template-copy">Premium, food-forward layout that performs well for daily in-store offers.</p>
+              <p id="createPreviewQrStatus" class="pp-preview-qr-status">Preparing scannable QR...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pp-modal-footer">
+        <button id="createOfferBackButton" class="pp-secondary-btn" type="button">Back</button>
+        <button id="createOfferCancelButton" class="pp-secondary-btn" type="button">Cancel</button>
+        <button id="createOfferNextButton" class="pp-primary-btn" type="button">Next</button>
+        <button id="createOfferSaveDraftButton" class="pp-secondary-btn hidden" type="button">Save Draft</button>
+        <button id="createOfferGoLiveButton" class="pp-primary-btn hidden" type="button">Go Live</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORE_ID = "taco123";
+    const BACKEND_BASE = "http://localhost:3000";
+    const state = {
+      stats: null,
+      offers: [],
+      redemptions: [],
+      reminderSent: false,
+      modalStep: "success",
+      previewEditing: false,
+      currentBoostOffer: null,
+      boostDraft: {
+        title: "Taco Tuesday",
+        reward: "10% OFF Tacos",
+        meta: "Every Tuesday – In-Store Only",
+      },
+      createOffer: {
+        isOpen: false,
+        step: 0,
+        offerId: null,
+        creationSource: "new",
+        sourceOfferId: null,
+        templateId: null,
+        stepStartedAt: Date.now(),
+        completedSteps: [],
+        stepTimestamps: {},
+        stepDurations: {},
+        qrDataUrl: "",
+        redeemUrl: "",
+        qrKey: "",
+        qrLoading: false,
+        qrError: "",
+        posterVariants: [],
+        selectedPosterVariantId: "",
+        posterRegenerationCount: 0,
+        posterGenerating: false,
+        posterSelectedTemplateId: "",
+        selectedPosterVariantSnapshot: null,
+        posterGeneratedLogged: false,
+        form: {
+          name: "Taco Tuesday",
+          offerType: "Percentage Off",
+          reward: "10% off taco combo",
+          eligibleItem: "",
+          minSpend: "",
+          terms: "Valid for dine-in and pickup. One redemption per guest.",
+          scheduleType: "today",
+          startDate: "",
+          endDate: "",
+          startTime: "11:00",
+          endTime: "21:00",
+          allDay: true,
+          activeDays: [],
+          qrEnabled: true,
+          socialEnabled: false,
+          reminderEnabled: true,
+          posterImageName: "",
+          posterImageOriginalDataUrl: "",
+          posterImageEnhancedDataUrl: "",
+          posterImageEnhancedAt: null,
+        },
+      },
+    };
+
+    const CREATE_STEPS = [
+      { id: 0, label: "Step 0 of 5", title: "Choose your path", heading: "Create an Offer", copy: "What do you want to do today?" },
+      { id: 1, label: "Step 1 of 5", title: "Offer Basics", heading: "Create a New Offer", copy: "Offer Basics" },
+      { id: 2, label: "Step 2 of 5", title: "Offer Details", heading: "Create a New Offer", copy: "Offer Details" },
+      { id: 3, label: "Step 3 of 5", title: "Schedule", heading: "Create a New Offer", copy: "Schedule" },
+      { id: 4, label: "Step 4 of 5", title: "Promotion Setup", heading: "Create a New Offer", copy: "Promotion Setup" },
+      { id: 5, label: "Step 5 of 5", title: "Preview Your Offer", heading: "Create a New Offer", copy: "Preview Your Offer" },
+    ];
+
+    const OFFER_TEMPLATES = [
+      {
+        id: "tmpl-lunch",
+        name: "Lunch Boost",
+        offerType: "Percentage Off",
+        reward: "10% off lunch combo",
+        eligibleItem: "Lunch combo",
+        terms: "Valid weekdays until 2 PM.",
+        scheduleType: "this-week",
+      },
+      {
+        id: "tmpl-weekend",
+        name: "Weekend Push",
+        offerType: "Combo Deal",
+        reward: "Free drink with entree",
+        eligibleItem: "Entree + drink",
+        terms: "Valid Friday through Sunday.",
+        scheduleType: "weekend",
+      },
+      {
+        id: "tmpl-first-time",
+        name: "First Visit Offer",
+        offerType: "Free Item",
+        reward: "Free churro with first order",
+        eligibleItem: "First-time customer order",
+        terms: "One per guest.",
+        scheduleType: "today",
+      },
+    ];
+
+    const POSTER_TEMPLATE_REGISTRY = [
+      {
+        id: "hero-food-focus",
+        name: "Hero Food Focus",
+        badge: "🔥 High Conversion",
+        description: "Modern, high-contrast, food-first layout with bold deal text.",
+        mood: "bold",
+        className: "pp-template-hero-food",
+      },
+      {
+        id: "clean-minimal",
+        name: "Clean Minimal",
+        badge: "Best for Print",
+        description: "Soft, clean composition for premium cafe and brunch-style offers.",
+        mood: "minimal",
+        className: "pp-template-clean-minimal",
+      },
+      {
+        id: "high-urgency-deal",
+        name: "High Urgency Deal",
+        badge: "⚡ Action Trigger",
+        description: "Louder urgency layout for limited-time and BOGO campaigns.",
+        mood: "urgent",
+        className: "pp-template-high-urgency",
+      },
+      {
+        id: "smart-info-card",
+        name: "Smart Info Card",
+        badge: "Fast Setup",
+        description: "Concise info-forward poster with cleaner utility chips.",
+        mood: "balanced",
+        className: "pp-template-smart-info",
+      },
+      {
+        id: "social-first",
+        name: "Social First",
+        badge: "Best for Instagram",
+        description: "Trendy social-friendly composition with strong visual rhythm.",
+        mood: "social",
+        className: "pp-template-social-first",
+      },
+      {
+        id: "diagonal-promo",
+        name: "Diagonal Promo",
+        badge: "🔥 High Conversion",
+        description: "Diagonal split composition for bold offer-first promotions.",
+        mood: "bold",
+        className: "pp-template-diagonal-promo",
+      },
+      {
+        id: "centered-menu",
+        name: "Centered Menu",
+        badge: "Best for Menu Promo",
+        description: "Centered hero with circular discount highlight for menu pushes.",
+        mood: "premium",
+        className: "pp-template-centered-menu",
+      },
+    ];
+
+    const CATEGORY_ALIASES = {
+      burgers: ["burger", "burgers", "fries", "fast", "fast food"],
+      tacos: ["taco", "tacos", "burrito", "nacho", "quesadilla", "mex", "mexican"],
+      pizza: ["pizza", "slice", "pizzeria"],
+      drinks: ["drink", "drinks", "juice", "coffee", "cold brew", "tea", "shake", "smoothie", "mocktail", "soda"],
+      appetizers: ["appz", "apps", "appetizer", "appetizers", "starter", "starters", "shareables", "snacks"],
+      mains: ["main", "mains", "maincourse", "main course", "entree", "entrees", "plate", "plates", "lunch", "dinner"],
+      desserts: ["dessert", "desserts", "desert", "deserts", "cake", "brownie", "cookie", "donut", "pastry", "ice cream"],
+      biryani: ["biryani", "rice bowl", "rice", "bowl"],
+      cafe: ["cafe", "bakery", "brunch", "croissant"],
+    };
+
+    const SOCIAL_STYLE_PROFILES = {
+      bold_food_drop: {
+        id: "bold_food_drop",
+        tone: "loud_craveable_fast",
+        fontPair: { headline: "Anton", body: "Inter" },
+        layoutDirection: "image_dominant_overlay",
+        textDensity: "low",
+        colorBehavior: "hot_high_contrast",
+        badgeStyle: "solid_capsule",
+        ctaStyle: "bold_pill",
+        imageTreatment: "high_contrast_food_pop",
+        overlayStyle: "dark_gradient_overlay",
+        layoutPattern: "image_full_bleed_overlay",
+        idealCategories: ["burgers", "tacos", "pizza", "mains"],
+        idealOfferTypes: ["percentage_discount", "bogo", "limited_time"],
+      },
+      premium_minimal: {
+        id: "premium_minimal",
+        tone: "clean_elevated",
+        fontPair: { headline: "Oswald", body: "Inter" },
+        layoutDirection: "asymmetric_whitespace",
+        textDensity: "medium_low",
+        colorBehavior: "muted_premium",
+        badgeStyle: "soft_outline",
+        ctaStyle: "understated_chip",
+        imageTreatment: "soft_blur_backdrop",
+        overlayStyle: "clean_light_panel",
+        layoutPattern: "clean_editorial",
+        idealCategories: ["cafe", "desserts", "drinks"],
+        idealOfferTypes: ["combo", "new_item", "happy_hour"],
+      },
+      spicy_flash_deal: {
+        id: "spicy_flash_deal",
+        tone: "urgent_bold",
+        fontPair: { headline: "Anton", body: "Inter" },
+        layoutDirection: "headline_first",
+        textDensity: "low",
+        colorBehavior: "red_orange_pop",
+        badgeStyle: "urgent_flash",
+        ctaStyle: "impact_button",
+        imageTreatment: "warm_appetite_filter",
+        overlayStyle: "dark_gradient_overlay",
+        layoutPattern: "badge_plus_hero",
+        idealCategories: ["tacos", "burgers", "appetizers", "pizza"],
+        idealOfferTypes: ["bogo", "limited_time", "percentage_discount"],
+      },
+      dessert_soft_luxe: {
+        id: "dessert_soft_luxe",
+        tone: "soft_luxe",
+        fontPair: { headline: "Oswald", body: "Inter" },
+        layoutDirection: "centered_clean",
+        textDensity: "medium_low",
+        colorBehavior: "blush_cream",
+        badgeStyle: "soft_tag",
+        ctaStyle: "rounded_glow",
+        imageTreatment: "dessert_soft_glow",
+        overlayStyle: "soft_gradient_overlay",
+        layoutPattern: "story_center_stack",
+        idealCategories: ["desserts", "cafe"],
+        idealOfferTypes: ["percentage_discount", "new_item"],
+      },
+      drinks_fresh_pop: {
+        id: "drinks_fresh_pop",
+        tone: "fresh_energy",
+        fontPair: { headline: "Anton", body: "Inter" },
+        layoutDirection: "hero_with_banner",
+        textDensity: "low",
+        colorBehavior: "icy_blue_teal",
+        badgeStyle: "cool_glass",
+        ctaStyle: "bright_capsule",
+        imageTreatment: "cool_drink_filter",
+        overlayStyle: "cool_gradient_overlay",
+        layoutPattern: "bottom_cta_banner",
+        idealCategories: ["drinks"],
+        idealOfferTypes: ["happy_hour", "percentage_discount"],
+      },
+      brunch_clean_bright: {
+        id: "brunch_clean_bright",
+        tone: "airy_fresh",
+        fontPair: { headline: "Oswald", body: "Inter" },
+        layoutDirection: "clean_split",
+        textDensity: "medium_low",
+        colorBehavior: "bright_neutral",
+        badgeStyle: "clean_tag",
+        ctaStyle: "clean_chip",
+        imageTreatment: "soft_blur_backdrop",
+        overlayStyle: "light_overlay",
+        layoutPattern: "clean_editorial",
+        idealCategories: ["cafe", "mains", "desserts"],
+        idealOfferTypes: ["combo", "new_item", "lunch_special"],
+      },
+      late_night_crave: {
+        id: "late_night_crave",
+        tone: "moody_crave",
+        fontPair: { headline: "Anton", body: "Inter" },
+        layoutDirection: "dark_hero",
+        textDensity: "low",
+        colorBehavior: "neon_dark",
+        badgeStyle: "glow_badge",
+        ctaStyle: "glow_button",
+        imageTreatment: "high_contrast_food_pop",
+        overlayStyle: "dark_gradient_overlay",
+        layoutPattern: "image_full_bleed_overlay",
+        idealCategories: ["burgers", "pizza", "mains", "appetizers"],
+        idealOfferTypes: ["limited_time", "bogo"],
+      },
+      local_special_board: {
+        id: "local_special_board",
+        tone: "friendly_local",
+        fontPair: { headline: "Oswald", body: "Inter" },
+        layoutDirection: "structured_offer_board",
+        textDensity: "medium",
+        colorBehavior: "earth_spice",
+        badgeStyle: "chalk_label",
+        ctaStyle: "solid_chip",
+        imageTreatment: "warm_appetite_filter",
+        overlayStyle: "anchored_panel",
+        layoutPattern: "diagonal_split_promo",
+        idealCategories: ["mains", "biryani", "tacos"],
+        idealOfferTypes: ["lunch_special", "percentage_discount", "combo"],
+      },
+    };
+
+    const CATEGORY_CREATIVE_PROFILES = {
+      burgers: {
+        fallback: "bold_food_drop",
+        map: {
+          percentage_discount: ["bold_food_drop", "spicy_flash_deal", "late_night_crave"],
+          bogo: ["spicy_flash_deal", "bold_food_drop", "late_night_crave"],
+          default: ["bold_food_drop", "spicy_flash_deal"],
+        },
+      },
+      tacos: {
+        fallback: "spicy_flash_deal",
+        map: {
+          percentage_discount: ["spicy_flash_deal", "bold_food_drop", "local_special_board"],
+          limited_time: ["spicy_flash_deal", "bold_food_drop", "late_night_crave"],
+          default: ["spicy_flash_deal", "bold_food_drop"],
+        },
+      },
+      drinks: {
+        fallback: "drinks_fresh_pop",
+        map: {
+          happy_hour: ["drinks_fresh_pop", "premium_minimal", "brunch_clean_bright"],
+          percentage_discount: ["drinks_fresh_pop", "premium_minimal"],
+          default: ["drinks_fresh_pop", "premium_minimal"],
+        },
+      },
+      desserts: {
+        fallback: "dessert_soft_luxe",
+        map: {
+          percentage_discount: ["dessert_soft_luxe", "premium_minimal", "brunch_clean_bright"],
+          default: ["dessert_soft_luxe", "premium_minimal"],
+        },
+      },
+      appetizers: {
+        fallback: "spicy_flash_deal",
+        map: {
+          game_day_deal: ["spicy_flash_deal", "late_night_crave", "bold_food_drop"],
+          default: ["spicy_flash_deal", "bold_food_drop"],
+        },
+      },
+      mains: {
+        fallback: "local_special_board",
+        map: {
+          lunch_special: ["local_special_board", "brunch_clean_bright", "premium_minimal"],
+          default: ["local_special_board", "bold_food_drop"],
+        },
+      },
+      biryani: {
+        fallback: "local_special_board",
+        map: {
+          default: ["local_special_board", "bold_food_drop", "premium_minimal"],
+        },
+      },
+      cafe: {
+        fallback: "premium_minimal",
+        map: {
+          combo: ["premium_minimal", "brunch_clean_bright", "dessert_soft_luxe"],
+          default: ["premium_minimal", "brunch_clean_bright"],
+        },
+      },
+      default: {
+        fallback: "bold_food_drop",
+        map: {
+          default: ["bold_food_drop", "premium_minimal", "local_special_board"],
+        },
+      },
+    };
+
+    const SOCIAL_LAYOUT_RULES = {
+      feed: {
+        ratio: "1:1",
+        safePadding: { top: 64, right: 64, bottom: 72, left: 64 },
+        preferredLayouts: ["image_full_bleed_overlay", "badge_plus_hero", "clean_editorial"],
+      },
+      story: {
+        ratio: "9:16",
+        safePadding: { top: 140, right: 70, bottom: 210, left: 70 },
+        preferredLayouts: ["story_center_stack", "image_full_bleed_overlay", "bottom_cta_banner"],
+      },
+      print: {
+        ratio: "4:5",
+        safePadding: { top: 72, right: 68, bottom: 72, left: 68 },
+        preferredLayouts: ["diagonal_split_promo", "badge_plus_hero", "clean_editorial"],
+      },
+      ad: {
+        ratio: "1:1",
+        safePadding: { top: 66, right: 66, bottom: 66, left: 66 },
+        preferredLayouts: ["badge_plus_hero", "bottom_cta_banner", "image_full_bleed_overlay"],
+      },
+    };
+
+    function money(value) {
+      if (value === null || value === undefined || value === "") return "--";
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0);
+    }
+
+    function formatDate(value) {
+      if (!value) return "--";
+      return new Date(value).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    function formatDateForInput(value) {
+      const date = value ? new Date(value) : new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function plusDays(days) {
+      const date = new Date();
+      date.setDate(date.getDate() + days);
+      return formatDateForInput(date.toISOString());
+    }
+
+    function getScheduleDateBounds() {
+      return {
+        minDate: formatDateForInput(),
+        maxDate: plusDays(60),
+      };
+    }
+
+    async function fetchJson(path, options = {}) {
+      const response = await fetch(`${BACKEND_BASE}${path}`, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    function getCreateStepKey(step) {
+      return ({
+        1: "offer_basics",
+        2: "offer_details",
+        3: "schedule",
+        4: "promotion_setup",
+        5: "preview",
+      })[step] || "entry";
+    }
+
+    function getCreationCompletionPercent(step) {
+      return Math.max(0, Math.min(100, Math.round((Math.min(step, 5) / 5) * 100)));
+    }
+
+    function buildCreateScheduleDefaults(type = "today") {
+      if (type === "weekend") {
+        return { startDate: plusDays(5), endDate: plusDays(7), activeDays: ["fri", "sat", "sun"] };
+      }
+      if (type === "this-week") {
+        return { startDate: formatDateForInput(), endDate: plusDays(6), activeDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] };
+      }
+      return { startDate: formatDateForInput(), endDate: plusDays(2), activeDays: [] };
+    }
+
+    function resetCreateOfferState() {
+      const defaults = buildCreateScheduleDefaults("today");
+      state.createOffer = {
+        isOpen: false,
+        step: 0,
+        offerId: null,
+        creationSource: "new",
+        sourceOfferId: null,
+        templateId: null,
+        stepStartedAt: Date.now(),
+        completedSteps: [],
+        stepTimestamps: {},
+        stepDurations: {},
+        qrDataUrl: "",
+        redeemUrl: "",
+        qrKey: "",
+        qrLoading: false,
+        qrError: "",
+        posterVariants: [],
+        selectedPosterVariantId: "",
+        posterRegenerationCount: 0,
+        posterGenerating: false,
+        posterSelectedTemplateId: "",
+        selectedPosterVariantSnapshot: null,
+        posterGeneratedLogged: false,
+        form: {
+          name: "Taco Tuesday",
+          offerType: "Percentage Off",
+          reward: "10% off taco combo",
+          eligibleItem: "",
+          minSpend: "",
+          terms: "Valid for dine-in and pickup. One redemption per guest.",
+          scheduleType: "today",
+          startDate: defaults.startDate,
+          endDate: defaults.endDate,
+          startTime: "11:00",
+          endTime: "21:00",
+          allDay: true,
+          activeDays: [],
+          qrEnabled: true,
+          socialEnabled: false,
+          reminderEnabled: true,
+          posterImageName: "",
+          posterImageOriginalDataUrl: "",
+          posterImageEnhancedDataUrl: "",
+          posterImageEnhancedAt: null,
+        },
+      };
+    }
+
+    function populateCreateSelectors() {
+      const duplicateSelect = document.getElementById("duplicateOfferSelect");
+      const offerOptions = state.offers.length
+        ? state.offers
+        : [{ id: "fallback-live", name: "Taco Tuesday", statusDisplay: "live" }];
+      duplicateSelect.innerHTML = offerOptions.map((offer) => `
+        <option value="${offer.id}">${offer.name} · ${(offer.statusDisplay || offer.status || "draft").toUpperCase()}</option>
+      `).join("");
+
+      document.getElementById("templateOfferGrid").innerHTML = OFFER_TEMPLATES.map((template) => `
+        <button class="pp-template-select-card${state.createOffer.templateId === template.id ? " active" : ""}" type="button" data-template-id="${template.id}">
+          <strong>${template.name}</strong>
+          <p>${template.reward}</p>
+        </button>
+      `).join("");
+
+      document.querySelectorAll("[data-template-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.createOffer.templateId = button.getAttribute("data-template-id");
+          renderCreateOfferModal();
+        });
+      });
+    }
+
+    function syncCreateInputs() {
+      const form = state.createOffer.form;
+      const { minDate, maxDate } = getScheduleDateBounds();
+      document.getElementById("offerNameInput").value = form.name || "";
+      document.getElementById("offerDiscountInput").value = form.reward || "";
+      document.getElementById("offerEligibleItemInput").value = form.eligibleItem || "";
+      document.getElementById("offerMinSpendInput").value = form.minSpend || "";
+      document.getElementById("offerTermsInput").value = form.terms || "";
+      document.getElementById("offerStartDateInput").value = form.startDate || formatDateForInput();
+      document.getElementById("offerEndDateInput").value = form.endDate || plusDays(2);
+      document.getElementById("offerStartDateInput").setAttribute("min", minDate);
+      document.getElementById("offerStartDateInput").setAttribute("max", maxDate);
+      document.getElementById("offerEndDateInput").setAttribute("min", minDate);
+      document.getElementById("offerEndDateInput").setAttribute("max", maxDate);
+      document.getElementById("offerStartTimeInput").value = form.startTime || "11:00";
+      document.getElementById("offerEndTimeInput").value = form.endTime || "21:00";
+      document.getElementById("offerAllDayInput").checked = Boolean(form.allDay);
+      document.getElementById("offerQrEnabledInput").checked = Boolean(form.qrEnabled);
+      document.getElementById("offerSocialEnabledInput").checked = Boolean(form.socialEnabled);
+      document.getElementById("offerReminderEnabledInput").checked = Boolean(form.reminderEnabled);
+
+      document.querySelectorAll("[data-offer-type]").forEach((button) => {
+        button.classList.toggle("active", button.getAttribute("data-offer-type") === form.offerType);
+      });
+      document.querySelectorAll("[data-schedule-type]").forEach((button) => {
+        button.classList.toggle("active", button.getAttribute("data-schedule-type") === form.scheduleType);
+      });
+      document.querySelectorAll(".pp-day-toggle-grid input").forEach((input) => {
+        input.checked = form.activeDays.includes(input.value);
+      });
+      document.querySelectorAll(".pp-create-entry-card").forEach((button) => {
+        button.classList.toggle("active", button.getAttribute("data-path") === state.createOffer.creationSource);
+      });
+      document.getElementById("createPathDuplicatePicker").classList.toggle("hidden", state.createOffer.creationSource !== "duplicate");
+      document.getElementById("createPathTemplatePicker").classList.toggle("hidden", state.createOffer.creationSource !== "template");
+      if (state.createOffer.sourceOfferId) {
+        document.getElementById("duplicateOfferSelect").value = state.createOffer.sourceOfferId;
+      }
+      updateScheduleTimeState();
+      renderCreatePosterUploadState();
+    }
+
+    function renderCreatePosterUploadState() {
+      const form = state.createOffer.form;
+      const hasOriginal = Boolean(form.posterImageOriginalDataUrl);
+      const hasEnhanced = Boolean(form.posterImageEnhancedDataUrl);
+      const uploadName = document.getElementById("createPosterUploadName");
+      const status = document.getElementById("createPosterUploadStatus");
+      const enhanceButton = document.getElementById("createEnhancePosterImageButton");
+      const clearButton = document.getElementById("createClearPosterImageButton");
+      const dropzone = document.querySelector('label[for="createPosterImageInput"]');
+      if (!uploadName || !status || !enhanceButton || !clearButton || !dropzone) return;
+
+      uploadName.innerText = form.posterImageName || "No image selected";
+      enhanceButton.disabled = !hasOriginal;
+      clearButton.classList.toggle("hidden", !hasOriginal);
+      dropzone.classList.toggle("has-image", hasOriginal);
+
+      if (hasEnhanced) {
+        status.innerText = "Poster-ready image is enhanced and applied. Review the preview and confirm.";
+      } else if (hasOriginal) {
+        status.innerText = "Image uploaded. Click “Enhance for Poster” to auto-edit and apply it.";
+      } else {
+        status.innerText = "No image added yet. We will use your offer details with QR in a clean social-friendly poster.";
+      }
+    }
+
+    function inferCuisineType() {
+      const source = `${state.createOffer.form.name || ""} ${state.createOffer.form.eligibleItem || ""}`.toLowerCase();
+      if (/taco|burrito|nacho|quesadilla|mex/.test(source)) return "mexican";
+      if (/pizza|pasta|ital/.test(source)) return "italian";
+      if (/cafe|coffee|bakery|dessert|croissant/.test(source)) return "cafe";
+      if (/burger|fries|fast/.test(source)) return "fast-casual";
+      return "general";
+    }
+
+    function inferPosterCategory() {
+      const source = `${state.createOffer.form.name || ""} ${state.createOffer.form.eligibleItem || ""}`.toLowerCase();
+      return normalizePosterCategory(source);
+    }
+
+    function normalizePosterCategory(value = "") {
+      const normalized = String(value || "").toLowerCase();
+      const matched = Object.entries(CATEGORY_ALIASES).find(([, aliases]) =>
+        aliases.some((alias) => normalized.includes(alias))
+      );
+      if (matched) return matched[0];
+      return "food";
+    }
+
+    function normalizeOfferType(value = "", scheduleType = "") {
+      const source = `${value} ${scheduleType}`.toLowerCase();
+      if (/buy\s*1|get\s*1|bogo/.test(source)) return "bogo";
+      if (/happy\s*hour|drinks?/.test(source)) return "happy_hour";
+      if (/combo/.test(source)) return "combo";
+      if (/free/.test(source)) return "free_item";
+      if (/today|limited|flash/.test(source)) return "limited_time";
+      if (/lunch/.test(source)) return "lunch_special";
+      if (/%|percentage|discount/.test(source)) return "percentage_discount";
+      return "default";
+    }
+
+    function buildFallbackHeroImage(category = "food") {
+      const palettes = {
+        burgers: ["#FF7A00", "#1A1A1A", "🍔"],
+        tacos: ["#E63946", "#FFD166", "🌮"],
+        pizza: ["#ef4444", "#f59e0b", "🍕"],
+        drinks: ["#00C2FF", "#0A2540", "🥤"],
+        desserts: ["#FFB6C1", "#FFF0F5", "🍰"],
+        biryani: ["#D4AF37", "#3E2723", "🍛"],
+        food: ["#f97316", "#334155", "🍽️"],
+      };
+      const [primary, secondary, emoji] = palettes[category] || palettes.food;
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${primary}"/>
+              <stop offset="100%" stop-color="${secondary}"/>
+            </linearGradient>
+          </defs>
+          <rect width="1080" height="1350" fill="url(#g)"/>
+          <circle cx="860" cy="240" r="190" fill="rgba(255,255,255,0.15)"/>
+          <circle cx="210" cy="1120" r="230" fill="rgba(255,255,255,0.12)"/>
+          <text x="540" y="640" text-anchor="middle" fill="rgba(255,255,255,0.95)" font-size="180" font-family="Inter, Arial, sans-serif">${emoji}</text>
+          <text x="540" y="760" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-size="62" font-weight="800" font-family="Inter, Arial, sans-serif">Fresh ${category.toUpperCase()} PICK</text>
+        </svg>
+      `.trim();
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    function resolveHeroImage(inputImage, category = "food") {
+      if (inputImage) return inputImage;
+      return buildFallbackHeroImage(category);
+    }
+
+    function wrapPosterLines(text, maxCharsPerLine = 18, maxLines = 3) {
+      const raw = String(text || "").trim();
+      if (!raw) return [];
+      const words = raw.split(/\s+/);
+      const lines = [];
+      let current = "";
+      for (const word of words) {
+        const next = current ? `${current} ${word}` : word;
+        if (!current || next.length <= maxCharsPerLine) {
+          current = next;
+        } else {
+          lines.push(current);
+          current = word;
+          if (lines.length >= maxLines - 1) break;
+        }
+      }
+      if (current && lines.length < maxLines) lines.push(current);
+      const consumed = lines.join(" ").split(/\s+/).filter(Boolean).length;
+      if (lines.length === maxLines && consumed < words.length) {
+        lines[maxLines - 1] = `${lines[maxLines - 1].replace(/[.!?]+$/, "")}…`;
+      }
+      return lines;
+    }
+
+    function getPosterStyleProfile(cuisineType) {
+      const map = {
+        mexican: { primary: "#E63946", secondary: "#FF7A00", accent: "#FFD166" },
+        italian: { primary: "#4B352A", secondary: "#A2673F", accent: "#F2E8CF" },
+        cafe: { primary: "#5A4A42", secondary: "#D9B08C", accent: "#FAF3E0" },
+        "fast-casual": { primary: "#1F2937", secondary: "#FF6B00", accent: "#FFE8CC" },
+        general: { primary: "#334155", secondary: "#F97316", accent: "#FEEBC8" },
+      };
+      return map[cuisineType] || map.general;
+    }
+
+    function resolveCategoryPalette(category, cuisineType, styleProfileId = "") {
+      const categoryMap = {
+        burgers: { primary: "#f97316", secondary: "#1f2937", accent: "#ffd166", text: "#fff8e8", textSoft: "#fef3c7" },
+        tacos: { primary: "#ef4444", secondary: "#f97316", accent: "#ffd166", text: "#fff8e8", textSoft: "#ffedd5" },
+        pizza: { primary: "#dc2626", secondary: "#f59e0b", accent: "#fde68a", text: "#fff7ed", textSoft: "#ffedd5" },
+        drinks: { primary: "#0ea5e9", secondary: "#0f172a", accent: "#7dd3fc", text: "#f8fafc", textSoft: "#dbeafe" },
+        desserts: { primary: "#f472b6", secondary: "#fbcfe8", accent: "#fef3c7", text: "#1f2937", textSoft: "#475569" },
+        appetizers: { primary: "#f97316", secondary: "#7c2d12", accent: "#fdba74", text: "#fff8e8", textSoft: "#ffedd5" },
+        mains: { primary: "#92400e", secondary: "#292524", accent: "#facc15", text: "#fff8e8", textSoft: "#fef3c7" },
+        biryani: { primary: "#D4AF37", secondary: "#3E2723", accent: "#faedcd", text: "#fff8e8", textSoft: "#fef3c7" },
+        cafe: { primary: "#8b5e3c", secondary: "#f5e9dc", accent: "#f7d7b5", text: "#1f2937", textSoft: "#475569" },
+        food: { primary: "#f97316", secondary: "#334155", accent: "#ffedd5", text: "#fff8e8", textSoft: "#fef3c7" },
+      };
+      const base = categoryMap[category] || categoryMap.food;
+      const styleProfile = SOCIAL_STYLE_PROFILES[styleProfileId];
+      if (styleProfile?.colorBehavior === "icy_blue_teal") {
+        return { ...base, primary: "#0891b2", secondary: "#0f172a", accent: "#67e8f9", text: "#ecfeff", textSoft: "#bae6fd" };
+      }
+      if (styleProfile?.colorBehavior === "blush_cream") {
+        return { ...base, primary: "#fbcfe8", secondary: "#fff7ed", accent: "#f9a8d4", text: "#1f2937", textSoft: "#475569" };
+      }
+      if (styleProfile?.colorBehavior === "earth_spice") {
+        return { ...base, primary: "#92400e", secondary: "#292524", accent: "#fbbf24", text: "#fff8e8", textSoft: "#fde68a" };
+      }
+      if (styleProfile?.colorBehavior === "muted_premium") {
+        return { ...base, primary: "#f8f3ed", secondary: "#e8edf3", accent: "#f2e8cf", text: "#111827", textSoft: "#334155" };
+      }
+      return { ...base, ...getPosterStyleProfile(cuisineType) };
+    }
+
+    function getTemplateStyle(cuisineType, templateId, styleProfileId = "") {
+      const category = inferPosterCategory();
+      const base = resolveCategoryPalette(category, cuisineType, styleProfileId);
+      if (templateId === "clean-minimal") {
+        return {
+          primary: base.primary,
+          secondary: base.secondary,
+          accent: base.accent,
+          text: "#111827",
+          textSoft: "#334155",
+        };
+      }
+      if (templateId === "high-urgency-deal") {
+        return {
+          primary: cuisineType === "mexican" ? "#E11D48" : "#BE123C",
+          secondary: base.secondary === "#f8f3ed" ? "#F97316" : base.secondary,
+          accent: "#FDBA74",
+          text: "#fff8e8",
+          textSoft: "#fef3c7",
+        };
+      }
+      if (templateId === "social-first") {
+        return {
+          primary: "#0f172a",
+          secondary: "#334155",
+          accent: "#fb923c",
+          text: "#fff8e8",
+          textSoft: "#f8fafc",
+        };
+      }
+      if (templateId === "smart-info-card") {
+        return {
+          primary: "#0f766e",
+          secondary: "#14b8a6",
+          accent: "#99f6e4",
+          text: "#fff8e8",
+          textSoft: "#ecfeff",
+        };
+      }
+      return {
+        ...base,
+        text: base.text || "#fff8e8",
+        textSoft: base.textSoft || "#fef3c7",
+      };
+    }
+
+    function parseOfferItems(rawText = "") {
+      return String(rawText || "")
+        .split(/,|\/|&|\+| and /i)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function buildItemHook(itemText = "", fallback = "today’s favorites") {
+      const items = parseOfferItems(itemText);
+      if (!items.length) return fallback;
+      if (items.length === 1) return items[0].toLowerCase();
+      if (items.length === 2) return `${items[0].toLowerCase()} + ${items[1].toLowerCase()}`;
+      return `${items[0].toLowerCase()} and more`;
+    }
+
+    function enforceMarketingChecklist(copy, context = {}) {
+      const checked = { ...copy };
+      const headlineWords = String(checked.mainHeadline || checked.headline || "").trim().split(/\s+/).filter(Boolean);
+      if (headlineWords.length > 6) {
+        checked.mainHeadline = headlineWords.slice(0, 6).join(" ");
+      }
+      if (!String(checked.mainHeadline || "").trim()) {
+        checked.mainHeadline = "SPECIAL DEAL TODAY";
+      }
+      const supportWords = String(checked.supportLine || checked.subheadline || "").trim().split(/\s+/).filter(Boolean);
+      if (supportWords.length > 10) {
+        checked.supportLine = supportWords.slice(0, 10).join(" ");
+      }
+      if (!String(checked.ctaText || checked.CTA || "").trim()) {
+        checked.ctaText = "SCAN & SAVE";
+      }
+      if (!/(SCAN|SAVE|ORDER|GRAB|CLAIM|TAP|SIP|BITE|TREAT|GET|UNLOCK|START)/i.test(checked.ctaText || checked.CTA || "")) {
+        checked.ctaText = "SCAN & SAVE";
+      }
+      if (!String(checked.urgencyTag || checked.urgencyBadge || "").trim()) {
+        checked.urgencyTag = context.schedule === "weekend" ? "⏳ THIS WEEKEND" : "🔥 TODAY ONLY";
+      }
+      checked.headline = checked.mainHeadline || checked.headline;
+      checked.subheadline = checked.supportLine || checked.subheadline;
+      checked.urgencyTag = checked.urgencyTag || checked.urgencyBadge;
+      checked.ctaText = checked.ctaText || checked.CTA;
+      return checked;
+    }
+
+    function urgencyEngine({ scheduleType, activeDays = [] }) {
+      if (scheduleType === "today") {
+        return { urgencyTag: "🔥 TODAY ONLY", urgencyStyle: "urgent" };
+      }
+      if (scheduleType === "weekend") {
+        return { urgencyTag: "⏳ THIS WEEKEND", urgencyStyle: "weekend" };
+      }
+      if (Array.isArray(activeDays) && activeDays.length === 1) {
+        const day = String(activeDays[0] || "").toUpperCase();
+        return { urgencyTag: `EVERY ${day}`, urgencyStyle: "recurring" };
+      }
+      return { urgencyTag: "LIMITED TIME", urgencyStyle: "default" };
+    }
+
+    function ctaEngine({ offerType, urgencyStyle, tone, category }) {
+      const type = String(offerType || "").toLowerCase();
+      if (category === "drinks") return tone === "social" ? "SIP & SAVE" : "GET REFRESHED";
+      if (category === "desserts") return tone === "social" ? "TREAT YOURSELF" : "GRAB A BITE";
+      if (category === "tacos") return tone === "social" ? "TAP FOR TACOS" : "SCAN & SAVE";
+      if (category === "burgers") return tone === "social" ? "BITE NOW" : "ORDER NOW";
+      if (category === "appetizers") return tone === "social" ? "GET THE APPZ" : "START YOUR ORDER";
+      if (category === "mains" || category === "biryani") return tone === "social" ? "GET YOUR PLATE" : "ORDER DINNER";
+      if (type.includes("buy 1") || type.includes("bogo")) {
+        return tone === "social" ? "GRAB THIS DEAL →" : "UNLOCK YOUR DEAL";
+      }
+      if (urgencyStyle === "urgent") return "DON'T MISS THIS";
+      if (tone === "minimal") return "SCAN & ENJOY";
+      if (tone === "social") return "TAP. SCAN. SAVE.";
+      return "SCAN & SAVE NOW";
+    }
+
+    function normalizedRewardText(reward = "", offerType = "") {
+      const cleaned = String(reward || "").trim();
+      if (!cleaned) return "Special deal";
+      if (/%/.test(cleaned)) return cleaned;
+      if (/free/i.test(cleaned)) return cleaned;
+      if (/buy\s*1|get\s*1/i.test(cleaned)) return cleaned;
+      if (String(offerType || "").toLowerCase().includes("percentage") && /\d+/.test(cleaned)) {
+        return `${cleaned}% OFF`;
+      }
+      return cleaned;
+    }
+
+    function titleCase(value) {
+      return String(value || "")
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    }
+
+    function getCategoryCopyBanks(category) {
+      const banks = {
+        burgers: {
+          hooks: ["BIG BURGER ENERGY 🍔🔥", "BITE INTO THIS DEAL", "STACKED. SAUCY. SAVED."],
+          headlines: ["BURGER DEAL LIVE", "CRAVE-WORTHY SAVINGS", "BURGER TIME"],
+          support: ["{discount} on your next burger", "{discount} on first order", "Hot off the grill. Better price."],
+          ctas: ["ORDER NOW", "BITE NOW", "GRAB THE DEAL"],
+        },
+        tacos: {
+          hooks: ["TACO TUESDAY IS ON 🌮", "YOUR TACO FIX, FOR LESS", "SPICE UP YOUR TUESDAY"],
+          headlines: ["TACO DEAL LIVE", "TACOS. SAVED.", "TUESDAY TACO DROP"],
+          support: ["Get {discount} on favorite tacos", "{discount} on your taco order", "Fresh tacos, better price today"],
+          ctas: ["SCAN & SAVE", "TAP FOR TACOS", "CLAIM TODAY"],
+        },
+        drinks: {
+          hooks: ["SIP SOMETHING COLD 🧊", "HAPPY HOUR JUST HIT", "COOL DOWN FOR LESS"],
+          headlines: ["DRINK DEAL LIVE", "CHILL + SAVE", "SIP SPECIAL TODAY"],
+          support: ["{discount} on refreshing drinks", "{discount} on your favorite sip", "Icy, fresh, and on promo"],
+          ctas: ["SIP & SAVE", "GET REFRESHED", "ORDER A DRINK"],
+        },
+        desserts: {
+          hooks: ["SWEET DEAL ALERT 🍰", "TREAT YOURSELF TODAY", "DESSERT FIRST, ALWAYS"],
+          headlines: ["SWEET SPECIAL LIVE", "DESSERT DEAL", "SWEET TOOTH WIN"],
+          support: ["{discount} on your sweet pick", "{discount} on desserts", "Soft, rich, and worth it"],
+          ctas: ["GRAB A BITE", "GET SOMETHING SWEET", "TREAT YOURSELF"],
+        },
+        appetizers: {
+          hooks: ["START WITH A WIN", "SNACK TIME JUST GOT BETTER", "SHAREABLES ON SPECIAL"],
+          headlines: ["APPZ DEAL LIVE", "SNACK + SAVE", "STARTERS ON PROMO"],
+          support: ["{discount} on starters", "{discount} on shareables", "Kick off your order for less"],
+          ctas: ["START YOUR ORDER", "GET THE APPZ", "ORDER NOW"],
+        },
+        mains: {
+          hooks: ["LUNCH LOOKS BETTER HERE", "DINNER DEAL, READY", "COME HUNGRY"],
+          headlines: ["MAIN DEAL LIVE", "PLATE UP + SAVE", "DINNER SPECIAL"],
+          support: ["{discount} on mains", "{discount} on selected plates", "Hearty meals, lighter bill"],
+          ctas: ["GET YOUR PLATE", "ORDER DINNER", "CLAIM THIS SPECIAL"],
+        },
+      };
+      return banks[category] || {
+        hooks: ["TODAY'S KITCHEN DEAL", "FRESH PICKS ON SPECIAL", "YOUR NEXT BITE, FOR LESS"],
+        headlines: ["SPECIAL OFFER LIVE", "FOOD DEAL TODAY", "SAVE ON YOUR ORDER"],
+        support: ["{discount} on menu favorites", "{discount} today", "Made fresh and priced to move"],
+        ctas: ["SCAN & SAVE", "ORDER NOW", "CLAIM TODAY"],
+      };
+    }
+
+    const socialCopyEngine = {
+      /*
+       Example output:
+       category=burgers, offerType=percentage_discount
+       -> hookLine: "BIG BURGER ENERGY 🍔🔥"
+       -> mainHeadline: "BURGER DEAL LIVE"
+       -> supportLine: "30% OFF on first order"
+       -> CTA: "ORDER NOW"
+      */
+      generateVariants(input = {}) {
+        const category = normalizePosterCategory(input.category || "");
+        const rewardText = normalizedRewardText(input.discountText || input.discount || "", input.offerType);
+        const banks = getCategoryCopyBanks(category);
+        const urgency = urgencyEngine({ scheduleType: input.scheduleText || input.schedule || "today", activeDays: state.createOffer.form.activeDays });
+        const tones = [
+          { key: "bold", idx: 0 },
+          { key: "premium", idx: 1 },
+          { key: "playful", idx: 2 },
+        ];
+        return tones.map((toneConfig) => {
+          const idx = toneConfig.idx % banks.hooks.length;
+          const supportTemplate = banks.support[idx % banks.support.length];
+          const supportLine = supportTemplate.replace("{discount}", rewardText || "Special pricing");
+          return enforceMarketingChecklist({
+            copyTone: toneConfig.key,
+            hookLine: banks.hooks[idx],
+            mainHeadline: banks.headlines[idx % banks.headlines.length],
+            supportLine,
+            urgencyBadge: urgency.urgencyTag,
+            urgencyTag: urgency.urgencyTag,
+            urgencyStyle: urgency.urgencyStyle,
+            CTA: banks.ctas[idx % banks.ctas.length],
+            ctaText: banks.ctas[idx % banks.ctas.length],
+            microBrandLine: input.brandName || "Spice Taco House",
+            flavorText: toneConfig.key === "premium"
+              ? "Clean, premium look for social and print"
+              : toneConfig.key === "playful"
+                ? "Built to grab attention in the feed"
+                : "Designed for fast action and redemptions",
+          }, { schedule: input.scheduleText || input.schedule });
+        });
+      },
+    };
+
+    const socialStyleEngine = {
+      resolveProfile({ category, offerTypeNormalized, cuisineType }) {
+        const cat = normalizePosterCategory(category || "");
+        const profileConfig = CATEGORY_CREATIVE_PROFILES[cat] || CATEGORY_CREATIVE_PROFILES.default;
+        const candidateIds = profileConfig.map[offerTypeNormalized] || profileConfig.map.default || [profileConfig.fallback];
+        const selectedId = candidateIds.find((id) => SOCIAL_STYLE_PROFILES[id]) || profileConfig.fallback || "bold_food_drop";
+        const profile = SOCIAL_STYLE_PROFILES[selectedId] || SOCIAL_STYLE_PROFILES.bold_food_drop;
+        return {
+          ...profile,
+          id: selectedId,
+          cuisineType: cuisineType || "general",
+        };
+      },
+    };
+
+    const socialLayoutRules = {
+      resolveChannelRule(channelType = "print") {
+        return SOCIAL_LAYOUT_RULES[channelType] || SOCIAL_LAYOUT_RULES.print;
+      },
+      matchesChannel(layoutPattern, channelType = "print") {
+        const rule = this.resolveChannelRule(channelType);
+        return rule.preferredLayouts.includes(layoutPattern);
+      },
+    };
+
+    const creativeValidation = {
+      validate(creativeContext = {}) {
+        const issues = [];
+        const copy = creativeContext.copy || {};
+        const headlineWordCount = String(copy.mainHeadline || "").trim().split(/\s+/).filter(Boolean).length;
+        const supportWordCount = String(copy.supportLine || "").trim().split(/\s+/).filter(Boolean).length;
+        if (!creativeContext.heroImage) issues.push("missing_hero_image");
+        if (headlineWordCount > 6) issues.push("headline_too_long");
+        if (supportWordCount > 10) issues.push("support_too_long");
+        if (!/(SCAN|SAVE|ORDER|GRAB|CLAIM|SIP|BITE|TREAT|GET|UNLOCK|START)/i.test(String(copy.ctaText || ""))) {
+          issues.push("weak_cta");
+        }
+        if (!socialLayoutRules.matchesChannel(creativeContext.layoutPattern, creativeContext.channelType)) {
+          issues.push("layout_channel_mismatch");
+        }
+        return {
+          valid: issues.length === 0,
+          issues,
+        };
+      },
+    };
+
+    const socialCreativeEngine = {
+      generateCreative({ templateId, channelType = "print", toneHint = "bold" }) {
+        const category = inferPosterCategory();
+        const offerTypeNormalized = normalizeOfferType(state.createOffer.form.offerType, state.createOffer.form.scheduleType);
+        const styleProfile = socialStyleEngine.resolveProfile({
+          category,
+          offerTypeNormalized,
+          cuisineType: inferCuisineType(),
+        });
+        const copies = socialCopyEngine.generateVariants({
+          offerName: state.createOffer.form.name,
+          offerType: state.createOffer.form.offerType,
+          itemName: state.createOffer.form.eligibleItem,
+          discountText: state.createOffer.form.reward,
+          category,
+          cuisineType: inferCuisineType(),
+          scheduleText: state.createOffer.form.scheduleType,
+          brandName: "Spice Taco House",
+          channelType,
+        });
+        const preferredTone = toneHint === "urgent" ? "bold" : toneHint === "minimal" ? "premium" : toneHint === "social" ? "playful" : "bold";
+        let selectedCopy = copies.find((item) => item.copyTone === preferredTone) || copies[0];
+        const creativeDraft = {
+          heroImage: resolveHeroImage(
+            state.createOffer.form.posterImageEnhancedDataUrl || state.createOffer.form.posterImageOriginalDataUrl || "",
+            category
+          ),
+          copy: selectedCopy,
+          styleProfileId: styleProfile.id,
+          layoutPattern: styleProfile.layoutPattern,
+          channelType,
+          category,
+        };
+        const validation = creativeValidation.validate(creativeDraft);
+        if (!validation.valid && validation.issues.includes("headline_too_long")) {
+          selectedCopy = copies.find((item) => item.copyTone === "premium") || selectedCopy;
+        }
+        return {
+          styleProfile,
+          copy: selectedCopy,
+          heroImage: creativeDraft.heroImage,
+          layoutPattern: styleProfile.layoutPattern,
+          channelType,
+          category,
+          offerTypeNormalized,
+          validation,
+        };
+      },
+    };
+
+    function marketingCopyEngine({ offerName, offerType, discount, item, schedule, cuisineType, brandName, tone, channelType = "print", category }) {
+      const generated = socialCopyEngine.generateVariants({
+        offerName,
+        offerType,
+        itemName: item,
+        discountText: discount,
+        category: category || inferPosterCategory(),
+        cuisineType,
+        scheduleText: schedule,
+        brandName,
+        channelType,
+      });
+      const mappedTone = tone === "minimal" ? "premium" : tone === "social" ? "playful" : "bold";
+      const selected = generated.find((item) => item.copyTone === mappedTone) || generated[0];
+      return enforceMarketingChecklist(selected, { schedule });
+    }
+
+    function getPosterTemplateById(templateId) {
+      return POSTER_TEMPLATE_REGISTRY.find((template) => template.id === templateId) || POSTER_TEMPLATE_REGISTRY[0];
+    }
+
+    function getTemplateCandidatesForOffer() {
+      const offerType = String(state.createOffer.form.offerType || "").toLowerCase();
+      const scheduleType = String(state.createOffer.form.scheduleType || "").toLowerCase();
+      const text = `${state.createOffer.form.name || ""} ${state.createOffer.form.eligibleItem || ""}`.toLowerCase();
+      const category = inferPosterCategory();
+      const offerTypeNormalized = normalizeOfferType(offerType, scheduleType);
+      const isNewItem = /new|special menu|event|launch|featured/.test(text);
+      const isBogoUrgent = offerType.includes("buy 1") || offerType.includes("bogo") || scheduleType === "today";
+      const isPercentage = offerType.includes("percentage") || /%/.test(String(state.createOffer.form.reward || ""));
+
+      if (CATEGORY_CREATIVE_PROFILES[category]) {
+        const styleIds = CATEGORY_CREATIVE_PROFILES[category].map[offerTypeNormalized]
+          || CATEGORY_CREATIVE_PROFILES[category].map.default
+          || [CATEGORY_CREATIVE_PROFILES[category].fallback];
+        const profileToTemplates = {
+          bold_food_drop: ["hero-food-focus", "diagonal-promo", "high-urgency-deal"],
+          premium_minimal: ["clean-minimal", "centered-menu", "smart-info-card"],
+          spicy_flash_deal: ["high-urgency-deal", "hero-food-focus", "social-first"],
+          dessert_soft_luxe: ["centered-menu", "clean-minimal", "social-first"],
+          drinks_fresh_pop: ["social-first", "clean-minimal", "centered-menu"],
+          brunch_clean_bright: ["clean-minimal", "centered-menu", "smart-info-card"],
+          late_night_crave: ["high-urgency-deal", "hero-food-focus", "diagonal-promo"],
+          local_special_board: ["diagonal-promo", "smart-info-card", "hero-food-focus"],
+        };
+        const fromProfiles = styleIds
+          .flatMap((styleId) => profileToTemplates[styleId] || [])
+          .filter((value, index, arr) => arr.indexOf(value) === index);
+        if (fromProfiles.length >= 3) {
+          return fromProfiles;
+        }
+      }
+
+      if (category === "burgers") {
+        return ["diagonal-promo", "hero-food-focus", "high-urgency-deal", "social-first", "smart-info-card"];
+      }
+      if (category === "drinks") {
+        return ["clean-minimal", "social-first", "centered-menu", "hero-food-focus", "smart-info-card"];
+      }
+      if (category === "desserts") {
+        return ["centered-menu", "clean-minimal", "social-first", "hero-food-focus", "smart-info-card"];
+      }
+      if (category === "appetizers") {
+        return ["high-urgency-deal", "social-first", "hero-food-focus", "diagonal-promo", "smart-info-card"];
+      }
+      if (category === "mains" || category === "cafe") {
+        return ["diagonal-promo", "clean-minimal", "centered-menu", "hero-food-focus", "smart-info-card"];
+      }
+      if (category === "biryani") {
+        return ["diagonal-promo", "centered-menu", "hero-food-focus", "high-urgency-deal", "social-first"];
+      }
+      if (isBogoUrgent) {
+        return ["high-urgency-deal", "hero-food-focus", "social-first", "smart-info-card", "clean-minimal"];
+      }
+      if (isNewItem) {
+        return ["social-first", "centered-menu", "hero-food-focus", "clean-minimal", "high-urgency-deal"];
+      }
+      if (isPercentage) {
+        return ["hero-food-focus", "clean-minimal", "smart-info-card", "diagonal-promo", "social-first"];
+      }
+      return ["hero-food-focus", "centered-menu", "social-first", "smart-info-card", "clean-minimal"];
+    }
+
+    function trackCreatePosterEvent(eventType, metadata = {}) {
+      if (!state.createOffer.offerId) return Promise.resolve();
+      return fetchJson(`/offers/${encodeURIComponent(state.createOffer.offerId)}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType,
+          actorType: "owner",
+          metadata: {
+            offer_type: state.createOffer.form.offerType || "",
+            cuisine_type: inferCuisineType(),
+            reminder_enabled: Boolean(state.createOffer.form.reminderEnabled),
+            enhanced_image_enabled: Boolean(state.createOffer.form.posterImageEnhancedDataUrl),
+            creation_source: state.createOffer.creationSource,
+            step_source: "create_offer_step_5",
+            poster_category: inferPosterCategory(),
+            ...metadata,
+          },
+        }),
+      }).catch(() => null);
+    }
+
+    function createPosterVariant(templateId, seedOffset = 0) {
+      const template = getPosterTemplateById(templateId);
+      const cuisineType = inferCuisineType();
+      const posterCategory = inferPosterCategory();
+      const channelType = template.id === "social-first" ? "feed" : "print";
+      const tone = template.id === "high-urgency-deal"
+        ? "urgent"
+        : template.id === "social-first"
+          ? "social"
+          : template.id === "clean-minimal"
+            ? "minimal"
+            : "bold";
+      const creative = socialCreativeEngine.generateCreative({
+        templateId: template.id,
+        channelType,
+        toneHint: tone,
+      });
+      const style = getTemplateStyle(cuisineType, template.id, creative.styleProfile.id);
+      const copy = marketingCopyEngine({
+        offerName: state.createOffer.form.name,
+        offerType: state.createOffer.form.offerType,
+        discount: state.createOffer.form.reward,
+        item: state.createOffer.form.eligibleItem,
+        schedule: state.createOffer.form.scheduleType,
+        cuisineType,
+        brandName: "Spice Taco House",
+        tone,
+        channelType,
+        category: posterCategory,
+      });
+      const finalCopy = {
+        ...copy,
+        ...creative.copy,
+      };
+      return {
+        id: `${template.id}-${Date.now()}-${seedOffset}`,
+        templateId: template.id,
+        templateName: template.name,
+        templateBadge: template.badge,
+        templateDescription: template.description,
+        templateClassName: template.className,
+        style,
+        cuisineType,
+        posterCategory,
+        heroImage: resolveHeroImage(
+          state.createOffer.form.posterImageEnhancedDataUrl || state.createOffer.form.posterImageOriginalDataUrl || "",
+          posterCategory
+        ),
+        tone,
+        copy: finalCopy,
+        styleProfileId: creative.styleProfile.id,
+        layoutPattern: creative.layoutPattern,
+        channelType,
+        offerTypeNormalized: creative.offerTypeNormalized,
+      };
+    }
+
+    function generatePosterVariants(force = false) {
+      if (state.createOffer.posterVariants.length && !force) return state.createOffer.posterVariants;
+      const candidates = getTemplateCandidatesForOffer();
+      const rotation = state.createOffer.posterRegenerationCount % candidates.length;
+      const ordered = candidates.slice(rotation).concat(candidates.slice(0, rotation));
+      const picked = ordered.slice(0, 3);
+      state.createOffer.posterVariants = picked.map((templateId, index) => createPosterVariant(templateId, index));
+      state.createOffer.selectedPosterVariantId = state.createOffer.posterVariants[0]?.id || "";
+      state.createOffer.posterSelectedTemplateId = state.createOffer.posterVariants[0]?.templateId || "";
+      state.createOffer.selectedPosterVariantSnapshot = state.createOffer.posterVariants[0] || null;
+      return state.createOffer.posterVariants;
+    }
+
+    function getSelectedPosterVariant() {
+      const selected = state.createOffer.posterVariants.find((item) => item.id === state.createOffer.selectedPosterVariantId);
+      if (selected) return selected;
+      if (state.createOffer.selectedPosterVariantSnapshot) return state.createOffer.selectedPosterVariantSnapshot;
+      return state.createOffer.posterVariants[0] || null;
+    }
+
+    function renderPosterVariantGallery() {
+      const gallery = document.getElementById("createPosterVariantGallery");
+      if (!gallery) return;
+      const variants = state.createOffer.posterVariants;
+      const hasImage = Boolean(state.createOffer.form.posterImageEnhancedDataUrl);
+      gallery.innerHTML = variants.map((variant) => `
+        <article class="pp-poster-variant-card ${variant.templateClassName} ${variant.id === state.createOffer.selectedPosterVariantId ? "selected" : ""}" data-variant-id="${variant.id}">
+          <div class="pp-poster-variant-thumb">
+            <div class="pp-poster-variant-thumb-copy">
+              <strong>${variant.copy.headline}</strong>
+              <span>${variant.copy.subheadline}</span>
+              <small>${variant.copy.urgencyTag} • ${hasImage ? "Visual ready" : "Info-led"}</small>
+            </div>
+            <div class="pp-poster-thumb-qr"></div>
+          </div>
+          <div class="pp-poster-variant-meta">
+            <div>
+              <span class="pp-card-chip accent">${variant.templateBadge}</span>
+              <h5>${variant.templateName}</h5>
+              <p>${variant.templateDescription}</p>
+            </div>
+            <button class="pp-secondary-btn pp-inline-btn" type="button" data-use-variant="${variant.id}">Use This Design</button>
+          </div>
+        </article>
+      `).join("");
+
+      gallery.querySelectorAll("[data-use-variant]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const variantId = button.getAttribute("data-use-variant");
+          if (!variantId) return;
+          state.createOffer.selectedPosterVariantId = variantId;
+          const selected = state.createOffer.posterVariants.find((item) => item.id === variantId) || null;
+          state.createOffer.posterSelectedTemplateId = selected?.templateId || "";
+          state.createOffer.selectedPosterVariantSnapshot = selected;
+          renderPosterVariantGallery();
+          updateCreatePreview();
+          trackCreatePosterEvent("poster_variant_selected", {
+            selected_template: state.createOffer.posterSelectedTemplateId,
+            cta_used: selected?.copy?.ctaText || "",
+            urgency_type: selected?.copy?.urgencyStyle || "",
+            styleProfile: selected?.styleProfileId || "",
+            layoutPattern: selected?.layoutPattern || "",
+            channelType: selected?.channelType || "print",
+            copyTone: selected?.copy?.copyTone || "",
+          });
+          trackCreatePosterEvent("creative_style_profile_selected", {
+            selected_template: state.createOffer.posterSelectedTemplateId,
+            styleProfile: selected?.styleProfileId || "",
+            layoutPattern: selected?.layoutPattern || "",
+          });
+          trackCreatePosterEvent("creative_copy_variant_selected", {
+            selected_template: state.createOffer.posterSelectedTemplateId,
+            copyTone: selected?.copy?.copyTone || "",
+            cta_used: selected?.copy?.ctaText || "",
+          });
+          trackCreatePosterEvent("offer_poster_variant_selected", {
+            selected_template: state.createOffer.posterSelectedTemplateId,
+          });
+        });
+      });
+
+      gallery.querySelectorAll(".pp-poster-thumb-qr").forEach((node) => {
+        node.innerHTML = Array.from({ length: 16 }).map((_, index) => `<span class="${index % 2 === 0 ? "filled" : ""}"></span>`).join("");
+      });
+    }
+
+    function buildCreateQrKey() {
+      const form = state.createOffer.form;
+      return [
+        STORE_ID,
+        "Spice Taco House",
+        form.name || "Special Offer",
+      ].join("|");
+    }
+
+    function renderCreateQrFallback() {
+      const fallback = document.getElementById("createPosterQrFallback");
+      if (!fallback) return;
+      fallback.innerHTML = Array.from({ length: 25 })
+        .map((_, index) => `<span class="${index % 2 === 0 ? "filled" : ""}"></span>`)
+        .join("");
+    }
+
+    function renderCreateQrVisual() {
+      const image = document.getElementById("createPosterQrImage");
+      const fallback = document.getElementById("createPosterQrFallback");
+      const status = document.getElementById("createPreviewQrStatus");
+      if (!image || !fallback || !status) return;
+
+      if (state.createOffer.form.qrEnabled === false) {
+        image.classList.add("hidden");
+        image.removeAttribute("src");
+        fallback.classList.remove("hidden");
+        status.innerText = "QR is off. Turn on In-Store QR in Promotion Setup.";
+        return;
+      }
+
+      if (state.createOffer.qrDataUrl) {
+        image.src = state.createOffer.qrDataUrl;
+        image.classList.remove("hidden");
+        fallback.classList.add("hidden");
+        status.innerText = "QR scan ready. Customers can scan this at the counter or tables.";
+        return;
+      }
+
+      image.classList.add("hidden");
+      image.removeAttribute("src");
+      fallback.classList.remove("hidden");
+      if (state.createOffer.qrLoading) {
+        status.innerText = "Preparing scannable QR...";
+      } else if (state.createOffer.qrError) {
+        status.innerText = "QR could not be generated right now. You can still save and try again.";
+      } else {
+        status.innerText = "Preparing scannable QR...";
+      }
+    }
+
+    async function ensureCreateOfferQr() {
+      if (state.createOffer.form.qrEnabled === false) {
+        state.createOffer.qrDataUrl = "";
+        state.createOffer.redeemUrl = "";
+        state.createOffer.qrLoading = false;
+        state.createOffer.qrError = "";
+        renderCreateQrVisual();
+        return;
+      }
+
+      const nextKey = buildCreateQrKey();
+      if (state.createOffer.qrKey === nextKey && state.createOffer.qrDataUrl) {
+        renderCreateQrVisual();
+        return;
+      }
+      if (state.createOffer.qrLoading) return;
+
+      state.createOffer.qrLoading = true;
+      state.createOffer.qrError = "";
+      renderCreateQrVisual();
+      try {
+        const response = await fetchJson(
+          `/qr?store=${encodeURIComponent(STORE_ID)}&restaurant=${encodeURIComponent("Spice Taco House")}&offer=${encodeURIComponent(state.createOffer.form.name || "Special Offer")}`
+        );
+        state.createOffer.qrDataUrl = response.qrDataUrl || "";
+        state.createOffer.redeemUrl = response.redeemUrl || "";
+        state.createOffer.qrKey = nextKey;
+      } catch (error) {
+        state.createOffer.qrDataUrl = "";
+        state.createOffer.redeemUrl = "";
+        state.createOffer.qrError = "failed";
+      } finally {
+        state.createOffer.qrLoading = false;
+        renderCreateQrVisual();
+      }
+    }
+
+    async function regeneratePosterVariants() {
+      state.createOffer.posterGenerating = true;
+      const button = document.getElementById("createRegenerateDesignsButton");
+      const gallery = document.getElementById("createPosterVariantGallery");
+      const originalText = button ? button.innerText : "Regenerate Designs";
+      if (button) {
+        button.disabled = true;
+        button.innerText = "Regenerating...";
+      }
+      if (gallery) {
+        gallery.innerHTML = Array.from({ length: 3 }).map(() => `
+          <article class="pp-poster-variant-card pp-poster-variant-skeleton">
+            <div class="pp-poster-skeleton-block"></div>
+            <div class="pp-poster-skeleton-lines">
+              <span></span><span></span><span></span>
+            </div>
+          </article>
+        `).join("");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 280));
+      state.createOffer.posterRegenerationCount += 1;
+      generatePosterVariants(true);
+      state.createOffer.selectedPosterVariantSnapshot = getSelectedPosterVariant();
+      renderPosterVariantGallery();
+      updateCreatePreview();
+      state.createOffer.posterGenerating = false;
+      if (button) {
+        button.disabled = false;
+        button.innerText = originalText;
+      }
+      const selected = getSelectedPosterVariant();
+      trackCreatePosterEvent("creative_rejected_by_user", {
+        selected_template: state.createOffer.posterSelectedTemplateId,
+        reason: "regenerated",
+      });
+      trackCreatePosterEvent("creative_regenerated", {
+        selected_template: state.createOffer.posterSelectedTemplateId,
+        styleProfile: selected?.styleProfileId || "",
+        layoutPattern: selected?.layoutPattern || "",
+        channelType: selected?.channelType || "print",
+        copyTone: selected?.copy?.copyTone || "",
+      });
+      trackCreatePosterEvent("poster_regenerated", {
+        selected_template: state.createOffer.posterSelectedTemplateId,
+        cta_used: selected?.copy?.ctaText || "",
+        urgency_type: selected?.copy?.urgencyStyle || "",
+        styleProfile: selected?.styleProfileId || "",
+        layoutPattern: selected?.layoutPattern || "",
+        channelType: selected?.channelType || "print",
+        copyTone: selected?.copy?.copyTone || "",
+      });
+      trackCreatePosterEvent("offer_poster_regenerated", {
+        selected_template: state.createOffer.posterSelectedTemplateId,
+      });
+    }
+
+    function updateScheduleTimeState() {
+      const allDay = document.getElementById("offerAllDayInput").checked;
+      const startTime = document.getElementById("offerStartTimeInput");
+      const endTime = document.getElementById("offerEndTimeInput");
+      startTime.disabled = allDay;
+      endTime.disabled = allDay;
+      startTime.closest(".pp-create-field").classList.toggle("muted", allDay);
+      endTime.closest(".pp-create-field").classList.toggle("muted", allDay);
+    }
+
+    function updateCreatePreview() {
+      const form = state.createOffer.form;
+      const promotedLabel = form.eligibleItem || form.name || "today's special";
+      const selectedVariant = getSelectedPosterVariant();
+      const posterCanvas = document.getElementById("createPosterCanvas");
+      const templateNameEl = document.getElementById("createPreviewTemplateName");
+      const templateBadgeEl = document.getElementById("createPreviewTemplateBadge");
+      const templateDescEl = document.getElementById("createPreviewTemplateDescription");
+      const marketingCopy = selectedVariant?.copy || marketingCopyEngine({
+        offerName: form.name,
+        offerType: form.offerType,
+        discount: form.reward,
+        item: form.eligibleItem,
+        schedule: form.scheduleType,
+        cuisineType: inferCuisineType(),
+        brandName: "Spice Taco House",
+        tone: "bold",
+      });
+      document.getElementById("createPreviewTitle").innerText = marketingCopy.headline || form.name || "Special Offer";
+      document.getElementById("createPreviewReward").innerText = marketingCopy.subheadline || form.reward || "Reward coming soon";
+      document.getElementById("createPreviewType").innerText = form.offerType || "--";
+      document.getElementById("createPreviewItem").innerText = form.eligibleItem || "Any qualifying order";
+      document.getElementById("createPreviewSpend").innerText = form.minSpend ? money(form.minSpend) : "None";
+      document.getElementById("createPreviewSchedule").innerText = form.scheduleType === "weekend"
+        ? "This weekend"
+        : form.scheduleType === "this-week"
+          ? "This week"
+          : form.scheduleType === "custom"
+            ? `${form.startDate || "--"} to ${form.endDate || "--"}`
+            : "Today";
+      document.getElementById("createPreviewMeta").innerText = `${document.getElementById("createPreviewSchedule").innerText} • ${form.allDay ? "In-Store Only" : `${form.startTime || "--"} to ${form.endTime || "--"}`}`;
+      document.getElementById("createPreviewQrChip").innerText = form.qrEnabled ? "QR Ready" : "QR Off";
+      document.getElementById("createPreviewReminderChip").innerText = form.reminderEnabled ? "Reminders On" : "Reminders Off";
+      document.getElementById("createPreviewImageChip").innerText = form.posterImageEnhancedDataUrl
+        ? "Enhanced image"
+        : form.posterImageOriginalDataUrl
+          ? "Uploaded image"
+          : "Auto hero image";
+      document.getElementById("createPreviewUrgency").innerText = marketingCopy.urgencyTag || "LIMITED TIME";
+      document.getElementById("createPreviewCta").innerText = marketingCopy.ctaText || "SCAN & SAVE NOW";
+      document.getElementById("createPreviewWelcome").innerText = form.posterImageEnhancedDataUrl
+        ? `${marketingCopy.flavorText}. Share this ${promotedLabel.toLowerCase()} offer in-store and on social.`
+        : `${marketingCopy.flavorText}. Welcome in for ${form.reward || "a special offer"} and scan to redeem.`;
+      if (selectedVariant && posterCanvas && templateNameEl && templateBadgeEl && templateDescEl) {
+        state.createOffer.selectedPosterVariantSnapshot = selectedVariant;
+        posterCanvas.className = `pp-create-poster ${selectedVariant.templateClassName}`;
+        posterCanvas.style.setProperty("--poster-primary", selectedVariant.style.primary);
+        posterCanvas.style.setProperty("--poster-secondary", selectedVariant.style.secondary);
+        posterCanvas.style.setProperty("--poster-accent", selectedVariant.style.accent);
+        posterCanvas.style.setProperty("--poster-text", selectedVariant.style.text || "#fff8e8");
+        posterCanvas.style.setProperty("--poster-text-soft", selectedVariant.style.textSoft || "#f5efe1");
+        templateNameEl.innerText = selectedVariant.templateName;
+        templateBadgeEl.innerText = selectedVariant.templateBadge;
+        templateDescEl.innerText = selectedVariant.templateDescription;
+      }
+
+      const posterImageEl = document.getElementById("createPosterEnhancedImage");
+      const posterFallbackEl = document.getElementById("createPosterFallbackArt");
+      const resolvedHeroImage = selectedVariant?.heroImage || resolveHeroImage(
+        form.posterImageEnhancedDataUrl || form.posterImageOriginalDataUrl || "",
+        inferPosterCategory()
+      );
+      if (resolvedHeroImage && posterImageEl && posterFallbackEl) {
+        posterImageEl.src = resolvedHeroImage;
+        posterImageEl.classList.remove("hidden");
+        posterFallbackEl.classList.add("hidden");
+      } else if (posterImageEl && posterFallbackEl) {
+        posterImageEl.classList.add("hidden");
+        posterImageEl.removeAttribute("src");
+        posterFallbackEl.classList.remove("hidden");
+      }
+      renderCreateQrFallback();
+      renderCreateQrVisual();
+      ensureCreateOfferQr();
+    }
+
+    function renderCreateOfferModal() {
+      const modal = document.getElementById("createOfferModal");
+      modal.classList.toggle("hidden", !state.createOffer.isOpen);
+      modal.setAttribute("aria-hidden", state.createOffer.isOpen ? "false" : "true");
+
+      const stepConfig = CREATE_STEPS.find((item) => item.id === state.createOffer.step) || CREATE_STEPS[0];
+      document.getElementById("createOfferModalTitle").innerText = stepConfig.heading;
+      document.getElementById("createOfferModalCopy").innerText = stepConfig.copy;
+      document.getElementById("createOfferProgressLabel").innerText = stepConfig.label;
+      document.getElementById("createOfferStepTitle").innerText = stepConfig.title;
+      document.getElementById("createOfferProgressBar").style.width = `${state.createOffer.step === 0 ? 8 : getCreationCompletionPercent(state.createOffer.step)}%`;
+
+      document.querySelectorAll(".pp-create-step").forEach((panel) => panel.classList.add("hidden"));
+      document.getElementById(`createOfferStep${state.createOffer.step}`).classList.remove("hidden");
+
+      const backButton = document.getElementById("createOfferBackButton");
+      const nextButton = document.getElementById("createOfferNextButton");
+      const saveDraftButton = document.getElementById("createOfferSaveDraftButton");
+      const goLiveButton = document.getElementById("createOfferGoLiveButton");
+
+      backButton.classList.toggle("hidden", state.createOffer.step === 0);
+      nextButton.classList.toggle("hidden", state.createOffer.step === 5);
+      saveDraftButton.classList.toggle("hidden", state.createOffer.step !== 5);
+      goLiveButton.classList.toggle("hidden", state.createOffer.step !== 5);
+      nextButton.innerText = state.createOffer.step === 0 ? "Continue" : "Next";
+
+      populateCreateSelectors();
+      syncCreateInputs();
+      if (state.createOffer.step === 5) {
+        generatePosterVariants();
+        renderPosterVariantGallery();
+        if (!state.createOffer.posterGeneratedLogged) {
+          const selected = getSelectedPosterVariant();
+          trackCreatePosterEvent("creative_generated", {
+            generated_templates: state.createOffer.posterVariants.map((item) => item.templateId),
+            styleProfile: selected?.styleProfileId || "",
+            layoutPattern: selected?.layoutPattern || "",
+            channelType: selected?.channelType || "print",
+            copyTone: selected?.copy?.copyTone || "",
+          });
+          trackCreatePosterEvent("poster_generated", {
+            generated_templates: state.createOffer.posterVariants.map((item) => item.templateId),
+            selected_template: selected?.templateId || "",
+            cta_used: selected?.copy?.ctaText || "",
+            urgency_type: selected?.copy?.urgencyStyle || "",
+            styleProfile: selected?.styleProfileId || "",
+            layoutPattern: selected?.layoutPattern || "",
+            channelType: selected?.channelType || "print",
+            copyTone: selected?.copy?.copyTone || "",
+          });
+          trackCreatePosterEvent("offer_poster_variants_generated", {
+            generated_templates: state.createOffer.posterVariants.map((item) => item.templateId),
+          });
+          state.createOffer.posterGeneratedLogged = true;
+        }
+      }
+      updateCreatePreview();
+    }
+
+    function applyDuplicateSource(sourceOfferId) {
+      const source = state.offers.find((offer) => offer.id === sourceOfferId);
+      if (!source) return;
+      const defaults = buildCreateScheduleDefaults("today");
+      state.createOffer.sourceOfferId = sourceOfferId;
+      state.createOffer.form = {
+        ...state.createOffer.form,
+        name: `${source.name} Copy`,
+        offerType: source.offerType || source.type || "Percentage Off",
+        reward: source.reward || source.name,
+        eligibleItem: source.eligibleItem || "",
+        minSpend: source.minSpend || "",
+        terms: source.termsText || source.terms || "",
+        scheduleType: "today",
+        startDate: defaults.startDate,
+        endDate: defaults.endDate,
+        startTime: source.startTime || source.activeWindowStart || "11:00",
+        endTime: source.endTime || source.activeWindowEnd || "21:00",
+        allDay: typeof source.allDay === "boolean" ? source.allDay : true,
+        activeDays: Array.isArray(source.activeDays) ? source.activeDays : [],
+        qrEnabled: typeof source.qrEnabled === "boolean" ? source.qrEnabled : true,
+        socialEnabled: Boolean(source.socialEnabled),
+        reminderEnabled: typeof source.reminderEnabled === "boolean" ? source.reminderEnabled : Boolean(source.remindersEnabled ?? true),
+        posterImageName: "",
+        posterImageOriginalDataUrl: "",
+        posterImageEnhancedDataUrl: "",
+        posterImageEnhancedAt: null,
+      };
+    }
+
+    function applyTemplateSource(templateId) {
+      const template = OFFER_TEMPLATES.find((item) => item.id === templateId);
+      if (!template) return;
+      const defaults = buildCreateScheduleDefaults(template.scheduleType);
+      state.createOffer.templateId = templateId;
+      state.createOffer.form = {
+        ...state.createOffer.form,
+        name: template.name,
+        offerType: template.offerType,
+        reward: template.reward,
+        eligibleItem: template.eligibleItem,
+        terms: template.terms,
+        scheduleType: template.scheduleType,
+        startDate: defaults.startDate,
+        endDate: defaults.endDate,
+        posterImageName: "",
+        posterImageOriginalDataUrl: "",
+        posterImageEnhancedDataUrl: "",
+        posterImageEnhancedAt: null,
+      };
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function enhanceImageForPoster(dataUrl) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const width = 1080;
+          const height = 1350;
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          if (!context) {
+            reject(new Error("Canvas unavailable"));
+            return;
+          }
+          canvas.width = width;
+          canvas.height = height;
+
+          const sourceRatio = image.width / image.height;
+          const targetRatio = width / height;
+          let drawWidth = width;
+          let drawHeight = height;
+          let offsetX = 0;
+          let offsetY = 0;
+
+          if (sourceRatio > targetRatio) {
+            drawHeight = height;
+            drawWidth = Math.round(height * sourceRatio);
+            offsetX = Math.round((width - drawWidth) / 2);
+          } else {
+            drawWidth = width;
+            drawHeight = Math.round(width / sourceRatio);
+            offsetY = Math.round((height - drawHeight) / 2);
+          }
+
+          context.filter = "contrast(1.1) saturate(1.2) brightness(1.04)";
+          context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+          context.filter = "none";
+
+          const topGradient = context.createLinearGradient(0, 0, 0, height * 0.55);
+          topGradient.addColorStop(0, "rgba(15, 23, 42, 0.48)");
+          topGradient.addColorStop(1, "rgba(15, 23, 42, 0)");
+          context.fillStyle = topGradient;
+          context.fillRect(0, 0, width, height);
+
+          const bottomGradient = context.createLinearGradient(0, height * 0.45, 0, height);
+          bottomGradient.addColorStop(0, "rgba(15, 23, 42, 0)");
+          bottomGradient.addColorStop(1, "rgba(15, 23, 42, 0.22)");
+          context.fillStyle = bottomGradient;
+          context.fillRect(0, 0, width, height);
+
+          context.fillStyle = "rgba(245, 158, 11, 0.09)";
+          context.fillRect(0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.92));
+        };
+        image.onerror = () => reject(new Error("Invalid image"));
+        image.src = dataUrl;
+      });
+    }
+
+    function enterCreateStep(step) {
+      state.createOffer.step = step;
+      state.createOffer.stepStartedAt = Date.now();
+      const key = getCreateStepKey(step);
+      if (step > 0 && !state.createOffer.stepTimestamps[`${key}_started_at`]) {
+        state.createOffer.stepTimestamps[`${key}_started_at`] = new Date().toISOString();
+      }
+      renderCreateOfferModal();
+    }
+
+    function openCreateOfferModal() {
+      resetCreateOfferState();
+      state.createOffer.isOpen = true;
+      populateCreateSelectors();
+      enterCreateStep(0);
+    }
+
+    function closeCreateOfferModal() {
+      state.createOffer.isOpen = false;
+      renderCreateOfferModal();
+    }
+
+    function collectCreateInputs() {
+      const form = state.createOffer.form;
+      form.name = document.getElementById("offerNameInput").value.trim();
+      form.reward = document.getElementById("offerDiscountInput").value.trim();
+      form.eligibleItem = document.getElementById("offerEligibleItemInput").value.trim();
+      form.minSpend = document.getElementById("offerMinSpendInput").value.trim();
+      form.terms = document.getElementById("offerTermsInput").value.trim() || "Valid for dine-in and pickup. One redemption per guest.";
+      form.startDate = document.getElementById("offerStartDateInput").value;
+      form.endDate = document.getElementById("offerEndDateInput").value;
+      form.startTime = document.getElementById("offerStartTimeInput").value;
+      form.endTime = document.getElementById("offerEndTimeInput").value;
+      form.allDay = document.getElementById("offerAllDayInput").checked;
+      form.qrEnabled = document.getElementById("offerQrEnabledInput").checked;
+      form.socialEnabled = document.getElementById("offerSocialEnabledInput").checked;
+      form.reminderEnabled = document.getElementById("offerReminderEnabledInput").checked;
+      form.activeDays = Array.from(document.querySelectorAll(".pp-day-toggle-grid input:checked")).map((input) => input.value);
+    }
+
+    function validateCreateStep() {
+      collectCreateInputs();
+      if (state.createOffer.step === 0) {
+        if (state.createOffer.creationSource === "duplicate" && !document.getElementById("duplicateOfferSelect").value) {
+          return "Choose an offer to duplicate.";
+        }
+        if (state.createOffer.creationSource === "template" && !state.createOffer.templateId) {
+          return "Choose a template to continue.";
+        }
+      }
+      if (state.createOffer.step === 1) {
+        if (!state.createOffer.form.name) return "Add an offer name.";
+        if (!state.createOffer.form.offerType) return "Choose an offer type.";
+      }
+      if (state.createOffer.step === 2) {
+        if (!state.createOffer.form.reward) return "Add the offer discount or reward.";
+      }
+      if (state.createOffer.step === 3) {
+        if (!state.createOffer.form.startDate || !state.createOffer.form.endDate) return "Add a start and end date.";
+        const { minDate, maxDate } = getScheduleDateBounds();
+        if (state.createOffer.form.startDate < minDate) return "Start date must be today or later.";
+        if (state.createOffer.form.endDate < minDate) return "End date must be today or later.";
+        if (state.createOffer.form.startDate > maxDate || state.createOffer.form.endDate > maxDate) return "Dates can be set up to 60 days from today.";
+        if (state.createOffer.form.endDate < state.createOffer.form.startDate) return "End date must be after start date.";
+      }
+      return null;
+    }
+
+    async function persistCreateOffer(statusOverride = "paused", eventType = "offer_step_completed") {
+      collectCreateInputs();
+      const now = new Date().toISOString();
+      const currentStep = state.createOffer.step;
+      const stepKey = getCreateStepKey(currentStep);
+      if (currentStep > 0) {
+        state.createOffer.stepDurations[stepKey] = (state.createOffer.stepDurations[stepKey] || 0) + Math.max(1, Math.round((Date.now() - state.createOffer.stepStartedAt) / 1000));
+        state.createOffer.stepTimestamps[`${stepKey}_completed_at`] = now;
+        if (!state.createOffer.completedSteps.includes(stepKey)) {
+          state.createOffer.completedSteps.push(stepKey);
+        }
+      }
+
+      const form = state.createOffer.form;
+      const selectedVariant = getSelectedPosterVariant();
+      const activeWindowType = form.allDay ? "all-day" : "custom";
+      const payload = {
+        id: state.createOffer.offerId || undefined,
+        store: STORE_ID,
+        restaurant: "Spice Taco House",
+        name: form.name,
+        type: form.offerType,
+        reward: form.reward,
+        discountType: form.offerType.toLowerCase().includes("buy") ? "bogo" : form.offerType.toLowerCase().includes("free") ? "free_item" : "percentage",
+        discountValue: parseFloat(String(form.reward).match(/(\d+(?:\.\d+)?)/)?.[1] || "") || null,
+        eligibleItem: form.eligibleItem || null,
+        minSpend: form.minSpend || null,
+        terms: form.terms,
+        termsText: form.terms,
+        captureEmail: true,
+        captureName: false,
+        reminderOn: form.reminderEnabled,
+        remindersEnabled: form.reminderEnabled,
+        reminderEnabled: form.reminderEnabled,
+        creationSource: state.createOffer.creationSource,
+        sourceOfferId: state.createOffer.creationSource === "duplicate" ? state.createOffer.sourceOfferId : null,
+        templateId: state.createOffer.creationSource === "template" ? state.createOffer.templateId : null,
+        status: statusOverride,
+        startAt: form.startDate ? new Date(`${form.startDate}T${form.allDay ? "09:00" : (form.startTime || "09:00")}:00`).toISOString() : null,
+        endAt: form.endDate ? new Date(`${form.endDate}T${form.allDay ? "23:59" : (form.endTime || "23:59")}:00`).toISOString() : null,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        allDay: form.allDay,
+        durationDays: Math.max(1, Math.round((new Date(form.endDate) - new Date(form.startDate)) / 86400000) + 1 || 1),
+        scheduleType: form.scheduleType,
+        activeDays: form.activeDays,
+        activeWindowType,
+        activeWindowStart: form.allDay ? "" : form.startTime,
+        activeWindowEnd: form.allDay ? "" : form.endTime,
+        timezone: "America/New_York",
+        qrEnabled: form.qrEnabled,
+        qrAssetUrl: form.qrEnabled ? (state.createOffer.qrDataUrl || `/qr?store=${encodeURIComponent(STORE_ID)}&restaurant=${encodeURIComponent("Spice Taco House")}&offer=${encodeURIComponent(form.name)}`) : null,
+        posterAssetUrl: `/assets/posters/${encodeURIComponent((form.name || "offer").toLowerCase().replace(/[^a-z0-9]+/g, "-"))}.svg`,
+        socialEnabled: form.socialEnabled,
+        boostEnabled: statusOverride === "active",
+        boosted: false,
+        currentStep,
+        completedSteps: state.createOffer.completedSteps,
+        lastCompletedStep: stepKey,
+        draftCompletionPercent: getCreationCompletionPercent(currentStep),
+        isSetupComplete: statusOverride === "active",
+        stepTimestamps: state.createOffer.stepTimestamps,
+        stepDurations: state.createOffer.stepDurations,
+        estimatedRevenue: null,
+        lastAction: eventType,
+        lastActionAt: now,
+        flowEvent: {
+          eventType,
+          metadata: {
+            creation_source: state.createOffer.creationSource,
+            current_step: currentStep,
+            completed_steps: state.createOffer.completedSteps,
+            has_uploaded_image: Boolean(form.posterImageOriginalDataUrl),
+            has_enhanced_image: Boolean(form.posterImageEnhancedDataUrl),
+            selected_template: state.createOffer.posterSelectedTemplateId || null,
+            cuisine_type: inferCuisineType(),
+            reminder_enabled: Boolean(form.reminderEnabled),
+            cta_used: selectedVariant?.copy?.ctaText || "",
+            urgency_type: selectedVariant?.copy?.urgencyStyle || "",
+          },
+        },
+      };
+
+      const response = await fetchJson("/offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      state.createOffer.offerId = response.offer?.id || state.createOffer.offerId;
+      return response.offer;
+    }
+
+    async function handleCreateNext() {
+      const validationError = validateCreateStep();
+      if (validationError) {
+        alert(validationError);
+        return;
+      }
+
+      if (state.createOffer.step === 0) {
+        if (state.createOffer.creationSource === "duplicate") {
+          state.createOffer.sourceOfferId = document.getElementById("duplicateOfferSelect").value;
+          applyDuplicateSource(state.createOffer.sourceOfferId);
+        } else if (state.createOffer.creationSource === "template") {
+          applyTemplateSource(state.createOffer.templateId);
+        }
+        enterCreateStep(1);
+        return;
+      }
+
+      await persistCreateOffer("paused", "offer_step_completed");
+      enterCreateStep(Math.min(5, state.createOffer.step + 1));
+    }
+
+    async function handleCreateSaveDraft() {
+      const selected = getSelectedPosterVariant();
+      await persistCreateOffer("paused", "offer_saved_draft");
+      await trackCreatePosterEvent("poster_saved_draft", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        styleProfile: selected?.styleProfileId || "",
+        layoutPattern: selected?.layoutPattern || "",
+        channelType: selected?.channelType || "print",
+        copyTone: selected?.copy?.copyTone || "",
+      });
+      await trackCreatePosterEvent("offer_poster_saved_draft_with_template", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+      });
+      await loadOffersData();
+      closeCreateOfferModal();
+    }
+
+    async function handleCreateGoLive() {
+      const selected = getSelectedPosterVariant();
+      await persistCreateOffer("active", "offer_launched");
+      await trackCreatePosterEvent("poster_go_live", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        styleProfile: selected?.styleProfileId || "",
+        layoutPattern: selected?.layoutPattern || "",
+        channelType: selected?.channelType || "print",
+        copyTone: selected?.copy?.copyTone || "",
+      });
+      await trackCreatePosterEvent("creative_published", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        styleProfile: selected?.styleProfileId || "",
+        layoutPattern: selected?.layoutPattern || "",
+        channelType: selected?.channelType || "print",
+      });
+      await trackCreatePosterEvent("offer_poster_go_live_with_template", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+      });
+      await loadOffersData();
+      closeCreateOfferModal();
+    }
+
+    async function sendReminders() {
+      await fetchJson(`/send-reminders/${encodeURIComponent(STORE_ID)}`, { method: "POST" });
+      state.reminderSent = true;
+    }
+
+    function getLiveOffer() {
+      return state.offers.find((offer) => (offer.statusDisplay || offer.status) === "live" || offer.status === "active") || state.offers[0] || null;
+    }
+
+    function formatShortDate(value) {
+      if (!value) return "";
+      return new Date(value).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    function getFulfillmentLabel(offer) {
+      const mode = offer?.fulfillmentMode || offer?.fulfillment || "all";
+      if (mode === "pickup") return "Pickup Only";
+      if (mode === "dine-in") return "Dine-In Only";
+      return "In-Store Only";
+    }
+
+    function formatOfferTiming(offer) {
+      const days = Array.isArray(offer?.activeDays) ? offer.activeDays.filter(Boolean) : [];
+      if (days.length === 1) {
+        const label = days[0].charAt(0).toUpperCase() + days[0].slice(1);
+        return `Every ${label} – ${getFulfillmentLabel(offer)}`;
+      }
+      if (offer?.startAt && offer?.endAt) {
+        return `${formatShortDate(offer.startAt)} – ${formatShortDate(offer.endAt)} • ${getFulfillmentLabel(offer)}`;
+      }
+      if (offer?.startAt) {
+        return `${formatShortDate(offer.startAt)} • ${getFulfillmentLabel(offer)}`;
+      }
+      return `This week • ${getFulfillmentLabel(offer)}`;
+    }
+
+    function escapeXml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+    }
+
+    function clampWords(value, maxWords = 8) {
+      const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+      if (words.length <= maxWords) return words.join(" ");
+      return `${words.slice(0, maxWords).join(" ")}…`;
+    }
+
+    function buildPosterSvg() {
+      const title = escapeXml(state.boostDraft.title);
+      const reward = escapeXml(state.boostDraft.reward);
+      const meta = escapeXml(state.boostDraft.meta);
+      const buildQrRectsAt = (baseX, baseY) => Array.from({ length: 25 }).map((_, index) => {
+        if (index % 2 !== 0) return "";
+        const col = index % 5;
+        const row = Math.floor(index / 5);
+        return `<rect x="${baseX + (col * 20)}" y="${baseY + (row * 20)}" width="12" height="12" rx="2" fill="#0f172a" />`;
+      }).join("");
+      const qrRects = buildQrRectsAt(82, 530);
+
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#5f8578"/>
+              <stop offset="100%" stop-color="#e0d4be"/>
+            </linearGradient>
+            <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f2d37c"/>
+              <stop offset="100%" stop-color="#d6a24c"/>
+            </linearGradient>
+          </defs>
+          <rect width="1080" height="1350" fill="url(#bg)"/>
+          <rect x="0" y="0" width="520" height="1350" fill="#5f8578"/>
+          <text x="72" y="150" fill="#fff8e8" font-size="92" font-weight="800" font-family="Arial, Helvetica, sans-serif">${title}</text>
+          <text x="72" y="260" fill="#fff8e8" font-size="72" font-weight="800" font-family="Arial, Helvetica, sans-serif">${reward}</text>
+          <text x="72" y="330" fill="#f5efe1" font-size="40" font-family="Arial, Helvetica, sans-serif">${meta}</text>
+          <line x1="72" y1="400" x2="470" y2="400" stroke="#d9e7dd" stroke-width="2" stroke-dasharray="8 8"/>
+          <text x="72" y="470" fill="#fff8e8" font-size="52" font-weight="800" font-family="Arial, Helvetica, sans-serif">SCAN TO REDEEM</text>
+          <rect x="72" y="520" width="180" height="180" rx="18" fill="#ffffff" stroke="#d6dde6"/>
+          ${qrRects}
+          <text x="72" y="760" fill="#fff8e8" font-size="32" font-weight="700" font-family="Arial, Helvetica, sans-serif">🌮 Spice Taco House</text>
+
+          <ellipse cx="810" cy="340" rx="170" ry="96" transform="rotate(-12 810 340)" fill="url(#shell)"/>
+          <ellipse cx="810" cy="340" rx="118" ry="62" transform="rotate(-12 810 340)" fill="#6e4320"/>
+          <circle cx="760" cy="310" r="14" fill="#86efac"/>
+          <circle cx="788" cy="360" r="16" fill="#fde68a"/>
+          <circle cx="842" cy="318" r="14" fill="#fca5a5"/>
+          <circle cx="890" cy="352" r="12" fill="#ef4444"/>
+
+          <ellipse cx="780" cy="700" rx="210" ry="118" transform="rotate(9 780 700)" fill="url(#shell)"/>
+          <ellipse cx="780" cy="700" rx="150" ry="76" transform="rotate(9 780 700)" fill="#6e4320"/>
+          <circle cx="722" cy="666" r="16" fill="#86efac"/>
+          <circle cx="758" cy="728" r="18" fill="#fde68a"/>
+          <circle cx="816" cy="680" r="16" fill="#fca5a5"/>
+          <circle cx="860" cy="720" r="14" fill="#ef4444"/>
+
+          <circle cx="670" cy="960" r="78" fill="#7a5630"/>
+          <circle cx="670" cy="960" r="60" fill="#8f6336"/>
+          <circle cx="640" cy="940" r="10" fill="#fca5a5"/>
+          <circle cx="690" cy="950" r="10" fill="#86efac"/>
+          <circle cx="670" cy="985" r="10" fill="#fde68a"/>
+
+          <circle cx="920" cy="210" r="42" fill="#a3e635"/>
+          <circle cx="920" cy="210" r="28" fill="#d9f99d"/>
+          <circle cx="860" cy="260" r="34" fill="#a3e635"/>
+          <circle cx="860" cy="260" r="22" fill="#d9f99d"/>
+        </svg>
+      `.trim();
+    }
+
+    function buildPosterSvgFromDraft(draft) {
+      const channelType = draft.channelType || "print";
+      const canvasWidth = 1080;
+      const canvasHeight = channelType === "story" ? 1920 : channelType === "feed" || channelType === "ad" ? 1080 : 1350;
+      const title = escapeXml(draft.title || "Special Offer");
+      const reward = escapeXml(draft.reward || "Reward");
+      const meta = escapeXml(draft.meta || "In-Store Only");
+      const imageDataUrl = draft.imageDataUrl ? escapeXml(draft.imageDataUrl) : "";
+      const qrDataUrl = draft.qrDataUrl ? escapeXml(draft.qrDataUrl) : "";
+      const primaryColor = escapeXml(draft.primaryColor || "#5f8578");
+      const secondaryColor = escapeXml(draft.secondaryColor || "#e0d4be");
+      const textColor = escapeXml(draft.textColor || "#fff8e8");
+      const textSoftColor = escapeXml(draft.textSoftColor || "#f5efe1");
+      const templateId = draft.templateId || "hero-food-focus";
+      const headlineRaw = clampWords(draft.headline || title, 9).toUpperCase();
+      const offerLineRaw = clampWords(draft.subheadline || reward, 10);
+      const urgencyTag = escapeXml(draft.urgencyTag || "LIMITED TIME");
+      const ctaText = escapeXml(clampWords(draft.ctaText || "SCAN & SAVE NOW", 4).toUpperCase());
+      const brandName = escapeXml(draft.brandName || "🌮 Spice Taco House");
+      const qrLabel = escapeXml(draft.qrLabel || "Scan in 2 sec");
+      const footerText = escapeXml(draft.footerText || "");
+      const isPrint = channelType === "print";
+      const isSocial = templateId === "social-first";
+      const isUrgency = templateId === "high-urgency-deal";
+      const isMinimal = templateId === "clean-minimal";
+      const isDiagonal = templateId === "diagonal-promo";
+      const isCentered = templateId === "centered-menu";
+      const isSmartInfo = templateId === "smart-info-card";
+      const safePadding = channelType === "story"
+        ? { top: 140, right: 70, bottom: 210, left: 70 }
+        : channelType === "feed" || channelType === "ad"
+          ? { top: 64, right: 64, bottom: 72, left: 64 }
+          : { top: 72, right: 68, bottom: 72, left: 68 };
+      const topZoneY = safePadding.top;
+      const middleZoneY = topZoneY + (canvasHeight * (channelType === "story" ? 0.26 : 0.2));
+      const bottomZoneY = canvasHeight - safePadding.bottom - (isPrint ? 240 : 180);
+      const maxTextWidth = Math.round(canvasWidth * 0.58);
+      const textX = isCentered ? canvasWidth / 2 : safePadding.left;
+      const textAnchor = isCentered ? "middle" : "start";
+      const headlineLines = wrapPosterLines(headlineRaw, isCentered ? 12 : isMinimal ? 14 : 13, 3);
+      const offerLines = wrapPosterLines(offerLineRaw, isCentered ? 18 : 16, 2);
+      const headlineFont = isUrgency ? 92 : isMinimal ? 66 : isCentered ? 70 : 78;
+      const headlineLineHeight = Math.round(headlineFont * 0.9);
+      const offerFont = isMinimal ? 44 : 50;
+      const offerLineHeight = Math.round(offerFont * 1.08);
+      const metaFont = isPrint ? 36 : 32;
+      const ctaFont = 40;
+      const ctaRectH = 64;
+      const ctaRectW = isCentered ? 360 : 420;
+      const qrSize = isPrint ? 200 : 176;
+      const qrX = isCentered ? Math.round((canvasWidth - qrSize) / 2) : safePadding.left;
+      const qrY = isPrint ? bottomZoneY + 20 : canvasHeight - safePadding.bottom - qrSize;
+      const brandY = qrY + qrSize + 70;
+      const ctaX = isCentered ? Math.round((canvasWidth - ctaRectW) / 2) : safePadding.left;
+      const ctaY = Math.min(middleZoneY + 260, bottomZoneY - 34);
+      const metaY = Math.min(ctaY - 90, middleZoneY + 150);
+      const offerY = middleZoneY + 58;
+      const headlineY = topZoneY + 112;
+      const badgeY = topZoneY;
+      const gradientStops = isMinimal
+        ? `rgba(15,23,42,0.08), rgba(15,23,42,0.2), rgba(15,23,42,0.44)`
+        : isSocial || isDiagonal || isUrgency
+          ? `rgba(15,23,42,0.55), rgba(15,23,42,0.48), rgba(15,23,42,0.62)`
+          : `rgba(15,23,42,0.42), rgba(15,23,42,0.34), rgba(15,23,42,0.52)`;
+      const [gs1, gs2, gs3] = gradientStops.split(", ");
+      const buildQrRectsAt = (baseX, baseY) => Array.from({ length: 25 }).map((_, index) => {
+        if (index % 2 !== 0) return "";
+        const col = index % 5;
+        const row = Math.floor(index / 5);
+        return `<rect x="${baseX + (col * (qrSize / 7.4))}" y="${baseY + (row * (qrSize / 7.4))}" width="${Math.round(qrSize / 14)}" height="${Math.round(qrSize / 14)}" rx="2" fill="#0f172a" />`;
+      }).join("");
+      const qrRects = buildQrRectsAt(qrX + 12, qrY + 12);
+      const imageClip = `imgClip_${templateId.replace(/[^a-z0-9]/gi, "")}`;
+      const imageLayer = `
+        <clipPath id="${imageClip}">
+          <rect x="0" y="0" width="${canvasWidth}" height="${canvasHeight}" rx="0" />
+        </clipPath>
+        ${
+          imageDataUrl
+            ? `<image href="${imageDataUrl}" x="0" y="0" width="${canvasWidth}" height="${canvasHeight}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${imageClip})"/>`
+            : `<rect x="0" y="0" width="${canvasWidth}" height="${canvasHeight}" fill="url(#bgCreate)"/>`
+        }
+      `;
+      const anchoredOverlay = isDiagonal
+        ? `<path d="M0,0 L620,0 L500,${canvasHeight} L0,${canvasHeight} Z" fill="rgba(15,23,42,0.64)"/>`
+        : isCentered
+          ? `<rect x="70" y="${topZoneY + 100}" width="940" height="${Math.round(canvasHeight * 0.48)}" rx="30" fill="rgba(15,23,42,0.5)"/>`
+          : isMinimal
+            ? `<rect x="52" y="${safePadding.top - 12}" width="530" height="${Math.round(canvasHeight * 0.62)}" rx="28" fill="rgba(255,255,255,0.9)"/>`
+            : `<rect x="0" y="0" width="${Math.round(canvasWidth * 0.62)}" height="${canvasHeight}" fill="rgba(15,23,42,0.44)"/>`;
+      const headlineSvg = headlineLines.map((line, index) =>
+        `<tspan x="${textX}" dy="${index === 0 ? 0 : headlineLineHeight}">${escapeXml(line)}</tspan>`
+      ).join("");
+      const offerSvg = offerLines.map((line, index) =>
+        `<tspan x="${textX}" dy="${index === 0 ? 0 : offerLineHeight}">${escapeXml(line)}</tspan>`
+      ).join("");
+      const kicker = isSocial ? "TRENDING OFFER" : isUrgency ? "FLASH DEAL" : isMinimal ? "CHEF PICK" : "LIVE OFFER";
+
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
+          <defs>
+            <linearGradient id="bgCreate" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${primaryColor}"/>
+              <stop offset="100%" stop-color="${secondaryColor}"/>
+            </linearGradient>
+            <linearGradient id="overlayGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="${gs1}"/>
+              <stop offset="52%" stop-color="${gs2}"/>
+              <stop offset="100%" stop-color="${gs3}"/>
+            </linearGradient>
+          </defs>
+          ${imageLayer}
+          <rect x="0" y="0" width="${canvasWidth}" height="${canvasHeight}" fill="url(#overlayGrad)"/>
+          ${anchoredOverlay}
+
+          <rect x="${safePadding.left}" y="${badgeY}" width="220" height="48" rx="24" fill="rgba(255,248,232,0.18)" stroke="rgba(255,248,232,0.4)"/>
+          <text x="${safePadding.left + 110}" y="${badgeY + 32}" text-anchor="middle" fill="${isMinimal ? "#1f2937" : textColor}" font-size="28" font-weight="800" font-family="Inter, Arial, sans-serif">${kicker}</text>
+          <rect x="${isCentered ? 390 : safePadding.left + 250}" y="${badgeY}" width="300" height="48" rx="24" fill="${isUrgency ? "#f97316" : "rgba(255,248,232,0.22)"}" stroke="rgba(255,248,232,0.35)"/>
+          <text x="${isCentered ? 540 : safePadding.left + 400}" y="${badgeY + 32}" text-anchor="middle" fill="${textColor}" font-size="28" font-weight="800" font-family="Inter, Arial, sans-serif">${urgencyTag}</text>
+
+          <text x="${textX}" y="${headlineY}" text-anchor="${textAnchor}" fill="${isMinimal ? "#111827" : textColor}" font-size="${headlineFont}" font-weight="900" font-family="Anton, Impact, Arial Narrow, sans-serif">${headlineSvg}</text>
+          <text x="${textX}" y="${offerY}" text-anchor="${textAnchor}" fill="${isMinimal ? "#0f172a" : textColor}" font-size="${offerFont}" font-weight="800" font-family="Inter, Arial, sans-serif">${offerSvg}</text>
+          <text x="${textX}" y="${metaY}" text-anchor="${textAnchor}" fill="${isMinimal ? "#334155" : textSoftColor}" font-size="${metaFont}" font-family="Inter, Arial, sans-serif">${meta}</text>
+
+          <rect x="${ctaX}" y="${ctaY}" width="${ctaRectW}" height="${ctaRectH}" rx="32" fill="${isMinimal ? "#111827" : "rgba(15,23,42,0.44)"}" stroke="rgba(255,248,232,0.4)"/>
+          <text x="${ctaX + (ctaRectW / 2)}" y="${ctaY + 43}" text-anchor="middle" fill="${textColor}" font-size="${ctaFont}" font-weight="900" font-family="Inter, Arial, sans-serif">${ctaText}</text>
+
+          <rect x="${qrX}" y="${qrY}" width="${qrSize}" height="${qrSize}" rx="18" fill="#ffffff" stroke="#d6dde6"/>
+          ${
+            qrDataUrl
+              ? `<image href="${qrDataUrl}" x="${qrX + 8}" y="${qrY + 8}" width="${qrSize - 16}" height="${qrSize - 16}" preserveAspectRatio="xMidYMid meet" />`
+              : qrRects
+          }
+          <text x="${isCentered ? 540 : qrX + (qrSize / 2)}" y="${qrY + qrSize + 34}" text-anchor="${isCentered ? "middle" : "middle"}" fill="${textSoftColor}" font-size="24" font-weight="700" font-family="Inter, Arial, sans-serif">${qrLabel}</text>
+          <text x="${isCentered ? 540 : safePadding.left}" y="${brandY}" text-anchor="${isCentered ? "middle" : "start"}" fill="${isMinimal ? "#1f2937" : textColor}" font-size="48" font-weight="800" font-family="Inter, Arial, sans-serif">${brandName}</text>
+          ${
+            isPrint && footerText
+              ? `<text x="${safePadding.left}" y="${canvasHeight - 28}" fill="${textSoftColor}" font-size="20" font-family="Inter, Arial, sans-serif">${footerText}</text>`
+              : ""
+          }
+        </svg>
+      `.trim();
+    }
+
+    function downloadPoster() {
+      const svg = buildPosterSvg();
+      const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const safeName = (state.boostDraft.title || "offer-poster")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeName || "offer-poster"}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function downloadCreatePoster() {
+      collectCreateInputs();
+      const selectedVariant = getSelectedPosterVariant() || state.createOffer.selectedPosterVariantSnapshot || null;
+      const resolvedHeroImage = selectedVariant?.heroImage || resolveHeroImage(
+        state.createOffer.form.posterImageEnhancedDataUrl || state.createOffer.form.posterImageOriginalDataUrl || "",
+        inferPosterCategory()
+      );
+      const draft = {
+        title: state.createOffer.form.name || "Special Offer",
+        reward: state.createOffer.form.reward || "Reward",
+        headline: selectedVariant?.copy?.headline || state.createOffer.form.name || "Special Offer",
+        subheadline: selectedVariant?.copy?.subheadline || state.createOffer.form.reward || "Reward",
+        urgencyTag: selectedVariant?.copy?.urgencyTag || "LIMITED TIME",
+        ctaText: selectedVariant?.copy?.ctaText || "SCAN & SAVE NOW",
+        meta: `${state.createOffer.form.scheduleType === "weekend" ? "This weekend" : state.createOffer.form.scheduleType === "this-week" ? "This week" : state.createOffer.form.scheduleType === "custom" ? `${state.createOffer.form.startDate || "--"} to ${state.createOffer.form.endDate || "--"}` : "Today"} • ${state.createOffer.form.allDay ? "In-Store Only" : `${state.createOffer.form.startTime || "--"} to ${state.createOffer.form.endTime || "--"}`}`,
+        imageDataUrl: resolvedHeroImage,
+        qrDataUrl: state.createOffer.qrDataUrl || "",
+        channelType: "print",
+        brandName: "🌮 Spice Taco House",
+        qrLabel: "Scan in 2 sec",
+        footerText: state.createOffer.form.terms || "",
+        primaryColor: selectedVariant?.style?.primary,
+        secondaryColor: selectedVariant?.style?.secondary,
+        textColor: selectedVariant?.style?.text,
+        textSoftColor: selectedVariant?.style?.textSoft,
+        templateId: selectedVariant?.templateId || "",
+      };
+      const svg = buildPosterSvgFromDraft(draft);
+      const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const safeName = (state.createOffer.form.name || "offer-poster")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeName || "offer-poster"}-instore.svg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      if (state.createOffer.offerId) {
+        try {
+          await fetchJson(`/offers/${encodeURIComponent(state.createOffer.offerId)}/events`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              eventType: "poster_downloaded",
+              actorType: "owner",
+              posterDownloadIncrement: 1,
+              metadata: { source: "create_offer_step_5" },
+            }),
+          });
+        } catch (error) {
+        }
+      }
+      trackCreatePosterEvent("poster_downloaded", {
+        channel: "print",
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        cta_used: selectedVariant?.copy?.ctaText || "",
+        urgency_type: selectedVariant?.copy?.urgencyStyle || "",
+        styleProfile: selectedVariant?.styleProfileId || "",
+        layoutPattern: selectedVariant?.layoutPattern || "",
+        channelType: "print",
+        copyTone: selectedVariant?.copy?.copyTone || "",
+      });
+      trackCreatePosterEvent("creative_downloaded", {
+        channelType: "print",
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        styleProfile: selectedVariant?.styleProfileId || "",
+        layoutPattern: selectedVariant?.layoutPattern || "",
+      });
+      trackCreatePosterEvent("offer_poster_downloaded_print", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+      });
+    }
+
+    async function downloadCreateSocialPoster() {
+      collectCreateInputs();
+      const selectedVariant = getSelectedPosterVariant() || state.createOffer.selectedPosterVariantSnapshot || null;
+      const resolvedHeroImage = selectedVariant?.heroImage || resolveHeroImage(
+        state.createOffer.form.posterImageEnhancedDataUrl || state.createOffer.form.posterImageOriginalDataUrl || "",
+        inferPosterCategory()
+      );
+      const draft = {
+        title: state.createOffer.form.name || "Special Offer",
+        reward: state.createOffer.form.reward || "Reward",
+        headline: selectedVariant?.copy?.headline || state.createOffer.form.name || "Special Offer",
+        subheadline: selectedVariant?.copy?.subheadline || state.createOffer.form.reward || "Reward",
+        urgencyTag: selectedVariant?.copy?.urgencyTag || "LIMITED TIME",
+        ctaText: selectedVariant?.copy?.ctaText || "SCAN & SAVE NOW",
+        meta: `${state.createOffer.form.scheduleType === "weekend" ? "This weekend" : state.createOffer.form.scheduleType === "this-week" ? "This week" : "Today"} • In-Store`,
+        imageDataUrl: resolvedHeroImage,
+        qrDataUrl: state.createOffer.qrDataUrl || "",
+        channelType: "feed",
+        brandName: "🌮 Spice Taco House",
+        qrLabel: "Scan now",
+        footerText: "",
+        primaryColor: selectedVariant?.style?.primary,
+        secondaryColor: selectedVariant?.style?.secondary,
+        textColor: selectedVariant?.style?.text,
+        textSoftColor: selectedVariant?.style?.textSoft,
+        templateId: selectedVariant?.templateId || "",
+      };
+      const socialSvg = buildPosterSvgFromDraft(draft);
+      const blob = new Blob([socialSvg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const safeName = (state.createOffer.form.name || "offer-social")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeName || "offer-social"}-social.svg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      trackCreatePosterEvent("poster_downloaded", {
+        channel: "social",
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        cta_used: selectedVariant?.copy?.ctaText || "",
+        urgency_type: selectedVariant?.copy?.urgencyStyle || "",
+        styleProfile: selectedVariant?.styleProfileId || "",
+        layoutPattern: selectedVariant?.layoutPattern || "",
+        channelType: "feed",
+        copyTone: selectedVariant?.copy?.copyTone || "",
+      });
+      trackCreatePosterEvent("creative_downloaded", {
+        channelType: "feed",
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+        styleProfile: selectedVariant?.styleProfileId || "",
+        layoutPattern: selectedVariant?.layoutPattern || "",
+      });
+      trackCreatePosterEvent("offer_poster_downloaded_social", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+      });
+    }
+
+    async function copyCreateShareImagePlaceholder() {
+      const selectedVariant = getSelectedPosterVariant();
+      const shareHeadline = selectedVariant?.copy?.headline || state.createOffer.form.name || "Special Offer";
+      const shareCta = selectedVariant?.copy?.ctaText || "SCAN & SAVE NOW";
+      const text = `${shareHeadline} • ${selectedVariant?.copy?.subheadline || state.createOffer.form.reward || "Special reward"} • ${shareCta} • ${state.createOffer.redeemUrl || "Scan the QR in-store to redeem."}`;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        }
+      } catch (error) {
+      }
+      trackCreatePosterEvent("offer_poster_share_placeholder_copied", {
+        selected_template: state.createOffer.posterSelectedTemplateId || null,
+      });
+      alert("Share copy is ready. Social media image copy action is prepared for next integration.");
+    }
+
+    function syncBoostDraftFromOffer(offer) {
+      state.currentBoostOffer = offer || null;
+      state.boostDraft = {
+        title: offer?.name || "Taco Tuesday",
+        reward: offer?.reward || offer?.rewardValue || "10% OFF Tacos",
+        meta: formatOfferTiming(offer),
+      };
+    }
+
+    function renderPosterQr() {
+      const qrMarkup = Array.from({ length: 25 }).map((_, index) => `
+        <span class="${index % 2 === 0 ? "filled" : ""}"></span>
+      `).join("");
+      document.getElementById("posterQrPreview").innerHTML = qrMarkup;
+      document.getElementById("successPosterQr").innerHTML = qrMarkup;
+    }
+
+    function renderBoostCreative() {
+      document.getElementById("boostPreviewTitle").innerText = state.boostDraft.title;
+      document.getElementById("boostPreviewReward").innerText = state.boostDraft.reward;
+      document.getElementById("boostPreviewMeta").innerText = state.boostDraft.meta;
+      document.getElementById("boostSuccessTitle").innerText = state.boostDraft.title;
+      document.getElementById("boostSuccessReward").innerText = state.boostDraft.reward;
+      document.getElementById("boostSuccessMeta").innerText = state.boostDraft.meta;
+      document.getElementById("boostEditTitle").value = state.boostDraft.title;
+      document.getElementById("boostEditReward").value = state.boostDraft.reward;
+      document.getElementById("boostEditMeta").value = state.boostDraft.meta;
+    }
+
+    function openBoostModal(step = "setup") {
+      syncBoostDraftFromOffer(getLiveOffer());
+      state.modalStep = "success";
+      document.getElementById("boostOfferModal").classList.remove("hidden");
+      document.getElementById("boostOfferModal").setAttribute("aria-hidden", "false");
+      renderBoostModal();
+    }
+
+    function closeBoostModal() {
+      document.getElementById("boostOfferModal").classList.add("hidden");
+      document.getElementById("boostOfferModal").setAttribute("aria-hidden", "true");
+      state.modalStep = "success";
+      state.previewEditing = false;
+    }
+
+    function renderBoostModal() {
+      document.getElementById("boostModalStateSetup").classList.toggle("hidden", true);
+      document.getElementById("boostModalStatePreview").classList.toggle("hidden", true);
+      document.getElementById("boostModalStateSuccess").classList.toggle("hidden", state.modalStep !== "success");
+      document.getElementById("boostModalHeading").innerHTML = `<span class="pp-modal-title-icon success">✓</span>Your ${state.boostDraft.title} Offer is Ready!`;
+      document.getElementById("boostModalDescription").innerHTML = `You have successfully boosted your <strong>${state.boostDraft.title}</strong> offer. All set to bring in more customers!`;
+      renderBoostCreative();
+
+      if (state.modalStep === "success") {
+        const actionWrap = document.getElementById("successReminderAction");
+        actionWrap.innerHTML = state.reminderSent
+          ? `
+            <div class="pp-inline-success">
+              <span class="pp-success-check small">✓</span>
+              <div>
+                <strong>Reminders sent successfully</strong>
+                <p>17 customers notified</p>
+              </div>
+            </div>
+          `
+          : '<button id="sendRemindersInlineButton" class="pp-primary-btn pp-success-primary" type="button">Send Reminders</button>';
+
+        const reminderButton = document.getElementById("sendRemindersInlineButton");
+        if (reminderButton) {
+          reminderButton.addEventListener("click", async () => {
+            try {
+              await sendReminders();
+              renderBoostModal();
+              renderOffersPage();
+            } catch (error) {
+            }
+          });
+        }
+      }
+    }
+
+    function renderOffersPage() {
+      const liveOffer = getLiveOffer();
+      const redemptions = Array.isArray(state.redemptions) && state.redemptions.length
+        ? state.redemptions
+        : [
+            { offer: "Taco Tuesday", name: "Maria G.", email: "maria@email.com", redeemed: false, createdAt: new Date().toISOString() },
+            { offer: "Weekend Combo Boost", name: "Derek M.", email: "derek@email.com", redeemed: true, createdAt: new Date().toISOString() },
+            { offer: "Taco Tuesday", name: "Lina P.", email: "lina@email.com", redeemed: false, createdAt: new Date().toISOString() },
+            { offer: "Lunch Rush Deal", name: "Chris J.", email: "chris@email.com", redeemed: true, createdAt: new Date().toISOString() },
+          ];
+      const pending = redemptions.filter((item) => !item.redeemed).length;
+      const captured = redemptions.filter((item) => item.email).length;
+      const activeCount = state.stats?.activeOffers || (liveOffer ? 3 : 3);
+
+      document.getElementById("offersLiveCountPill").innerText = `${activeCount} Live`;
+      document.getElementById("offersRevenueStat").innerText = money(liveOffer?.estimatedNetImpact || 2940);
+      document.getElementById("offersWeekRedemptionsStat").innerText = redemptions.length || 138;
+      document.getElementById("offersRepeatCustomersStat").innerText = captured || 41;
+      document.getElementById("offersCaptureRate").innerText = `${redemptions.length ? Math.round((captured / redemptions.length) * 100) : 42}%`;
+      document.getElementById("offersPendingClaims").innerText = `${pending || 17} customers waiting`;
+      document.getElementById("offersBestOffer").innerText = liveOffer?.name || "Taco Tuesday";
+      document.getElementById("offersReminderCopy").innerText = state.reminderSent
+        ? "Reminder progress is ready to reflect back into boosted offer tracking."
+        : "You have 8 customers who claimed but haven’t redeemed yet.";
+      document.getElementById("offersPerformanceBars").innerHTML = [12, 18, 14, 24, 30, 20, 26].map((value, index) => `
+        <div class="pp-bar-col">
+          <span style="height:${value * 3}px"></span>
+          <small>${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}</small>
+        </div>
+      `).join("");
+
+      document.getElementById("offersActiveCards").innerHTML = [
+        {
+          title: "Taco Tuesday",
+          redemptions: 62,
+          days: "3 Days",
+          cta: "Send Reminders",
+          insight: "Best performer this week",
+        },
+        {
+          title: "Weekend Combo Boost",
+          redemptions: 41,
+          days: "2 Days",
+          cta: "Boost Again",
+          insight: "Higher average order value",
+        },
+        {
+          title: "Lunch Rush Deal",
+          redemptions: 35,
+          days: "5 Days",
+          cta: "Duplicate",
+          insight: "Strong weekday lunch pull",
+        },
+      ].map((offer) => `
+        <article class="pp-active-offer-card">
+          <div class="pp-active-offer-top">
+            <span class="pp-status-badge ready">LIVE</span>
+            <span class="pp-card-chip">${offer.days}</span>
+          </div>
+          <strong>${offer.title}</strong>
+          <p>${offer.redemptions} redemptions</p>
+          <button class="pp-secondary-btn pp-inline-btn" type="button">${offer.cta}</button>
+          <small>${offer.insight}</small>
+        </article>
+      `).join("");
+
+      document.getElementById("offersHistoryRows").innerHTML = redemptions.map((item) => `
+        <tr>
+          <td>${item.offer || "Special Offer"}</td>
+          <td>${item.name || "-"}</td>
+          <td>${item.email || "-"}</td>
+          <td>${item.redeemed ? "Redeemed" : "Pending"}</td>
+          <td>${formatDate(item.createdAt)}</td>
+          <td>${formatDate(item.createdAt)}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function loadOffersData() {
+      try {
+        const [stats, offers, redemptions] = await Promise.all([
+          fetchJson(`/stats/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/offers/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/redemptions/${encodeURIComponent(STORE_ID)}`),
+        ]);
+        state.stats = stats;
+        state.offers = Array.isArray(offers) ? offers : [];
+        state.redemptions = Array.isArray(redemptions) ? redemptions : [];
+      } catch (error) {
+        state.stats = {};
+        state.offers = [];
+        state.redemptions = [];
+      }
+      syncBoostDraftFromOffer(getLiveOffer());
+      renderPosterQr();
+      renderBoostCreative();
+      renderOffersPage();
+    }
+
+    document.getElementById("boostOfferButton").addEventListener("click", () => openBoostModal("success"));
+    document.getElementById("analyticsBoostButton").addEventListener("click", () => openBoostModal("success"));
+    document.getElementById("createOfferOpenButton").addEventListener("click", openCreateOfferModal);
+    document.getElementById("createOfferTopActionButton").addEventListener("click", openCreateOfferModal);
+    document.getElementById("boostModalCloseTop").addEventListener("click", closeBoostModal);
+    document.getElementById("boostSetupBack").addEventListener("click", closeBoostModal);
+    document.getElementById("boostSetupCancel").addEventListener("click", closeBoostModal);
+    document.getElementById("generateContentButton").addEventListener("click", () => {
+      state.modalStep = "preview";
+      renderBoostModal();
+    });
+    document.getElementById("boostSetupPromote").addEventListener("click", () => {
+      state.modalStep = "preview";
+      renderBoostModal();
+    });
+    document.getElementById("boostPreviewEdit").addEventListener("click", () => {
+      state.previewEditing = !state.previewEditing;
+      renderBoostModal();
+    });
+    document.getElementById("boostApplyEdits").addEventListener("click", () => {
+      state.boostDraft.title = document.getElementById("boostEditTitle").value.trim() || "Taco Tuesday";
+      state.boostDraft.reward = document.getElementById("boostEditReward").value.trim() || "10% OFF Tacos";
+      state.boostDraft.meta = document.getElementById("boostEditMeta").value.trim() || "Every Tuesday – In-Store Only";
+      state.previewEditing = false;
+      renderBoostModal();
+    });
+    document.getElementById("boostPreviewContinue").addEventListener("click", () => {
+      state.modalStep = "success";
+      state.previewEditing = false;
+      renderBoostModal();
+    });
+    document.getElementById("boostSuccessCancel").addEventListener("click", closeBoostModal);
+    document.getElementById("boostSuccessGoLive").addEventListener("click", closeBoostModal);
+    document.getElementById("downloadPosterButton").addEventListener("click", downloadPoster);
+    document.getElementById("boostOfferModal").addEventListener("click", (event) => {
+      if (event.target.id === "boostOfferModal") closeBoostModal();
+    });
+    document.getElementById("createOfferCloseTop").addEventListener("click", closeCreateOfferModal);
+    document.getElementById("createOfferCancelButton").addEventListener("click", closeCreateOfferModal);
+    document.getElementById("createOfferBackButton").addEventListener("click", () => {
+      if (state.createOffer.step > 0) {
+        enterCreateStep(state.createOffer.step - 1);
+      }
+    });
+    document.getElementById("createOfferNextButton").addEventListener("click", async () => {
+      try {
+        await handleCreateNext();
+      } catch (error) {
+        alert("We couldn't save this step right now. Please try again.");
+      }
+    });
+    document.getElementById("createOfferSaveDraftButton").addEventListener("click", async () => {
+      try {
+        await handleCreateSaveDraft();
+      } catch (error) {
+        alert("We couldn't save your draft right now.");
+      }
+    });
+    document.getElementById("createOfferGoLiveButton").addEventListener("click", async () => {
+      try {
+        await handleCreateGoLive();
+      } catch (error) {
+        alert("We couldn't launch this offer right now.");
+      }
+    });
+    document.getElementById("createOfferModal").addEventListener("click", (event) => {
+      if (event.target.id === "createOfferModal") closeCreateOfferModal();
+    });
+
+    document.querySelectorAll(".pp-create-entry-card").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.createOffer.creationSource = button.getAttribute("data-path");
+        if (state.createOffer.creationSource !== "template") {
+          state.createOffer.templateId = null;
+        }
+        renderCreateOfferModal();
+      });
+    });
+
+    document.getElementById("duplicateOfferSelect").addEventListener("change", (event) => {
+      state.createOffer.sourceOfferId = event.target.value;
+    });
+
+    document.querySelectorAll("[data-offer-type]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.createOffer.form.offerType = button.getAttribute("data-offer-type");
+        renderCreateOfferModal();
+      });
+    });
+
+    document.querySelectorAll("[data-schedule-type]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const scheduleType = button.getAttribute("data-schedule-type");
+        state.createOffer.form.scheduleType = scheduleType;
+        const defaults = buildCreateScheduleDefaults(scheduleType);
+        state.createOffer.form.startDate = defaults.startDate;
+        state.createOffer.form.endDate = defaults.endDate;
+        state.createOffer.form.activeDays = defaults.activeDays;
+        renderCreateOfferModal();
+      });
+    });
+
+    document.getElementById("offerAllDayInput").addEventListener("change", () => {
+      updateScheduleTimeState();
+      updateCreatePreview();
+    });
+    document.getElementById("createPosterImageInput").addEventListener("change", async (event) => {
+      try {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          alert("Please upload a valid image file.");
+          return;
+        }
+        if (file.size > 12 * 1024 * 1024) {
+          alert("Please use an image smaller than 12 MB.");
+          return;
+        }
+        const originalDataUrl = await readFileAsDataUrl(file);
+        state.createOffer.form.posterImageName = file.name;
+        state.createOffer.form.posterImageOriginalDataUrl = String(originalDataUrl || "");
+        state.createOffer.form.posterImageEnhancedDataUrl = "";
+        state.createOffer.form.posterImageEnhancedAt = null;
+        renderCreatePosterUploadState();
+        document.getElementById("createPosterUploadStatus").innerText = "Image uploaded. Click “Enhance for Poster” to auto-edit and apply it.";
+        updateCreatePreview();
+      } catch (error) {
+        alert("We couldn't read that image. Please try another file.");
+      }
+    });
+    document.getElementById("createEnhancePosterImageButton").addEventListener("click", async () => {
+      const button = document.getElementById("createEnhancePosterImageButton");
+      const status = document.getElementById("createPosterUploadStatus");
+      if (!button || !status) return;
+      if (!state.createOffer.form.posterImageOriginalDataUrl) {
+        status.innerText = "Upload a food image first, then click Enhance for Poster.";
+        return;
+      }
+      const originalLabel = button.innerText;
+      try {
+        button.disabled = true;
+        button.innerText = "Enhancing...";
+        status.innerText = "Enhancing your image for poster-ready quality...";
+        const enhancedImage = await enhanceImageForPoster(state.createOffer.form.posterImageOriginalDataUrl);
+        state.createOffer.form.posterImageEnhancedDataUrl = enhancedImage;
+        state.createOffer.form.posterImageEnhancedAt = new Date().toISOString();
+        renderCreatePosterUploadState();
+        status.innerText = "Done. Poster-ready image applied. Review it in Preview Your Offer.";
+        updateCreatePreview();
+      } catch (error) {
+        status.innerText = "We couldn't enhance this image. Please try a different photo.";
+      } finally {
+        button.innerText = originalLabel;
+        button.disabled = !state.createOffer.form.posterImageOriginalDataUrl;
+      }
+    });
+    document.getElementById("createClearPosterImageButton").addEventListener("click", () => {
+      state.createOffer.form.posterImageName = "";
+      state.createOffer.form.posterImageOriginalDataUrl = "";
+      state.createOffer.form.posterImageEnhancedDataUrl = "";
+      state.createOffer.form.posterImageEnhancedAt = null;
+      const input = document.getElementById("createPosterImageInput");
+      if (input) input.value = "";
+      renderCreatePosterUploadState();
+      updateCreatePreview();
+    });
+    document.getElementById("createRegenerateDesignsButton").addEventListener("click", regeneratePosterVariants);
+    document.getElementById("createDownloadPosterButton").addEventListener("click", downloadCreatePoster);
+    document.getElementById("createDownloadSocialButton").addEventListener("click", downloadCreateSocialPoster);
+    document.getElementById("createCopyShareButton").addEventListener("click", copyCreateShareImagePlaceholder);
+
+    resetCreateOfferState();
+    loadOffersData();
+  </script>
+</body>
+</html>

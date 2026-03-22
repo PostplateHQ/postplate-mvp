@@ -62,6 +62,7 @@ function normalizeOffer(item) {
   const rewardValue = typeof item.rewardValue === "number"
     ? item.rewardValue
     : Number.parseFloat(item.rewardValue);
+  const completedSteps = Array.isArray(item.completedSteps) ? item.completedSteps : [];
 
   return {
     id: item.id || generateOfferId(),
@@ -74,14 +75,29 @@ function normalizeOffer(item) {
     reward: item.reward || item.name || item.offer || "Reward details coming soon",
     rewardType: item.rewardType || item.type || "Percentage Off",
     rewardValue: Number.isFinite(rewardValue) ? rewardValue : null,
+    discountType: item.discountType || item.rewardType || item.type || "percentage",
+    discountValue: Number.isFinite(Number(item.discountValue)) ? Number(item.discountValue) : null,
+    eligibleItem: item.eligibleItem || null,
+    minSpend: Number.isFinite(Number(item.minSpend)) ? Number(item.minSpend) : null,
+    termsText: item.termsText || item.terms || "",
     terms: item.terms || "Valid for dine-in and pickup. One redemption per guest.",
     captureEmail: typeof item.captureEmail === "boolean" ? item.captureEmail : true,
     captureName: typeof item.captureName === "boolean" ? item.captureName : false,
     reminderOn: typeof item.reminderOn === "boolean" ? item.reminderOn : true,
     remindersEnabled: typeof item.remindersEnabled === "boolean" ? item.remindersEnabled : (typeof item.reminderOn === "boolean" ? item.reminderOn : true),
     status: item.status || "active",
+    creationSource: item.creationSource || "new",
+    sourceOfferId: item.sourceOfferId || null,
+    templateId: item.templateId || null,
     startAt: item.startAt || null,
     endAt: item.endAt || null,
+    startDate: item.startDate || item.startAt || null,
+    endDate: item.endDate || item.endAt || null,
+    startTime: item.startTime || item.activeWindowStart || "",
+    endTime: item.endTime || item.activeWindowEnd || "",
+    allDay: typeof item.allDay === "boolean" ? item.allDay : !(item.activeWindowType === "custom"),
+    durationDays: Number.isFinite(Number(item.durationDays)) ? Number(item.durationDays) : null,
+    scheduleType: item.scheduleType || "custom",
     activeDays,
     activeWindowType: item.activeWindowType || "all-day",
     activeWindowStart: item.activeWindowStart || "",
@@ -96,8 +112,37 @@ function normalizeOffer(item) {
     internalNotes: item.internalNotes || "",
     parentOfferId: item.parentOfferId || null,
     clonedFromOfferId: item.clonedFromOfferId || null,
+    qrEnabled: typeof item.qrEnabled === "boolean" ? item.qrEnabled : true,
+    qrAssetUrl: item.qrAssetUrl || null,
+    posterAssetUrl: item.posterAssetUrl || null,
+    socialEnabled: Boolean(item.socialEnabled),
+    reminderEnabled: typeof item.reminderEnabled === "boolean" ? item.reminderEnabled : (typeof item.remindersEnabled === "boolean" ? item.remindersEnabled : true),
+    boostEnabled: Boolean(item.boostEnabled),
+    boosted: Boolean(item.boosted),
+    boostStartedAt: item.boostStartedAt || null,
+    currentStep: Number.isFinite(Number(item.currentStep)) ? Number(item.currentStep) : 0,
+    completedSteps,
+    lastCompletedStep: item.lastCompletedStep || null,
+    draftCompletionPercent: Number.isFinite(Number(item.draftCompletionPercent)) ? Number(item.draftCompletionPercent) : 0,
+    isSetupComplete: Boolean(item.isSetupComplete),
+    stepTimestamps: item.stepTimestamps || {},
+    stepDurations: item.stepDurations || {},
     scanCount: Number.isFinite(Number(item.scanCount)) ? Number(item.scanCount) : 0,
     claimCount: Number.isFinite(Number(item.claimCount)) ? Number(item.claimCount) : 0,
+    impressionsCount: Number.isFinite(Number(item.impressionsCount)) ? Number(item.impressionsCount) : 0,
+    posterDownloadCount: Number.isFinite(Number(item.posterDownloadCount)) ? Number(item.posterDownloadCount) : 0,
+    qrScanCount: Number.isFinite(Number(item.qrScanCount)) ? Number(item.qrScanCount) : 0,
+    landingPageViews: Number.isFinite(Number(item.landingPageViews)) ? Number(item.landingPageViews) : 0,
+    reminderSentCount: Number.isFinite(Number(item.reminderSentCount)) ? Number(item.reminderSentCount) : 0,
+    reminderSuccessCount: Number.isFinite(Number(item.reminderSuccessCount)) ? Number(item.reminderSuccessCount) : 0,
+    reminderFailureCount: Number.isFinite(Number(item.reminderFailureCount)) ? Number(item.reminderFailureCount) : 0,
+    repeatCustomerCount: Number.isFinite(Number(item.repeatCustomerCount)) ? Number(item.repeatCustomerCount) : 0,
+    estimatedRevenue: Number.isFinite(Number(item.estimatedRevenue)) ? Number(item.estimatedRevenue) : null,
+    actualRevenue: Number.isFinite(Number(item.actualRevenue)) ? Number(item.actualRevenue) : null,
+    conversionRate: Number.isFinite(Number(item.conversionRate)) ? Number(item.conversionRate) : null,
+    createdBy: item.createdBy || "owner",
+    lastAction: item.lastAction || "created",
+    lastActionAt: item.lastActionAt || item.updatedAt || item.createdAt || now,
     archivedAt: item.archivedAt || null,
     pausedAt: item.pausedAt || null,
     launchedAt: item.launchedAt || null,
@@ -543,6 +588,8 @@ function enrichOffer(data, offer) {
     estimatedGrossRevenue !== null && estimatedDiscountCost !== null
       ? Number((estimatedGrossRevenue - estimatedDiscountCost).toFixed(2))
       : null;
+  const qrScanCount = Number(offer.qrScanCount || offer.scanCount || 0);
+  const conversionRate = qrScanCount ? Math.round((redemptionCount / qrScanCount) * 100) : 0;
 
   return {
     ...offer,
@@ -554,6 +601,8 @@ function enrichOffer(data, offer) {
     emailCaptureCount,
     emailCaptureRate,
     redeemedRate,
+    qrScanCount,
+    conversionRate,
     estimatedGrossRevenue,
     estimatedDiscountCost,
     estimatedNetImpact,
@@ -823,6 +872,51 @@ app.post("/offers", (req, res) => {
     internalNotes = "",
     parentOfferId = null,
     clonedFromOfferId = null,
+    creationSource = "new",
+    sourceOfferId = null,
+    templateId = null,
+    discountType = "percentage",
+    discountValue = null,
+    eligibleItem = null,
+    minSpend = null,
+    termsText = "",
+    startDate = null,
+    endDate = null,
+    startTime = "",
+    endTime = "",
+    allDay = true,
+    durationDays = null,
+    scheduleType = "custom",
+    qrEnabled = true,
+    qrAssetUrl = null,
+    posterAssetUrl = null,
+    socialEnabled = false,
+    reminderEnabled = true,
+    boostEnabled = false,
+    boosted = false,
+    boostStartedAt = null,
+    currentStep = 0,
+    completedSteps = [],
+    lastCompletedStep = null,
+    draftCompletionPercent = 0,
+    isSetupComplete = false,
+    stepTimestamps = {},
+    stepDurations = {},
+    impressionsCount = 0,
+    posterDownloadCount = 0,
+    qrScanCount = 0,
+    landingPageViews = 0,
+    reminderSentCount = 0,
+    reminderSuccessCount = 0,
+    reminderFailureCount = 0,
+    repeatCustomerCount = 0,
+    estimatedRevenue = null,
+    actualRevenue = null,
+    conversionRate = null,
+    createdBy = "owner",
+    lastAction = null,
+    lastActionAt = null,
+    flowEvent = null,
   } = req.body;
 
   const validationError = validateOfferPayload({
@@ -853,14 +947,30 @@ app.post("/offers", (req, res) => {
     offer.reward = reward || name;
     offer.rewardType = type;
     offer.rewardValue = parseRewardValue({ reward, name, rewardValue: req.body.rewardValue, type });
+    offer.discountType = discountType;
+    offer.discountValue = discountValue ? Number(discountValue) : null;
+    offer.eligibleItem = eligibleItem || null;
+    offer.minSpend = minSpend ? Number(minSpend) : null;
+    offer.termsText = termsText || terms || "";
     offer.terms = terms || "Valid for dine-in and pickup. One redemption per guest.";
     offer.captureEmail = Boolean(captureEmail);
     offer.captureName = Boolean(captureName);
     offer.reminderOn = Boolean(reminderOn);
     offer.remindersEnabled = Boolean(remindersEnabled ?? reminderOn);
+    offer.reminderEnabled = Boolean(reminderEnabled ?? remindersEnabled ?? reminderOn);
     offer.status = computedStatus;
+    offer.creationSource = creationSource || offer.creationSource || "new";
+    offer.sourceOfferId = sourceOfferId || offer.sourceOfferId || null;
+    offer.templateId = templateId || offer.templateId || null;
     offer.startAt = startAt;
     offer.endAt = endAt;
+    offer.startDate = startDate || startAt;
+    offer.endDate = endDate || endAt;
+    offer.startTime = startTime || activeWindowStart;
+    offer.endTime = endTime || activeWindowEnd;
+    offer.allDay = Boolean(allDay);
+    offer.durationDays = durationDays ? Number(durationDays) : offer.durationDays;
+    offer.scheduleType = scheduleType;
     offer.activeDays = Array.isArray(activeDays) ? activeDays : [];
     offer.activeWindowType = activeWindowType;
     offer.activeWindowStart = activeWindowStart;
@@ -875,6 +985,34 @@ app.post("/offers", (req, res) => {
     offer.internalNotes = internalNotes;
     offer.parentOfferId = parentOfferId || offer.parentOfferId || null;
     offer.clonedFromOfferId = clonedFromOfferId || offer.clonedFromOfferId || null;
+    offer.qrEnabled = Boolean(qrEnabled);
+    offer.qrAssetUrl = qrAssetUrl || offer.qrAssetUrl || null;
+    offer.posterAssetUrl = posterAssetUrl || offer.posterAssetUrl || null;
+    offer.socialEnabled = Boolean(socialEnabled);
+    offer.boostEnabled = Boolean(boostEnabled);
+    offer.boosted = Boolean(boosted);
+    offer.boostStartedAt = boostStartedAt || offer.boostStartedAt || null;
+    offer.currentStep = Number(currentStep) || offer.currentStep || 0;
+    offer.completedSteps = Array.isArray(completedSteps) ? completedSteps : offer.completedSteps || [];
+    offer.lastCompletedStep = lastCompletedStep || offer.lastCompletedStep || null;
+    offer.draftCompletionPercent = Number(draftCompletionPercent) || 0;
+    offer.isSetupComplete = Boolean(isSetupComplete);
+    offer.stepTimestamps = stepTimestamps || offer.stepTimestamps || {};
+    offer.stepDurations = stepDurations || offer.stepDurations || {};
+    offer.impressionsCount = Number(impressionsCount) || offer.impressionsCount || 0;
+    offer.posterDownloadCount = Number(posterDownloadCount) || offer.posterDownloadCount || 0;
+    offer.qrScanCount = Number(qrScanCount) || offer.qrScanCount || 0;
+    offer.landingPageViews = Number(landingPageViews) || offer.landingPageViews || 0;
+    offer.reminderSentCount = Number(reminderSentCount) || offer.reminderSentCount || 0;
+    offer.reminderSuccessCount = Number(reminderSuccessCount) || offer.reminderSuccessCount || 0;
+    offer.reminderFailureCount = Number(reminderFailureCount) || offer.reminderFailureCount || 0;
+    offer.repeatCustomerCount = Number(repeatCustomerCount) || offer.repeatCustomerCount || 0;
+    offer.estimatedRevenue = estimatedRevenue !== null ? Number(estimatedRevenue) : offer.estimatedRevenue;
+    offer.actualRevenue = actualRevenue !== null ? Number(actualRevenue) : offer.actualRevenue;
+    offer.conversionRate = conversionRate !== null ? Number(conversionRate) : offer.conversionRate;
+    offer.createdBy = createdBy || offer.createdBy || "owner";
+    offer.lastAction = lastAction || (computedStatus === "active" ? "offer_launched" : "offer_updated");
+    offer.lastActionAt = lastActionAt || now;
     offer.updatedAt = now;
     if (computedStatus === "active" && !offer.launchedAt) {
       offer.launchedAt = now;
@@ -882,6 +1020,7 @@ app.post("/offers", (req, res) => {
     recordOfferEvent(data, offer.id, "edited", {
       name: offer.name,
       status: computedStatus,
+      currentStep: offer.currentStep,
     });
   } else {
     offer = normalizeOffer({
@@ -894,14 +1033,30 @@ app.post("/offers", (req, res) => {
       reward: reward || name,
       rewardType: type,
       rewardValue: parseRewardValue({ reward, name, rewardValue: req.body.rewardValue, type }),
+      discountType,
+      discountValue,
+      eligibleItem,
+      minSpend,
+      termsText,
       terms,
       captureEmail: Boolean(captureEmail),
       captureName: Boolean(captureName),
       reminderOn: Boolean(reminderOn),
       remindersEnabled: Boolean(remindersEnabled ?? reminderOn),
+      reminderEnabled: Boolean(reminderEnabled ?? remindersEnabled ?? reminderOn),
       status: computedStatus,
+      creationSource,
+      sourceOfferId,
+      templateId,
       startAt,
       endAt,
+      startDate: startDate || startAt,
+      endDate: endDate || endAt,
+      startTime: startTime || activeWindowStart,
+      endTime: endTime || activeWindowEnd,
+      allDay: Boolean(allDay),
+      durationDays,
+      scheduleType,
       activeDays,
       activeWindowType,
       activeWindowStart,
@@ -916,6 +1071,34 @@ app.post("/offers", (req, res) => {
       internalNotes,
       parentOfferId,
       clonedFromOfferId,
+      qrEnabled: Boolean(qrEnabled),
+      qrAssetUrl,
+      posterAssetUrl,
+      socialEnabled: Boolean(socialEnabled),
+      boostEnabled: Boolean(boostEnabled),
+      boosted: Boolean(boosted),
+      boostStartedAt,
+      currentStep: Number(currentStep) || 0,
+      completedSteps,
+      lastCompletedStep,
+      draftCompletionPercent: Number(draftCompletionPercent) || 0,
+      isSetupComplete: Boolean(isSetupComplete),
+      stepTimestamps,
+      stepDurations,
+      impressionsCount,
+      posterDownloadCount,
+      qrScanCount,
+      landingPageViews,
+      reminderSentCount,
+      reminderSuccessCount,
+      reminderFailureCount,
+      repeatCustomerCount,
+      estimatedRevenue,
+      actualRevenue,
+      conversionRate,
+      createdBy,
+      lastAction: lastAction || (computedStatus === "active" ? "offer_launched" : "offer_created"),
+      lastActionAt: lastActionAt || now,
       launchedAt: computedStatus === "active" ? now : null,
       createdAt: now,
       updatedAt: now,
@@ -924,7 +1107,12 @@ app.post("/offers", (req, res) => {
     recordOfferEvent(data, offer.id, "created", {
       name: offer.name,
       status: computedStatus,
+      creationSource: offer.creationSource,
     });
+  }
+
+  if (flowEvent?.eventType) {
+    recordOfferEvent(data, offer.id, flowEvent.eventType, flowEvent.metadata || {}, flowEvent.actorType || "owner");
   }
 
   if (offer.status === "active") {
@@ -1108,6 +1296,47 @@ app.delete("/offers/:id", (req, res) => {
   res.json({ success: true });
 });
 
+app.post("/offers/:id/events", (req, res) => {
+  const data = loadData();
+  const offer = getOfferById(data, req.params.id);
+
+  if (!offer) {
+    return res.status(404).json({ error: "offer not found" });
+  }
+
+  const {
+    eventType,
+    actorType = "owner",
+    metadata = {},
+    posterDownloadIncrement = 0,
+    qrScanIncrement = 0,
+    landingViewIncrement = 0,
+    reminderSentIncrement = 0,
+    reminderSuccessIncrement = 0,
+    reminderFailureIncrement = 0,
+    impressionsIncrement = 0,
+  } = req.body || {};
+
+  if (!eventType) {
+    return res.status(400).json({ error: "eventType is required" });
+  }
+
+  offer.posterDownloadCount = (offer.posterDownloadCount || 0) + Number(posterDownloadIncrement || 0);
+  offer.qrScanCount = (offer.qrScanCount || 0) + Number(qrScanIncrement || 0);
+  offer.landingPageViews = (offer.landingPageViews || 0) + Number(landingViewIncrement || 0);
+  offer.reminderSentCount = (offer.reminderSentCount || 0) + Number(reminderSentIncrement || 0);
+  offer.reminderSuccessCount = (offer.reminderSuccessCount || 0) + Number(reminderSuccessIncrement || 0);
+  offer.reminderFailureCount = (offer.reminderFailureCount || 0) + Number(reminderFailureIncrement || 0);
+  offer.impressionsCount = (offer.impressionsCount || 0) + Number(impressionsIncrement || 0);
+  offer.lastAction = eventType;
+  offer.lastActionAt = new Date().toISOString();
+  offer.updatedAt = offer.lastActionAt;
+
+  recordOfferEvent(data, offer.id, eventType, metadata, actorType);
+  saveData(data);
+  res.json({ success: true, offer: enrichOffer(data, offer) });
+});
+
 app.get("/qr", async (req, res) => {
   let {
     store = "",
@@ -1283,6 +1512,14 @@ app.post("/send-reminders/:store", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+
+["SIGINT", "SIGTERM"].forEach((signal) => {
+  process.on(signal, () => {
+    server.close(() => {
+      process.exit(0);
+    });
+  });
 });

@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostPlate Offers</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="pp-shell">
+    <aside class="pp-sidebar">
+      <div class="pp-business-switcher">
+        <div class="pp-business-avatar">ST</div>
+        <div class="pp-business-copy">
+          <p class="pp-business-label">Business</p>
+          <button class="pp-business-name" type="button">Spice Taco House</button>
+          <p class="pp-business-location"><span class="pp-status-dot live"></span> Downtown location</p>
+        </div>
+      </div>
+
+      <nav class="pp-sidebar-nav">
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Core</p>
+          <a class="pp-nav-link" href="dashboard.html?page=dashboard">
+            <span class="pp-nav-icon">◫</span>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Marketing</p>
+          <a class="pp-nav-link" href="dashboard.html?page=content-studio">
+            <span class="pp-nav-icon">✦</span>
+            <span>Content Studio</span>
+            <span class="pp-nav-badge">12</span>
+          </a>
+          <a class="pp-nav-link active" href="offers.html">
+            <span class="pp-nav-icon">◌</span>
+            <span>Offers</span>
+            <span class="pp-nav-badge success">3 live</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Performance</p>
+          <a class="pp-nav-link" href="dashboard.html?page=analytics">
+            <span class="pp-nav-icon">▣</span>
+            <span>Analytics</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Customers</p>
+          <a class="pp-nav-link" href="dashboard.html?page=customer-capture">
+            <span class="pp-nav-icon">◎</span>
+            <span>Customer Capture</span>
+            <span class="pp-nav-badge info">28 new</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Integrations</p>
+          <a class="pp-nav-link" href="dashboard.html?page=social-accounts">
+            <span class="pp-nav-icon">⟲</span>
+            <span>Social Accounts</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Settings</p>
+          <a class="pp-nav-link" href="dashboard.html?page=business-profile">
+            <span class="pp-nav-icon">⌂</span>
+            <span>Business Profile</span>
+          </a>
+          <a class="pp-nav-link" href="dashboard.html?page=billing">
+            <span class="pp-nav-icon">◍</span>
+            <span>Billing</span>
+          </a>
+        </div>
+
+        <div class="pp-sidebar-group">
+          <p class="pp-sidebar-heading">Support</p>
+          <a class="pp-nav-link" href="dashboard.html?page=help-demo">
+            <span class="pp-nav-icon">?</span>
+            <span>Help / Demo</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="pp-main">
+      <header class="pp-topbar">
+        <div class="pp-topbar-search">
+          <span class="pp-search-icon">⌕</span>
+          <input type="search" placeholder="Search offers, customers, templates..." />
+        </div>
+        <div class="pp-topbar-actions">
+          <button class="pp-icon-btn" type="button">◔</button>
+          <button class="pp-icon-btn" type="button">⚑</button>
+          <button class="pp-primary-btn" type="button">Launch Offer</button>
+          <button class="pp-avatar-btn" type="button">VD</button>
+        </div>
+      </header>
+
+      <section class="pp-page active pp-offers-page">
+        <div class="pp-module-head pp-offers-head">
+          <div>
+            <p class="pp-breadcrumb">Dashboard / Offers</p>
+            <div class="pp-title-row">
+              <h1>Offers</h1>
+            </div>
+            <div class="pp-offers-filter-pills">
+              <button class="pp-filter-pill active" type="button">Active</button>
+              <button class="pp-filter-pill" type="button">All</button>
+              <button class="pp-filter-pill" type="button">Draft</button>
+              <span id="offersLiveCountPill" class="pp-filter-pill pp-filter-pill-live">3 Live</span>
+            </div>
+          </div>
+          <div class="pp-page-actions">
+            <button class="pp-secondary-btn" type="button">Duplicate Best Offer</button>
+            <button class="pp-primary-btn" type="button">Create Offer</button>
+          </div>
+        </div>
+
+        <article class="pp-card pp-next-action-card">
+          <div class="pp-next-action-copy">
+            <div class="pp-next-action-icon">🌮</div>
+            <div>
+              <p class="pp-card-kicker">Next Best Action</p>
+              <h3>Taco Tuesday is performing well!</h3>
+              <p>Consider boosting this offer to maximize redemptions.</p>
+            </div>
+          </div>
+          <button id="boostOfferButton" class="pp-primary-btn" type="button">Boost this Offer</button>
+        </article>
+
+        <div class="pp-grid pp-grid-2-1">
+          <article class="pp-card pp-offers-analytics-card">
+            <div class="pp-card-head">
+              <div>
+                <h3>Offer Redemption Analytics</h3>
+              </div>
+              <button id="analyticsBoostButton" class="pp-secondary-btn pp-quiet-action" type="button">Boost this Offer</button>
+            </div>
+
+            <div class="pp-offers-analytics-stats">
+              <div class="pp-analytics-stat">
+                <span>Revenue From Offers</span>
+                <strong id="offersRevenueStat">$2,940</strong>
+              </div>
+              <div class="pp-analytics-stat">
+                <span>Redemptions (This Week)</span>
+                <strong id="offersWeekRedemptionsStat">138</strong>
+              </div>
+              <div class="pp-analytics-stat">
+                <span>Repeat Customers</span>
+                <strong id="offersRepeatCustomersStat">41</strong>
+              </div>
+            </div>
+
+            <div id="offersPerformanceBars" class="pp-bar-chart pp-offers-mini-chart"></div>
+            <p class="pp-muted-copy">Friday performs 32% better. Consider running offers on weekends.</p>
+          </article>
+
+          <article class="pp-card pp-response-card">
+            <div class="pp-card-head">
+              <h3>Customer Response Insights</h3>
+            </div>
+
+            <div class="pp-response-list">
+              <button class="pp-response-row" type="button">
+                <div>
+                  <strong>Email capture rate</strong>
+                  <p id="offersCaptureRate">42%</p>
+                </div>
+                <span>Improve</span>
+              </button>
+
+              <button class="pp-response-row" type="button">
+                <div>
+                  <strong>Pending claims</strong>
+                  <p id="offersPendingClaims">17 customers waiting</p>
+                </div>
+                <span>Send Reminders</span>
+              </button>
+
+              <button class="pp-response-row" type="button">
+                <div>
+                  <strong>Best performing offer</strong>
+                  <p id="offersBestOffer">Taco Tuesday</p>
+                </div>
+                <span>Duplicate</span>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <section class="pp-card pp-top-actions-card">
+          <div class="pp-card-head compact">
+            <h3>Top Actions</h3>
+          </div>
+          <div class="pp-top-actions-row">
+            <button class="pp-action-pill" type="button">Create New</button>
+            <button class="pp-action-pill" type="button">Duplicate Best Offer</button>
+            <button class="pp-action-pill" type="button">Schedule Offer</button>
+            <button class="pp-action-pill" type="button">Send Reminder</button>
+            <button class="pp-action-pill pp-action-pill-more" type="button">•••</button>
+          </div>
+        </section>
+
+        <section class="pp-card">
+          <div class="pp-card-head">
+            <h3>Active Offers and Recent Customer Activity</h3>
+          </div>
+
+          <div id="offersActiveCards" class="pp-active-offers-row"></div>
+
+          <div class="pp-table-wrap">
+            <table class="pp-table">
+              <thead>
+                <tr>
+                  <th>Offer</th>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody id="offersHistoryRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="boostOfferModal" class="pp-modal-backdrop hidden" aria-hidden="true">
+    <div class="pp-modal-shell">
+      <div class="pp-modal-head">
+        <div>
+          <h3 id="boostModalHeading"><span class="pp-modal-title-icon success">✓</span>Your Taco Tuesday Offer is Ready!</h3>
+          <p id="boostModalDescription">You have successfully boosted your Taco Tuesday offer. All set to bring in more customers!</p>
+        </div>
+        <button id="boostModalCloseTop" class="pp-modal-close" type="button">×</button>
+      </div>
+
+      <div id="boostModalStateSetup" class="pp-modal-state">
+        <div class="pp-modal-stack">
+          <section class="pp-modal-section">
+            <h4>Share On Social Media</h4>
+            <p>Select the social media platforms to promote your offer.</p>
+            <div class="pp-platform-list">
+              <label class="pp-platform-item">
+                <div>
+                  <strong>Instagram</strong>
+                  <p>Open app</p>
+                </div>
+                <input type="checkbox" checked />
+              </label>
+              <label class="pp-platform-item">
+                <div>
+                  <strong>Facebook</strong>
+                  <p>Open app</p>
+                </div>
+                <input type="checkbox" checked />
+              </label>
+              <label class="pp-platform-item">
+                <div>
+                  <strong>WhatsApp</strong>
+                  <p>Open app</p>
+                </div>
+                <input type="checkbox" />
+              </label>
+            </div>
+            <div class="pp-modal-estimate">Reach New Customers: 1,600+ (Estimated)</div>
+          </section>
+
+          <section class="pp-modal-section">
+            <h4>Download In-Store Promo</h4>
+            <p>Download a poster with a QR code to promote in your store.</p>
+            <button id="generateContentButton" class="pp-secondary-btn" type="button">Generate Content</button>
+          </section>
+
+          <section class="pp-modal-section">
+            <h4>Send Reminder</h4>
+            <p>Use SMS and email reminders to reach customers who showed interest but have not redeemed yet.</p>
+            <div class="pp-modal-estimate">17 reminders left</div>
+          </section>
+        </div>
+
+        <div class="pp-modal-footer">
+          <button id="boostSetupBack" class="pp-secondary-btn" type="button">Back</button>
+          <button id="boostSetupCancel" class="pp-secondary-btn" type="button">Cancel</button>
+          <button id="boostSetupPromote" class="pp-primary-btn" type="button">Promote</button>
+        </div>
+      </div>
+
+      <div id="boostModalStatePreview" class="pp-modal-state hidden">
+        <section class="pp-modal-section">
+          <h4>Social Media Content Preview</h4>
+          <p class="pp-modal-preview-copy">Review your generated content for the Taco Tuesday offer. You can edit before posting or continue to share as is.</p>
+
+          <div id="boostPreviewEditor" class="pp-preview-editor hidden">
+            <div class="pp-preview-editor-grid">
+              <label>
+                <span>Offer title</span>
+                <input id="boostEditTitle" type="text" value="Taco Tuesday" />
+              </label>
+              <label>
+                <span>Offer reward</span>
+                <input id="boostEditReward" type="text" value="10% OFF Tacos" />
+              </label>
+              <label class="full">
+                <span>Offer details</span>
+                <input id="boostEditMeta" type="text" value="Every Tuesday – In-Store Only" />
+              </label>
+            </div>
+            <div class="pp-preview-editor-actions">
+              <button id="boostApplyEdits" class="pp-secondary-btn" type="button">Apply changes</button>
+            </div>
+          </div>
+
+          <div class="pp-social-preview-card">
+            <div class="pp-social-preview-head">
+              <div class="pp-social-brand-mark">ST</div>
+              <div class="pp-social-brand-copy">
+                <strong>Spice Taco House</strong>
+                <span>@spicetacohouse</span>
+              </div>
+              <button class="pp-social-dots" type="button">•••</button>
+            </div>
+
+            <div class="pp-social-poster">
+              <div class="pp-social-poster-copy">
+                <div id="boostPreviewTitle" class="pp-social-poster-title">Taco Tuesday</div>
+                <div id="boostPreviewReward" class="pp-social-poster-subtitle">10% OFF Tacos</div>
+                <div id="boostPreviewMeta" class="pp-social-poster-meta">Every Tuesday – In-Store Only</div>
+                <div class="pp-social-poster-scan">SCAN TO REDEEM</div>
+                <div class="pp-social-poster-bottom">
+                  <div id="posterQrPreview" class="pp-poster-qr pp-poster-qr-lg"></div>
+                  <div id="boostPreviewBrandline" class="pp-social-poster-brandline">🌮 Spice Taco House</div>
+                </div>
+              </div>
+              <div class="pp-social-poster-art">
+                <div class="pp-photo-glow"></div>
+                <div class="pp-taco-scene">
+                  <div class="pp-taco taco-top">
+                    <span class="pp-taco-shell"></span>
+                    <span class="pp-taco-filling"></span>
+                  </div>
+                  <div class="pp-taco taco-main">
+                    <span class="pp-taco-shell"></span>
+                    <span class="pp-taco-filling"></span>
+                  </div>
+                  <div class="pp-taco taco-side">
+                    <span class="pp-taco-shell"></span>
+                    <span class="pp-taco-filling"></span>
+                  </div>
+                  <div class="pp-salsa-bowl"></div>
+                  <div class="pp-lime lime-a"></div>
+                  <div class="pp-lime lime-b"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pp-preview-platforms">
+            <span>This will be shared on:</span>
+            <div class="pp-preview-platform-icons">
+              <span>📷 Instagram</span>
+              <span>f Facebook</span>
+            </div>
+          </div>
+          <p class="pp-preview-note">Generate even better content by integrating your social accounts</p>
+        </section>
+
+        <div class="pp-modal-footer">
+          <button id="boostPreviewEdit" class="pp-secondary-btn" type="button">Edit</button>
+          <button id="boostPreviewContinue" class="pp-primary-btn" type="button">Continue</button>
+        </div>
+      </div>
+
+      <div id="boostModalStateSuccess" class="pp-modal-state hidden">
+        <section class="pp-modal-section">
+          <div class="pp-success-panel">
+            <article class="pp-success-feature-block">
+              <div>
+                <h5>Store Poster</h5>
+                <p>Download and print your promotional poster for in-store display.</p>
+              </div>
+              <div class="pp-success-panel-grid">
+                <div class="pp-success-poster-thumb">
+                  <div class="pp-success-poster-copy">
+                    <strong id="boostSuccessTitle">Taco Tuesday</strong>
+                    <span id="boostSuccessReward">10% OFF Tacos</span>
+                    <small id="boostSuccessMeta">Every Tuesday – In-Store Only</small>
+                  </div>
+                  <div class="pp-success-thumb-qr-wrap">
+                    <div id="successPosterQr" class="pp-success-thumb-qr"></div>
+                  </div>
+                </div>
+                <div class="pp-success-action-column">
+                  <button id="downloadPosterButton" class="pp-primary-btn pp-success-primary" type="button">Download Poster</button>
+                  <small>Estimated Size: 8.7 MB</small>
+                </div>
+              </div>
+            </article>
+
+            <article class="pp-success-feature-block">
+              <div>
+                <h5>Send Reminders</h5>
+                <p>Reach out to your interested customers via SMS and email reminders.</p>
+              </div>
+              <div id="successReminderAction">
+                <button id="sendRemindersInlineButton" class="pp-primary-btn pp-success-primary" type="button">Send Reminders</button>
+              </div>
+            </article>
+          </div>
+
+          <div class="pp-success-strip">
+            <span class="pp-success-check">✓</span>
+            <p>All Set! Here’s to a successful Taco Tuesday promo!</p>
+          </div>
+        </section>
+
+        <div class="pp-modal-footer">
+          <button id="boostSuccessEdit" class="pp-secondary-btn" type="button" disabled>Edit</button>
+          <button id="boostSuccessCancel" class="pp-secondary-btn" type="button">Cancel</button>
+          <button id="boostSuccessGoLive" class="pp-primary-btn" type="button">Let’s Go Live</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORE_ID = "taco123";
+    const BACKEND_BASE = "http://localhost:3000";
+    const state = {
+      stats: null,
+      offers: [],
+      redemptions: [],
+      reminderSent: false,
+      modalStep: "success",
+      previewEditing: false,
+      currentBoostOffer: null,
+      boostDraft: {
+        title: "Taco Tuesday",
+        reward: "10% OFF Tacos",
+        meta: "Every Tuesday – In-Store Only",
+      },
+    };
+
+    function money(value) {
+      if (value === null || value === undefined || value === "") return "--";
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(Number(value) || 0);
+    }
+
+    function formatDate(value) {
+      if (!value) return "--";
+      return new Date(value).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    async function fetchJson(path, options = {}) {
+      const response = await fetch(`${BACKEND_BASE}${path}`, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    async function sendReminders() {
+      await fetchJson(`/send-reminders/${encodeURIComponent(STORE_ID)}`, { method: "POST" });
+      state.reminderSent = true;
+    }
+
+    function getLiveOffer() {
+      return state.offers.find((offer) => (offer.statusDisplay || offer.status) === "live" || offer.status === "active") || state.offers[0] || null;
+    }
+
+    function formatShortDate(value) {
+      if (!value) return "";
+      return new Date(value).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    function getFulfillmentLabel(offer) {
+      const mode = offer?.fulfillmentMode || offer?.fulfillment || "all";
+      if (mode === "pickup") return "Pickup Only";
+      if (mode === "dine-in") return "Dine-In Only";
+      return "In-Store Only";
+    }
+
+    function formatOfferTiming(offer) {
+      const days = Array.isArray(offer?.activeDays) ? offer.activeDays.filter(Boolean) : [];
+      if (days.length === 1) {
+        const label = days[0].charAt(0).toUpperCase() + days[0].slice(1);
+        return `Every ${label} – ${getFulfillmentLabel(offer)}`;
+      }
+      if (offer?.startAt && offer?.endAt) {
+        return `${formatShortDate(offer.startAt)} – ${formatShortDate(offer.endAt)} • ${getFulfillmentLabel(offer)}`;
+      }
+      if (offer?.startAt) {
+        return `${formatShortDate(offer.startAt)} • ${getFulfillmentLabel(offer)}`;
+      }
+      return `This week • ${getFulfillmentLabel(offer)}`;
+    }
+
+    function escapeXml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+    }
+
+    function buildPosterSvg() {
+      const title = escapeXml(state.boostDraft.title);
+      const reward = escapeXml(state.boostDraft.reward);
+      const meta = escapeXml(state.boostDraft.meta);
+      const qrRects = Array.from({ length: 25 }).map((_, index) => {
+        if (index % 2 !== 0) return "";
+        const col = index % 5;
+        const row = Math.floor(index / 5);
+        return `<rect x="${40 + (col * 20)}" y="${40 + (row * 20)}" width="12" height="12" rx="2" fill="#0f172a" />`;
+      }).join("");
+
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#5f8578"/>
+              <stop offset="100%" stop-color="#e0d4be"/>
+            </linearGradient>
+            <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f2d37c"/>
+              <stop offset="100%" stop-color="#d6a24c"/>
+            </linearGradient>
+          </defs>
+          <rect width="1080" height="1350" fill="url(#bg)"/>
+          <rect x="0" y="0" width="520" height="1350" fill="#5f8578"/>
+          <text x="72" y="150" fill="#fff8e8" font-size="92" font-weight="800" font-family="Arial, Helvetica, sans-serif">${title}</text>
+          <text x="72" y="260" fill="#fff8e8" font-size="72" font-weight="800" font-family="Arial, Helvetica, sans-serif">${reward}</text>
+          <text x="72" y="330" fill="#f5efe1" font-size="40" font-family="Arial, Helvetica, sans-serif">${meta}</text>
+          <line x1="72" y1="400" x2="470" y2="400" stroke="#d9e7dd" stroke-width="2" stroke-dasharray="8 8"/>
+          <text x="72" y="470" fill="#fff8e8" font-size="52" font-weight="800" font-family="Arial, Helvetica, sans-serif">SCAN TO REDEEM</text>
+          <rect x="72" y="520" width="180" height="180" rx="18" fill="#ffffff" stroke="#d6dde6"/>
+          ${qrRects}
+          <text x="72" y="760" fill="#fff8e8" font-size="32" font-weight="700" font-family="Arial, Helvetica, sans-serif">🌮 Spice Taco House</text>
+
+          <ellipse cx="810" cy="340" rx="170" ry="96" transform="rotate(-12 810 340)" fill="url(#shell)"/>
+          <ellipse cx="810" cy="340" rx="118" ry="62" transform="rotate(-12 810 340)" fill="#6e4320"/>
+          <circle cx="760" cy="310" r="14" fill="#86efac"/>
+          <circle cx="788" cy="360" r="16" fill="#fde68a"/>
+          <circle cx="842" cy="318" r="14" fill="#fca5a5"/>
+          <circle cx="890" cy="352" r="12" fill="#ef4444"/>
+
+          <ellipse cx="780" cy="700" rx="210" ry="118" transform="rotate(9 780 700)" fill="url(#shell)"/>
+          <ellipse cx="780" cy="700" rx="150" ry="76" transform="rotate(9 780 700)" fill="#6e4320"/>
+          <circle cx="722" cy="666" r="16" fill="#86efac"/>
+          <circle cx="758" cy="728" r="18" fill="#fde68a"/>
+          <circle cx="816" cy="680" r="16" fill="#fca5a5"/>
+          <circle cx="860" cy="720" r="14" fill="#ef4444"/>
+
+          <circle cx="670" cy="960" r="78" fill="#7a5630"/>
+          <circle cx="670" cy="960" r="60" fill="#8f6336"/>
+          <circle cx="640" cy="940" r="10" fill="#fca5a5"/>
+          <circle cx="690" cy="950" r="10" fill="#86efac"/>
+          <circle cx="670" cy="985" r="10" fill="#fde68a"/>
+
+          <circle cx="920" cy="210" r="42" fill="#a3e635"/>
+          <circle cx="920" cy="210" r="28" fill="#d9f99d"/>
+          <circle cx="860" cy="260" r="34" fill="#a3e635"/>
+          <circle cx="860" cy="260" r="22" fill="#d9f99d"/>
+        </svg>
+      `.trim();
+    }
+
+    function downloadPoster() {
+      const svg = buildPosterSvg();
+      const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const safeName = (state.boostDraft.title || "offer-poster")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeName || "offer-poster"}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function syncBoostDraftFromOffer(offer) {
+      state.currentBoostOffer = offer || null;
+      state.boostDraft = {
+        title: offer?.name || "Taco Tuesday",
+        reward: offer?.reward || offer?.rewardValue || "10% OFF Tacos",
+        meta: formatOfferTiming(offer),
+      };
+    }
+
+    function renderPosterQr() {
+      const qrMarkup = Array.from({ length: 25 }).map((_, index) => `
+        <span class="${index % 2 === 0 ? "filled" : ""}"></span>
+      `).join("");
+      document.getElementById("posterQrPreview").innerHTML = qrMarkup;
+      document.getElementById("successPosterQr").innerHTML = qrMarkup;
+    }
+
+    function renderBoostCreative() {
+      document.getElementById("boostPreviewTitle").innerText = state.boostDraft.title;
+      document.getElementById("boostPreviewReward").innerText = state.boostDraft.reward;
+      document.getElementById("boostPreviewMeta").innerText = state.boostDraft.meta;
+      document.getElementById("boostSuccessTitle").innerText = state.boostDraft.title;
+      document.getElementById("boostSuccessReward").innerText = state.boostDraft.reward;
+      document.getElementById("boostSuccessMeta").innerText = state.boostDraft.meta;
+      document.getElementById("boostEditTitle").value = state.boostDraft.title;
+      document.getElementById("boostEditReward").value = state.boostDraft.reward;
+      document.getElementById("boostEditMeta").value = state.boostDraft.meta;
+    }
+
+    function openBoostModal(step = "setup") {
+      syncBoostDraftFromOffer(getLiveOffer());
+      state.modalStep = "success";
+      document.getElementById("boostOfferModal").classList.remove("hidden");
+      document.getElementById("boostOfferModal").setAttribute("aria-hidden", "false");
+      renderBoostModal();
+    }
+
+    function closeBoostModal() {
+      document.getElementById("boostOfferModal").classList.add("hidden");
+      document.getElementById("boostOfferModal").setAttribute("aria-hidden", "true");
+      state.modalStep = "success";
+      state.previewEditing = false;
+    }
+
+    function renderBoostModal() {
+      document.getElementById("boostModalStateSetup").classList.toggle("hidden", true);
+      document.getElementById("boostModalStatePreview").classList.toggle("hidden", true);
+      document.getElementById("boostModalStateSuccess").classList.toggle("hidden", state.modalStep !== "success");
+      document.getElementById("boostModalHeading").innerHTML = `<span class="pp-modal-title-icon success">✓</span>Your ${state.boostDraft.title} Offer is Ready!`;
+      document.getElementById("boostModalDescription").innerHTML = `You have successfully boosted your <strong>${state.boostDraft.title}</strong> offer. All set to bring in more customers!`;
+      renderBoostCreative();
+
+      if (state.modalStep === "success") {
+        const actionWrap = document.getElementById("successReminderAction");
+        actionWrap.innerHTML = state.reminderSent
+          ? `
+            <div class="pp-inline-success">
+              <span class="pp-success-check small">✓</span>
+              <div>
+                <strong>Reminders sent successfully</strong>
+                <p>17 customers notified</p>
+              </div>
+            </div>
+          `
+          : '<button id="sendRemindersInlineButton" class="pp-primary-btn pp-success-primary" type="button">Send Reminders</button>';
+
+        const reminderButton = document.getElementById("sendRemindersInlineButton");
+        if (reminderButton) {
+          reminderButton.addEventListener("click", async () => {
+            try {
+              await sendReminders();
+              renderBoostModal();
+              renderOffersPage();
+            } catch (error) {
+            }
+          });
+        }
+      }
+    }
+
+    function renderOffersPage() {
+      const liveOffer = getLiveOffer();
+      const redemptions = Array.isArray(state.redemptions) && state.redemptions.length
+        ? state.redemptions
+        : [
+            { offer: "Taco Tuesday", name: "Maria G.", email: "maria@email.com", redeemed: false, createdAt: new Date().toISOString() },
+            { offer: "Weekend Combo Boost", name: "Derek M.", email: "derek@email.com", redeemed: true, createdAt: new Date().toISOString() },
+            { offer: "Taco Tuesday", name: "Lina P.", email: "lina@email.com", redeemed: false, createdAt: new Date().toISOString() },
+            { offer: "Lunch Rush Deal", name: "Chris J.", email: "chris@email.com", redeemed: true, createdAt: new Date().toISOString() },
+          ];
+      const pending = redemptions.filter((item) => !item.redeemed).length;
+      const captured = redemptions.filter((item) => item.email).length;
+      const activeCount = state.stats?.activeOffers || (liveOffer ? 3 : 3);
+
+      document.getElementById("offersLiveCountPill").innerText = `${activeCount} Live`;
+      document.getElementById("offersRevenueStat").innerText = money(liveOffer?.estimatedNetImpact || 2940);
+      document.getElementById("offersWeekRedemptionsStat").innerText = redemptions.length || 138;
+      document.getElementById("offersRepeatCustomersStat").innerText = captured || 41;
+      document.getElementById("offersCaptureRate").innerText = `${redemptions.length ? Math.round((captured / redemptions.length) * 100) : 42}%`;
+      document.getElementById("offersPendingClaims").innerText = `${pending || 17} customers waiting`;
+      document.getElementById("offersBestOffer").innerText = liveOffer?.name || "Taco Tuesday";
+      document.getElementById("offersReminderCopy").innerText = state.reminderSent
+        ? "Reminder progress is ready to reflect back into boosted offer tracking."
+        : "You have 8 customers who claimed but haven’t redeemed yet.";
+      document.getElementById("offersPerformanceBars").innerHTML = [12, 18, 14, 24, 30, 20, 26].map((value, index) => `
+        <div class="pp-bar-col">
+          <span style="height:${value * 3}px"></span>
+          <small>${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}</small>
+        </div>
+      `).join("");
+
+      document.getElementById("offersActiveCards").innerHTML = [
+        {
+          title: "Taco Tuesday",
+          redemptions: 62,
+          days: "3 Days",
+          cta: "Send Reminders",
+          insight: "Best performer this week",
+        },
+        {
+          title: "Weekend Combo Boost",
+          redemptions: 41,
+          days: "2 Days",
+          cta: "Boost Again",
+          insight: "Higher average order value",
+        },
+        {
+          title: "Lunch Rush Deal",
+          redemptions: 35,
+          days: "5 Days",
+          cta: "Duplicate",
+          insight: "Strong weekday lunch pull",
+        },
+      ].map((offer) => `
+        <article class="pp-active-offer-card">
+          <div class="pp-active-offer-top">
+            <span class="pp-status-badge ready">LIVE</span>
+            <span class="pp-card-chip">${offer.days}</span>
+          </div>
+          <strong>${offer.title}</strong>
+          <p>${offer.redemptions} redemptions</p>
+          <button class="pp-secondary-btn pp-inline-btn" type="button">${offer.cta}</button>
+          <small>${offer.insight}</small>
+        </article>
+      `).join("");
+
+      document.getElementById("offersHistoryRows").innerHTML = redemptions.map((item) => `
+        <tr>
+          <td>${item.offer || "Special Offer"}</td>
+          <td>${item.name || "-"}</td>
+          <td>${item.email || "-"}</td>
+          <td>${item.redeemed ? "Redeemed" : "Pending"}</td>
+          <td>${formatDate(item.createdAt)}</td>
+          <td>${formatDate(item.createdAt)}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function loadOffersData() {
+      try {
+        const [stats, offers, redemptions] = await Promise.all([
+          fetchJson(`/stats/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/offers/${encodeURIComponent(STORE_ID)}`),
+          fetchJson(`/redemptions/${encodeURIComponent(STORE_ID)}`),
+        ]);
+        state.stats = stats;
+        state.offers = Array.isArray(offers) ? offers : [];
+        state.redemptions = Array.isArray(redemptions) ? redemptions : [];
+      } catch (error) {
+        state.stats = {};
+        state.offers = [];
+        state.redemptions = [];
+      }
+      syncBoostDraftFromOffer(getLiveOffer());
+      renderPosterQr();
+      renderBoostCreative();
+      renderOffersPage();
+    }
+
+    document.getElementById("boostOfferButton").addEventListener("click", () => openBoostModal("success"));
+    document.getElementById("analyticsBoostButton").addEventListener("click", () => openBoostModal("success"));
+    document.getElementById("boostModalCloseTop").addEventListener("click", closeBoostModal);
+    document.getElementById("boostSetupBack").addEventListener("click", closeBoostModal);
+    document.getElementById("boostSetupCancel").addEventListener("click", closeBoostModal);
+    document.getElementById("generateContentButton").addEventListener("click", () => {
+      state.modalStep = "preview";
+      renderBoostModal();
+    });
+    document.getElementById("boostSetupPromote").addEventListener("click", () => {
+      state.modalStep = "preview";
+      renderBoostModal();
+    });
+    document.getElementById("boostPreviewEdit").addEventListener("click", () => {
+      state.previewEditing = !state.previewEditing;
+      renderBoostModal();
+    });
+    document.getElementById("boostApplyEdits").addEventListener("click", () => {
+      state.boostDraft.title = document.getElementById("boostEditTitle").value.trim() || "Taco Tuesday";
+      state.boostDraft.reward = document.getElementById("boostEditReward").value.trim() || "10% OFF Tacos";
+      state.boostDraft.meta = document.getElementById("boostEditMeta").value.trim() || "Every Tuesday – In-Store Only";
+      state.previewEditing = false;
+      renderBoostModal();
+    });
+    document.getElementById("boostPreviewContinue").addEventListener("click", () => {
+      state.modalStep = "success";
+      state.previewEditing = false;
+      renderBoostModal();
+    });
+    document.getElementById("boostSuccessCancel").addEventListener("click", closeBoostModal);
+    document.getElementById("boostSuccessGoLive").addEventListener("click", closeBoostModal);
+    document.getElementById("downloadPosterButton").addEventListener("click", downloadPoster);
+    document.getElementById("boostOfferModal").addEventListener("click", (event) => {
+      if (event.target.id === "boostOfferModal") closeBoostModal();
+    });
+
+    loadOffersData();
+  </script>
+</body>
+</html>

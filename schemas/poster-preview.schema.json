@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "poster-preview.schema.json",
+  "title": "PosterPreviewResponse",
+  "type": "object",
+  "required": ["templateId", "presetId", "format", "canvas", "resolvedNodes", "warnings", "overflowAdjusted"],
+  "properties": {
+    "templateId": { "type": "string" },
+    "presetId": { "type": "string" },
+    "format": { "type": "string", "enum": ["square"] },
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "number" },
+        "height": { "type": "number" }
+      }
+    },
+    "resolvedNodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "x", "y", "width", "height"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "width": { "type": "number" },
+          "height": { "type": "number" }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "overflowAdjusted": { "type": "boolean" }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "design-brief.schema.json",
+  "title": "OfferPosterDesignBrief",
+  "type": "object",
+  "required": [
+    "itemName",
+    "itemNames",
+    "offerType",
+    "offerLabel",
+    "visualStyle",
+    "textDensity",
+    "backgroundMode",
+    "fontMood",
+    "restaurantName",
+    "qrEnabled",
+    "addressEnabled"
+  ],
+  "properties": {
+    "itemName": { "type": "string", "minLength": 1 },
+    "itemNames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "itemImageCatalog": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "maxItems": 5,
+        "items": { "type": "string" }
+      }
+    },
+    "imageAssetIdsByItem": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "maxItems": 5,
+        "items": { "type": "string" }
+      }
+    },
+    "offerType": { "type": "string", "minLength": 1 },
+    "offerLabel": { "type": "string", "minLength": 1 },
+    "visualStyle": {
+      "type": "string",
+      "enum": ["Dark & Premium", "Bright & Fun", "Minimal Clean", "Text Heavy", "Image Focused"]
+    },
+    "textDensity": { "type": "string", "enum": ["more_text", "balanced", "more_image"] },
+    "backgroundMode": { "type": "string", "enum": ["dark", "light"] },
+    "fontMood": { "type": "string", "enum": ["bold", "elegant"] },
+    "restaurantName": { "type": "string", "minLength": 1 },
+    "restaurantLocation": { "type": "string" },
+    "logoAsset": { "type": "string" },
+    "productImageAsset": { "type": "string" },
+    "productImageAssets": {
+      "type": "array",
+      "maxItems": 25,
+      "items": { "type": "string" }
+    },
+    "qrEnabled": { "type": "boolean" },
+    "logoEnabled": { "type": "boolean" },
+    "addressEnabled": { "type": "boolean" },
+    "platform": { "type": "string" },
+    "styleKeywords": { "type": "string" },
+    "imageStyle": { "type": "string" },
+    "refinementChoice": {
+      "type": "string",
+      "enum": ["", "Make it bolder", "Make it cleaner", "Highlight the offer", "Make it more premium", "Make it more fun"]
+    }
+  },
+  "additionalProperties": false
+}

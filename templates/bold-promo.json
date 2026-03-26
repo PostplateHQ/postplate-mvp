@@ -1,0 +1,7 @@
+{
+  "id": "bold-promo",
+  "name": "Bold Promo",
+  "description": "Energetic conversion-focused promo layout",
+  "status": "active",
+  "supportedFormats": ["square"]
+}

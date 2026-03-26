@@ -3,10 +3,13 @@ const fs = require("fs");
 const path = require("path");
 const QRCode = require("qrcode");
 const { sendReminderEmail } = require("./mail/reminders");
+const { registerPromotionRoutes } = require("./promotions/routes");
+const { listPresetCatalog, buildPreview } = require("./promotions/service");
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
+registerPromotionRoutes(app);
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -18,12 +21,22 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((error, _req, res, next) => {
+  if (error && error.type === "entity.too.large") {
+    return res.status(413).json({
+      error: "payload too large",
+      details: ["Uploaded file exceeds allowed size."],
+    });
+  }
+  return next(error);
+});
+
 const PORT = 3000;
 const dataPath = path.join(__dirname, "db", "data.json");
 const REMINDER_DELAY_MS = 30 * 60 * 1000;
 
 function defaultData() {
-  return { offers: [], redemptions: [], offerEvents: [] };
+  return { offers: [], redemptions: [], offerEvents: [], ownerProfiles: {} };
 }
 
 function generateId(prefix = "id") {
@@ -524,6 +537,7 @@ function loadData() {
       offers: normalizedOffers,
       redemptions: rawRedemptions.map((item) => normalizeRedemption(item, offerLookup)),
       offerEvents: Array.isArray(parsed.offerEvents) ? parsed.offerEvents.map(normalizeOfferEvent) : [],
+      ownerProfiles: parsed.ownerProfiles && typeof parsed.ownerProfiles === "object" ? parsed.ownerProfiles : {},
     };
   } catch (error) {
     return defaultData();
@@ -535,7 +549,106 @@ function saveData(data) {
     offers: data.offers || [],
     redemptions: data.redemptions || [],
     offerEvents: data.offerEvents || [],
+    ownerProfiles: data.ownerProfiles && typeof data.ownerProfiles === "object" ? data.ownerProfiles : {},
   }, null, 2));
+}
+
+function initialsForName(name = '') {
+  return String(name)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('') || 'PP';
+}
+
+function getOwnerProfile(data, requestedStore = '') {
+  const profiles = data.ownerProfiles && typeof data.ownerProfiles === "object" ? data.ownerProfiles : {};
+  if (requestedStore && profiles[requestedStore]) {
+    const saved = profiles[requestedStore];
+    const restaurantName = String(saved.restaurantName || "Your Restaurant");
+    return {
+      storeId: requestedStore,
+      restaurantName,
+      restaurantLocation: saved.restaurantLocation || "Primary location",
+      logoAsset: saved.logoAsset || "",
+      businessType: saved.businessType || "casual_restaurant",
+      cuisineType: saved.cuisineType || "",
+      category: saved.category || "",
+      businessHours: saved.businessHours || "",
+      brandTone: saved.brandTone || "",
+      businessInitials: initialsForName(restaurantName),
+      updatedAt: saved.updatedAt || null,
+    };
+  }
+
+  const candidates = (Array.isArray(data.offers) ? data.offers : [])
+    .filter((offer) => String(offer.restaurant || '').trim());
+  const scoped = requestedStore
+    ? candidates.filter((offer) => offer.store === requestedStore || offer.storeId === requestedStore)
+    : candidates;
+  const pool = scoped.length ? scoped : candidates;
+  const sorted = [...pool].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+  const latest = sorted[0] || null;
+
+  if (!latest) {
+    return {
+      storeId: requestedStore || 'store123',
+      restaurantName: 'Your Restaurant',
+      restaurantLocation: 'Primary location',
+      logoAsset: '',
+      businessType: 'casual_restaurant',
+      cuisineType: '',
+      category: '',
+      businessHours: '',
+      brandTone: '',
+      businessInitials: 'YR',
+    };
+  }
+
+  return {
+    storeId: latest.storeId || latest.store || requestedStore || 'store123',
+    restaurantName: latest.restaurant || 'Your Restaurant',
+    restaurantLocation: latest.restaurantLocation || 'Primary location',
+    logoAsset: latest.logoAsset || '',
+    businessType: latest.businessType || 'casual_restaurant',
+    cuisineType: latest.cuisineType || '',
+    category: latest.category || '',
+    businessHours: latest.businessHours || '',
+    brandTone: latest.brandTone || '',
+    businessInitials: initialsForName(latest.restaurant || 'Your Restaurant'),
+  };
+}
+
+function updateOwnerProfile(data, store, payload = {}) {
+  const storeId = String(store || '').trim();
+  if (!storeId) {
+    const error = new Error("store is required");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (!data.ownerProfiles || typeof data.ownerProfiles !== "object") {
+    data.ownerProfiles = {};
+  }
+  const current = getOwnerProfile(data, storeId);
+  const restaurantName = String(payload.restaurantName || current.restaurantName || '').trim() || "Your Restaurant";
+  const next = {
+    storeId,
+    restaurantName,
+    restaurantLocation: String(payload.restaurantLocation || current.restaurantLocation || '').trim() || "Primary location",
+    logoAsset: String(payload.logoAsset || current.logoAsset || '').trim(),
+    businessType: String(payload.businessType || current.businessType || '').trim() || "casual_restaurant",
+    cuisineType: String(payload.cuisineType || current.cuisineType || '').trim(),
+    category: String(payload.category || current.category || '').trim(),
+    businessHours: String(payload.businessHours || current.businessHours || '').trim(),
+    brandTone: String(payload.brandTone || current.brandTone || '').trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  data.ownerProfiles[storeId] = next;
+  return {
+    ...next,
+    businessInitials: initialsForName(next.restaurantName),
+  };
 }
 
 function getStoreOffers(data, store, options = {}) {
@@ -815,6 +928,26 @@ app.get("/redeem", (req, res) => {
     }
   }
   res.sendFile(path.join(__dirname, "..", "frontend", "redeem.html"));
+});
+
+app.get("/owner/profile", (req, res) => {
+  const data = loadData();
+  const store = String(req.query.store || '').trim();
+  const profile = getOwnerProfile(data, store);
+  res.json({ success: true, profile });
+});
+
+app.put("/owner/profile", (req, res) => {
+  try {
+    const store = String(req.query.store || req.body?.storeId || '').trim();
+    const data = loadData();
+    const profile = updateOwnerProfile(data, store, req.body || {});
+    saveData(data);
+    return res.json({ success: true, profile });
+  } catch (error) {
+    const code = Number(error.statusCode) || 400;
+    return res.status(code).json({ error: error.message || "failed to update owner profile" });
+  }
 });
 
 app.get("/offers/:store", (req, res) => {
@@ -1335,6 +1468,57 @@ app.post("/offers/:id/events", (req, res) => {
   recordOfferEvent(data, offer.id, eventType, metadata, actorType);
   saveData(data);
   res.json({ success: true, offer: enrichOffer(data, offer) });
+});
+
+app.get("/promo/templates", (req, res) => {
+  try {
+    const presets = listPresetCatalog();
+    res.json({ success: true, presets });
+  } catch (error) {
+    res.status(500).json({ error: "failed to load templates" });
+  }
+});
+
+app.post("/promo/suggestions", (req, res) => {
+  try {
+    const body = req.body || {};
+    const selectedPresetId = body.selectedPresetId || null;
+    const designBrief = body.designBrief || {};
+    const styleHints = body.styleHints || {};
+    const quickHints = [
+      styleHints.visualStyle || designBrief.visualStyle || "Minimal Clean",
+      styleHints.backgroundMode || designBrief.backgroundMode || "dark",
+      styleHints.fontMood || designBrief.fontMood || "bold",
+    ];
+    res.json({
+      success: true,
+      suggestions: {
+        selectedPresetId,
+        quickHints,
+        note: "Use /offer-designs/preview for deterministic preview payload.",
+      },
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message || "failed to generate suggestions" });
+  }
+});
+
+app.post("/promo/render", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const selectedPresetId = body.selectedPresetId || body.templateId || null;
+    const result = await buildPreview(body.designBrief || body.content || {}, selectedPresetId);
+
+    return res.json({
+      success: true,
+      selectedPresetId: result.presetId,
+      render: result.preview,
+      designBrief: result.designBrief,
+      providerMeta: result.providerMeta,
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message || "render failed", details: error.details || [] });
+  }
 });
 
 app.get("/qr", async (req, res) => {

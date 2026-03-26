@@ -1,0 +1,7 @@
+{
+  "id": "dark-premium",
+  "name": "Dark Premium",
+  "description": "High contrast premium layout with strong offer hierarchy",
+  "status": "active",
+  "supportedFormats": ["square"]
+}

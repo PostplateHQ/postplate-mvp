@@ -1,0 +1,41 @@
+{
+  "dark-premium": {
+    "canvas": { "width": 1080, "height": 1080 },
+    "safePadding": 48,
+    "zones": {
+      "headline": { "x": 94, "y": 90, "width": 590, "height": 250 },
+      "subline": { "x": 94, "y": 355, "width": 590, "height": 120 },
+      "restaurant": { "x": 94, "y": 905, "width": 640, "height": 70 },
+      "address": { "x": 94, "y": 980, "width": 640, "height": 45 },
+      "productImage": { "x": 700, "y": 84, "width": 286, "height": 720 },
+      "logo": { "x": 700, "y": 830, "width": 140, "height": 140 },
+      "qr": { "x": 860, "y": 830, "width": 172, "height": 172 }
+    }
+  },
+  "bold-promo": {
+    "canvas": { "width": 1080, "height": 1080 },
+    "safePadding": 44,
+    "zones": {
+      "headline": { "x": 86, "y": 84, "width": 908, "height": 190 },
+      "subline": { "x": 86, "y": 290, "width": 908, "height": 95 },
+      "restaurant": { "x": 86, "y": 890, "width": 700, "height": 68 },
+      "address": { "x": 86, "y": 965, "width": 700, "height": 44 },
+      "productImage": { "x": 86, "y": 400, "width": 620, "height": 420 },
+      "logo": { "x": 740, "y": 620, "width": 130, "height": 130 },
+      "qr": { "x": 870, "y": 620, "width": 170, "height": 170 }
+    }
+  },
+  "minimal-clean": {
+    "canvas": { "width": 1080, "height": 1080 },
+    "safePadding": 56,
+    "zones": {
+      "headline": { "x": 82, "y": 78, "width": 640, "height": 170 },
+      "subline": { "x": 82, "y": 258, "width": 640, "height": 85 },
+      "restaurant": { "x": 82, "y": 908, "width": 690, "height": 68 },
+      "address": { "x": 82, "y": 976, "width": 690, "height": 42 },
+      "productImage": { "x": 730, "y": 78, "width": 292, "height": 650 },
+      "logo": { "x": 740, "y": 770, "width": 120, "height": 120 },
+      "qr": { "x": 876, "y": 760, "width": 164, "height": 164 }
+    }
+  }
+}

@@ -99,6 +99,16 @@
     cuisineType: 'mexican',
     businessHours: '10am - 10pm',
     brandTone: 'friendly_local',
+    audiencePrimary: 'general',
+    primaryGoal: '',
+    menuItems: [],
+    menuSignalsSummary: {
+      totalItems: 0,
+      bestSellerCount: 0,
+      slowMoverCount: 0,
+      withImageCount: 0,
+      highMarginCount: 0,
+    },
   };
 
   const mockSmartActions = [
@@ -120,7 +130,8 @@
       confidenceLabel: 'Medium confidence',
       ctaLabel: 'Send Reminder',
       score: 0.86,
-      action: getRouteAction('campaigns', 'send_reminder', { filter: 'active' }),
+      insightSample: true,
+      action: getRouteAction('smart-reminders', 'send_reminder', {}),
     },
     {
       id: 'action_try_reel',
@@ -130,7 +141,7 @@
       confidenceLabel: 'High confidence',
       ctaLabel: 'Create Reel',
       score: 0.88,
-      action: getRouteAction('create', 'create_reel', { mode: 'reel' }),
+      action: getRouteAction('reel-guide', 'create_reel', { mode: 'reel' }),
     },
     {
       id: 'action_promote_top_item',
@@ -150,7 +161,10 @@
       confidenceLabel: 'High confidence',
       ctaLabel: 'Duplicate',
       score: 0.9,
-      action: getRouteAction('create', 'duplicate_winning_offer', { mode: 'offer', source: 'campaign_lunch_combo' }),
+      action: getRouteAction('create', 'duplicate_winning_offer', {
+        mode: 'offer',
+        sourceCampaignId: 'campaign_lunch_combo',
+      }),
     },
   ];
 
@@ -244,10 +258,11 @@
     }
   }
 
-  async function loadOffers(storeId = DEFAULT_STORE_ID) {
+  async function loadOffers(storeId = DEFAULT_STORE_ID, options = {}) {
+    const strict = Boolean(options.strict);
     try {
       const response = await fetchJson(`/offers/${encodeURIComponent(storeId)}`);
-      if (Array.isArray(response) && response.length) {
+      if (Array.isArray(response)) {
         return response.map((row) => ({
           id: row.id,
           title: row.name || 'Untitled Campaign',
@@ -266,18 +281,50 @@
           whatWorked: 'Clear value headline and QR call-to-action.',
           whatToImprove: 'Test a reel-first variant.',
           createdAt: row.createdAt || new Date().toISOString(),
+          sourceOfferId: row.id,
         }));
       }
+      if (strict) throw new Error('Campaign data format is invalid.');
       return deepClone(mockCampaigns);
-    } catch (_error) {
+    } catch (error) {
+      if (strict) throw error;
       return deepClone(mockCampaigns);
     }
   }
 
+  async function fetchSmartActionsBundle(storeId) {
+    try {
+      const response = await fetchJson(`/api/stores/${encodeURIComponent(storeId)}/smart-actions`);
+      if (response && Array.isArray(response.smartActions) && response.smartActions.length) {
+        return {
+          smartActions: response.smartActions,
+          smartActionsMeta: response.smartActionsMeta || { windowLabel: '', source: 'live' },
+        };
+      }
+    } catch (_e) { /* fallback below */ }
+    return {
+      smartActions: deepClone(mockSmartActions),
+      smartActionsMeta: { windowLabel: 'Sample ideas — we will personalize when your data is connected', source: 'sample' },
+    };
+  }
+
+  async function getEligibleReminders(storeId = DEFAULT_STORE_ID) {
+    try {
+      return await fetchJson(`/api/stores/${encodeURIComponent(storeId)}/reminders/eligible`);
+    } catch (_e) {
+      return { count: 0, items: [] };
+    }
+  }
+
+  async function sendReminderBatch(storeId = DEFAULT_STORE_ID) {
+    return postJson(`/send-reminders/${encodeURIComponent(storeId)}`, {});
+  }
+
   async function getGrowthHubData({ storeId = DEFAULT_STORE_ID } = {}) {
-    const [profile, campaigns] = await Promise.all([
+    const [profile, campaigns, smartBundle] = await Promise.all([
       loadProfile(storeId),
-      loadOffers(storeId),
+      loadOffers(storeId, { strict: true }),
+      fetchSmartActionsBundle(storeId),
     ]);
 
     const activeCount = campaigns.filter((row) => row.status === 'active').length;
@@ -291,10 +338,11 @@
         { id: 'pulse_campaigns', label: 'Active Campaigns', value: String(activeCount), note: 'Live this week' },
         { id: 'pulse_customers', label: 'Customers Today', value: '87', note: 'Est. walk-ins + redeemers' },
       ],
-      smartActions: deepClone(mockSmartActions),
+      smartActions: smartBundle.smartActions,
+      smartActionsMeta: smartBundle.smartActionsMeta,
       quickActions: [
         { id: 'quick_offer', title: 'Create Offer', icon: '◌', action: getRouteAction('create', 'create_offer', { mode: 'offer' }) },
-        { id: 'quick_reel', title: 'Create Reel', icon: '▶', action: getRouteAction('create', 'create_reel', { mode: 'reel' }) },
+        { id: 'quick_reel', title: 'Create Reel', icon: '▶', action: getRouteAction('reel-guide', 'create_reel', { mode: 'reel' }) },
         { id: 'quick_post', title: 'Create Post', icon: '✦', action: getRouteAction('create', 'create_post', { mode: 'post' }) },
       ],
       liveCampaigns: campaigns.filter((row) => row.status === 'active').slice(0, 4),
@@ -303,7 +351,7 @@
   }
 
   async function getCampaignList({ storeId = DEFAULT_STORE_ID, status = 'active' } = {}) {
-    const campaigns = await loadOffers(storeId);
+    const campaigns = await loadOffers(storeId, { strict: true });
     const normalizedStatus = asString(status, 'active').toLowerCase();
     const filtered = normalizedStatus === 'all'
       ? campaigns
@@ -321,8 +369,11 @@
   }
 
   async function getCampaignDetail(id, { storeId = DEFAULT_STORE_ID } = {}) {
-    const campaigns = await loadOffers(storeId);
-    const selected = campaigns.find((row) => row.id === id) || campaigns[0] || deepClone(mockCampaigns[0]);
+    const campaigns = await loadOffers(storeId, { strict: true });
+    const selected = campaigns.find((row) => row.id === id) || campaigns[0];
+    if (!selected) {
+      throw new Error('No campaign available yet. Create your first offer to continue.');
+    }
 
     return {
       ...selected,
@@ -417,6 +468,16 @@
     return 'bold';
   }
 
+  function normalizeOfferType(value = '') {
+    const raw = asString(value).toLowerCase();
+    if (raw.includes('%') || raw.includes('percent')) return 'percentage_off';
+    if (raw.includes('flat')) return 'flat_off';
+    if (raw.includes('buy') && raw.includes('get')) return 'buy_x_get_y';
+    if (raw.includes('combo') || raw.includes('bundle')) return 'combo_bundle';
+    if (raw.includes('time')) return 'time_window_special';
+    return 'custom_rule';
+  }
+
   function toUnifiedSuggestion(row = {}, index = 0) {
     const previewImage = row.previewImage || {};
     const preview = row.preview || {};
@@ -467,6 +528,14 @@
       },
       businessContext: input.businessContext || {},
       performanceSignals: input.performanceSignals || {},
+      offerConfig: input.offerConfig || {
+        offerType: normalizeOfferType(input.offerType || ''),
+        customRule: input.customRule || {},
+      },
+      channelPlan: input.channelPlan || {
+        channels: Array.isArray(input.channels) ? input.channels : [],
+        soundtrackMood: asString(input.soundtrackMood),
+      },
     };
 
     try {
@@ -479,6 +548,9 @@
         input,
         suggestions: suggestions.length ? suggestions : getMockSuggestions(input),
         soundtrackSuggestions: deepClone(mockSoundtracks),
+        orchestrator: response.orchestrator || null,
+        analyticsTags: response.analyticsTags || {},
+        recommendationSummary: response.recommendationSummary || null,
         generationStatus: {
           state: 'ready',
           message: suggestions.length
@@ -571,17 +643,27 @@
     }
   }
 
-  async function getAnalyticsStoryData({ storeId = DEFAULT_STORE_ID } = {}) {
-    const campaigns = await loadOffers(storeId);
-    const topCampaign = campaigns[0] || deepClone(mockCampaigns[0]);
+  async function getAnalyticsStoryData({ storeId = DEFAULT_STORE_ID, offerId = '' } = {}) {
+    const campaigns = await loadOffers(storeId, { strict: true });
+    const normalizedOfferId = asString(offerId);
+    const scopedCampaigns = normalizedOfferId
+      ? campaigns.filter((row) => asString(row.sourceOfferId || row.id) === normalizedOfferId)
+      : campaigns;
+    const topCampaign = scopedCampaigns[0] || campaigns[0];
+    if (!topCampaign) {
+      throw new Error('No analytics data available yet.');
+    }
     return {
       summaryCards: [
-        { id: 'sum_customers', title: 'Customers Gained', value: '42', explanation: 'From campaign-driven visits this week.' },
-        { id: 'sum_repeat', title: 'Repeat Visits', value: '18', explanation: 'Guests who came back after redeeming.' },
+        { id: 'sum_customers', title: 'Customers Gained', value: String(topCampaign.customersGained || 0), explanation: 'From campaign-driven visits this week.' },
+        { id: 'sum_repeat', title: 'Repeat Visits', value: String(Math.max(0, Math.round((topCampaign.customersGained || 0) * 0.35))), explanation: 'Guests who came back after redeeming.' },
         { id: 'sum_campaign', title: 'Top Campaign', value: topCampaign.title, explanation: 'Highest conversion this cycle.' },
         { id: 'sum_channel', title: 'Top Channel', value: topCampaign.bestChannel, explanation: 'Best performing destination.' },
       ],
-      whatWorked: deepClone(mockInsights),
+      whatWorked: [
+        { id: 'insight_offer', title: `${topCampaign.title} performed best`, detail: topCampaign.whatWorked || 'Strong scan-to-claim behavior this cycle.' },
+        ...deepClone(mockInsights).slice(0, 2),
+      ],
       whatToImprove: [
         { id: 'improve_1', title: 'Boost evening reach', detail: 'Your strongest redemptions happen before 3pm. Test dinner creatives.' },
         { id: 'improve_2', title: 'Add reel variants', detail: 'Campaigns with reels show stronger top-of-funnel lift.' },
@@ -594,6 +676,122 @@
     const storeId = asString(payload.storeId, DEFAULT_STORE_ID);
     const response = await putJson(`/owner/profile?store=${encodeURIComponent(storeId)}`, payload);
     return response.profile || payload;
+  }
+
+  async function uploadMenuItemAsset({ sourceUrl = '', mimeType = 'image/jpeg' } = {}) {
+    const response = await postJson('/offer-designs/assets', {
+      type: 'food_image',
+      sourceUrl,
+      optimizedUrl: sourceUrl,
+      mimeType,
+    });
+    return response.asset || null;
+  }
+
+  async function extractMenuFromPhoto({ imageDataUrl = '', mimeType = 'image/jpeg' } = {}) {
+    const response = await postJson('/api/menu/extract-from-photo', {
+      imageDataUrl,
+      mimeType,
+    });
+    return response || { items: [] };
+  }
+
+  async function generateCampaignContent(payload = {}) {
+    try {
+      return await postJson('/api/campaign/generate', payload);
+    } catch (_error) {
+      return { headline: '', offerLine: '', cta: '', posterImageUrl: '', posterSource: 'none', qrDataUrl: '', suggestedChannels: ['Instagram Post', 'In-store QR'], suggestedDuration: 7 };
+    }
+  }
+
+  async function regenerateCampaignContent(payload = {}) {
+    try {
+      return await postJson('/api/campaign/regenerate', payload);
+    } catch (_error) {
+      return {};
+    }
+  }
+
+  async function improveMenuItemDescription({ itemName = '', currentDescription = '', sectionName = '', restaurantName = '' } = {}) {
+    try {
+      const response = await postJson('/api/menu/improve-description', {
+        itemName,
+        currentDescription,
+        sectionName,
+        restaurantName,
+      });
+      return response || { description: '', source: 'fallback' };
+    } catch (_error) {
+      return { description: '', source: 'error' };
+    }
+  }
+
+  async function importMenuFile({ fileDataUrl = '', fileName = '', fileType = '' } = {}) {
+    try {
+      const response = await postJson('/api/menu/import', {
+        fileDataUrl,
+        fileName,
+        fileType,
+      });
+      return response || { sections: [], confidence: 0, warnings: [] };
+    } catch (_error) {
+      return { sections: [], confidence: 0, warnings: ['Import failed. Please try a different file.'] };
+    }
+  }
+
+  async function pauseCampaign(campaignId) {
+    const id = asString(campaignId);
+    if (!id) throw new Error('campaign id is required');
+    const response = await postJson(`/offers/${encodeURIComponent(id)}/pause`, {});
+    return response.offer || null;
+  }
+
+  async function relaunchCampaign(campaignId) {
+    const id = asString(campaignId);
+    if (!id) throw new Error('campaign id is required');
+    const response = await postJson(`/offers/${encodeURIComponent(id)}/relaunch`, {});
+    return response.offer || null;
+  }
+
+  async function duplicateCampaign(campaignId) {
+    const id = asString(campaignId);
+    if (!id) throw new Error('campaign id is required');
+    const response = await postJson(`/offers/${encodeURIComponent(id)}/duplicate`, {});
+    return response.offer || null;
+  }
+
+  async function createLiveCampaign(payload = {}) {
+    const storeId = asString(payload.storeId, DEFAULT_STORE_ID);
+    const restaurantName = asString(payload.restaurantName, 'Your Restaurant');
+    const item = asString(payload.item, 'Chef Special');
+    const offerType = asString(payload.offerType, 'Limited Time');
+    const headline = asString(payload.headline, `${item} Special`);
+    const offerLine = asString(payload.offerLine, offerType);
+    const cta = asString(payload.cta, 'Scan to redeem');
+    const campaignGoal = asString(payload.campaignGoal, 'traffic');
+    const audiencePrimary = asString(payload.audiencePrimary, 'general');
+    const brandTone = asString(payload.brandTone, '');
+    const customRule = payload.customRule && typeof payload.customRule === 'object' ? payload.customRule : {};
+    const selectedChannels = Array.isArray(payload.selectedChannels) ? payload.selectedChannels : ['Instagram Post', 'In-store QR'];
+    const status = asString(payload.status, 'active');
+
+    const response = await postJson('/offers', {
+      store: storeId,
+      restaurant: restaurantName,
+      name: headline,
+      type: offerType,
+      reward: offerLine,
+      terms: `Goal: ${campaignGoal}. Audience: ${audiencePrimary}. Channels: ${selectedChannels.join(', ')}. Show this code at counter. ${cta}.${brandTone ? ` Brand: ${brandTone}.` : ''}`,
+      campaignGoal,
+      audiencePrimary,
+      customRule,
+      selectedChannels,
+      status,
+      captureEmail: true,
+      reminderOn: true,
+      creationSource: 'growth_os_create_flow',
+    });
+    return response.offer || null;
   }
 
   async function trackCreateIntentInputUsed(payload = {}) {
@@ -609,8 +807,24 @@
     };
   }
 
+  async function trackMenuIntelligenceEvent(payload = {}) {
+    return {
+      tracked: true,
+      event: asString(payload.event, 'menu_intelligence_event'),
+      payload: {
+        storeId: asString(payload.storeId, DEFAULT_STORE_ID),
+        menuItemCount: asNumber(payload.menuItemCount),
+        bestSellerCount: asNumber(payload.bestSellerCount),
+        slowMoverCount: asNumber(payload.slowMoverCount),
+        withImageCount: asNumber(payload.withImageCount),
+      },
+    };
+  }
+
   globalScope.PostPlateDataAdapter = {
     getGrowthHubData,
+    getEligibleReminders,
+    sendReminderBatch,
     getCampaignList,
     getCampaignDetail,
     getContentStudioAssets,
@@ -619,6 +833,17 @@
     getCreateReviewPayload,
     getAnalyticsStoryData,
     saveRestaurantProfile,
+    uploadMenuItemAsset,
+    extractMenuFromPhoto,
+    importMenuFile,
+    improveMenuItemDescription,
+    generateCampaignContent,
+    regenerateCampaignContent,
     trackCreateIntentInputUsed,
+    trackMenuIntelligenceEvent,
+    pauseCampaign,
+    relaunchCampaign,
+    duplicateCampaign,
+    createLiveCampaign,
   };
 })(window);

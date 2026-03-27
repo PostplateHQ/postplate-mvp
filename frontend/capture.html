@@ -20,7 +20,7 @@
       <div class="hero-copy left-align">
         <h1>Where should we send your code?</h1>
         <p>
-          Add your details below and we'll send your reward code by email.
+          Add your details below so we can send offer reminders later.
           You can still continue without filling these fields.
         </p>
       </div>
@@ -31,9 +31,10 @@
 
         <label for="email">Email <span>(optional)</span></label>
         <input id="email" type="email" placeholder="you@example.com" />
+        <p id="captureError" class="micro-copy left-align" style="color:#b91c1c;"></p>
 
         <p class="micro-copy left-align">
-          We may send your code and occasional restaurant offers. No spam.
+          Your code is shown on the next screen. Email helps with optional reminders.
         </p>
 
         <button class="primary-btn" onclick="redeemOffer()">Get My Code</button>
@@ -51,9 +52,35 @@
 
     document.getElementById("restaurantName").innerText = restaurant;
 
+    function isValidEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+
+    const emailInput = document.getElementById("email");
+    emailInput.addEventListener("input", () => {
+      const errorNode = document.getElementById("captureError");
+      const current = emailInput.value.trim();
+      if (!current || isValidEmail(current)) {
+        errorNode.innerText = "";
+      }
+    });
+    emailInput.addEventListener("blur", () => {
+      const errorNode = document.getElementById("captureError");
+      const current = emailInput.value.trim();
+      if (current && !isValidEmail(current)) {
+        errorNode.innerText = "Enter a valid email or tap 'Skip for now'.";
+      }
+    });
+
     async function redeemOffer(skipCapture = false) {
       const name = skipCapture ? "" : document.getElementById("name").value.trim();
       const email = skipCapture ? "" : document.getElementById("email").value.trim();
+      const errorNode = document.getElementById("captureError");
+      errorNode.innerText = "";
+      if (email && !isValidEmail(email)) {
+        errorNode.innerText = "Enter a valid email or tap 'Skip for now'.";
+        return;
+      }
 
       try {
         const response = await fetch("/redeem", {
@@ -83,11 +110,12 @@
           `&restaurant=${encodeURIComponent(restaurant)}` +
           `&offer=${encodeURIComponent(offer)}` +
           (offerId ? `&offerId=${encodeURIComponent(offerId)}` : "") +
-          `&email=${encodeURIComponent(email)}`;
+          `&email=${encodeURIComponent(email)}` +
+          `&emailSent=${data.emailSent ? "1" : "0"}`;
 
         window.location.href = nextUrl;
       } catch (error) {
-        alert("Something went wrong. Please try again.");
+        errorNode.innerText = "Could not claim right now. Please try again.";
       }
     }
   </script>

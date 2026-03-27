@@ -59,17 +59,23 @@
         (offerId ? `&offerId=${encodeURIComponent(offerId)}` : "");
     }
 
-    window.botpress.init({
-      botId: "YOUR_BOT_ID",
-      clientId: "YOUR_CLIENT_ID",
-      selector: "#postplate-bot",
-      configuration: {
-        color: "#ea580c",
-        variant: "solid",
-        themeMode: "light",
-        radius: 16
-      }
-    });
+    const botId = window.BOTPRESS_BOT_ID || "";
+    const clientId = window.BOTPRESS_CLIENT_ID || "";
+    if (botId && clientId && window.botpress?.init) {
+      window.botpress.init({
+        botId,
+        clientId,
+        selector: "#postplate-bot",
+        configuration: {
+          color: "#ea580c",
+          variant: "solid",
+          themeMode: "light",
+          radius: 16
+        }
+      });
+    } else {
+      document.getElementById("postplate-bot").style.display = "none";
+    }
   </script>
 </body>
 </html>

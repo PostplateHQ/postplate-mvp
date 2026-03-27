@@ -17,8 +17,8 @@
         </p>
 
         <div class="landing-cta-row">
-          <button class="primary-btn landing-cta-btn" onclick="openDashboard('overview')">Open Dashboard</button>
-          <button class="secondary-btn landing-cta-btn" onclick="openDashboard('offers')">Open Offers</button>
+          <button class="primary-btn landing-cta-btn" onclick="openDashboard('home')">Open Dashboard</button>
+          <button class="secondary-btn landing-cta-btn" onclick="openDashboard('campaigns')">Open Campaigns</button>
         </div>
 
         <div class="landing-status-strip">
@@ -42,17 +42,23 @@
 
       <div class="landing-focus-card">
         <p class="panel-eyebrow">Start Here</p>
-        <h2 id="landingFocusTitle">Create or refine your live offer</h2>
-        <p id="landingFocusCopy">Use the Offers module to save one clear promotion, then generate the QR and test the customer flow.</p>
-        <button id="landingFocusButton" class="primary-btn landing-focus-btn" onclick="openDashboard('offers')">Go to Offers</button>
+        <h2 id="landingFocusTitle">Create or refine your live campaign</h2>
+        <p id="landingFocusCopy">Use Campaigns to save one clear promotion, then generate the QR and test the customer flow.</p>
+        <button id="landingFocusButton" class="primary-btn landing-focus-btn" onclick="openDashboard('campaigns')">Go to Campaigns</button>
       </div>
     </section>
 
+    <section id="landingLoadIssue" class="pp-card pp-state-card hidden" role="alert" aria-live="polite">
+      <h3>Live data is temporarily unavailable</h3>
+      <p>We could not load current campaign and redemption metrics. Try again in a moment.</p>
+      <button id="landingRetryButton" class="pp-primary-btn pp-inline-btn" type="button">Retry</button>
+    </section>
+
     <section class="landing-actions-grid">
-      <button class="landing-action-card" onclick="openDashboard('offers')">
+      <button class="landing-action-card" onclick="openDashboard('campaigns')">
         <span class="landing-action-mark"></span>
-        <strong>Create or Edit Offer</strong>
-        <p>Open the Offers module and save the live promotion for this store.</p>
+        <strong>Create or Edit Campaign</strong>
+        <p>Open Campaigns and save the live promotion for this store.</p>
       </button>
 
       <button id="generateQrAction" class="landing-action-card" onclick="openQrFlow()">
@@ -75,6 +81,7 @@
     const state = {
       activeOffer: null,
       stats: null,
+      loadError: false,
     };
 
     function escapeHtml(value) {
@@ -107,8 +114,8 @@
       ].filter(Boolean).join("&");
     }
 
-    function openDashboard(section = "overview") {
-      const query = new URLSearchParams({ section });
+    function openDashboard(page = "home") {
+      const query = new URLSearchParams({ page });
       if (state.activeOffer?.restaurant) {
         query.set("restaurant", state.activeOffer.restaurant);
       }
@@ -117,7 +124,7 @@
 
     function openQrFlow() {
       if (!state.activeOffer) {
-        openDashboard("offers");
+        openDashboard("campaigns");
         return;
       }
       window.location.href = `qr.html?${buildOfferQuery(state.activeOffer)}`;
@@ -125,7 +132,7 @@
 
     function openCustomerFlow() {
       if (!state.activeOffer) {
-        openDashboard("offers");
+        openDashboard("campaigns");
         return;
       }
       window.location.href = `redeem.html?${buildOfferQuery(state.activeOffer)}`;
@@ -134,12 +141,14 @@
     function renderLanding() {
       const offer = state.activeOffer;
       const stats = state.stats || { totalRedemptions: 0, pendingCount: 0 };
+      const loadIssue = document.getElementById("landingLoadIssue");
+      loadIssue.classList.toggle("hidden", !state.loadError);
 
       document.getElementById("landingRestaurantName").innerText = offer?.restaurant || "Save an offer in the dashboard to get started.";
       document.getElementById("landingOfferName").innerText = offer?.name || "No live offer yet";
       document.getElementById("landingOfferMeta").innerText = offer
         ? `${offer.type} • ${offer.status === "active" ? "Live now" : "Saved"}`
-        : "Open Offers to create and save the first promotion";
+        : "Open Campaigns to create and save the first promotion";
       document.getElementById("landingRedemptionCount").innerText = stats.totalRedemptions ?? 0;
       document.getElementById("landingRedemptionMeta").innerText = stats.totalRedemptions
         ? `${stats.pendingCount} still pending counter redemption`
@@ -158,9 +167,9 @@
 
       if (!offer) {
         focusTitle.innerText = "Create your first live offer";
-        focusCopy.innerText = "Start in the Offers module, save one clear promotion, then come back to generate the QR.";
-        focusButton.innerText = "Create Offer";
-        focusButton.onclick = () => openDashboard("offers");
+        focusCopy.innerText = "Start in Campaigns, save one clear promotion, then come back to generate the QR.";
+        focusButton.innerText = "Create Campaign";
+        focusButton.onclick = () => openDashboard("campaigns");
       } else if (!stats.totalRedemptions) {
         focusTitle.innerText = "Your offer is saved. Now make it visible.";
         focusCopy.innerText = "Generate the QR and place it at the counter or tables so customers can start claiming it.";
@@ -185,16 +194,22 @@
           ? offers.find((offer) => offer.status === "active") || offers[0] || null
           : null;
         state.stats = stats;
+        state.loadError = false;
       } catch (error) {
         state.activeOffer = null;
         state.stats = {
           totalRedemptions: 0,
           pendingCount: 0,
         };
+        state.loadError = true;
       }
 
       renderLanding();
     }
+
+    document.getElementById("landingRetryButton").addEventListener("click", () => {
+      loadLandingData();
+    });
 
     loadLandingData();
   </script>

@@ -84,6 +84,12 @@ function buildSuggestionBlueprints(input, itemProfile, cuisineProfile) {
   const isRetention = input.promotionIntent === 'bring_back';
   const cuisineCopy = cuisineCopyPack(cuisineKey, itemProfile, strongDiscount);
   const allowFamilyPack = (itemProfile.pairingCandidates || []).includes('family_pack');
+  const campaignGoal = String(input.campaignGoal || '').toLowerCase();
+  const menuSummary = input.businessContext?.menuSignalsSummary || {};
+  const menuItems = Array.isArray(input.businessContext?.menuItems) ? input.businessContext.menuItems : [];
+  const focusedMenuItem = menuItems.find((item) => baseItem.toLowerCase().includes(String(item.name || '').toLowerCase()));
+  const focusedStatus = String(focusedMenuItem?.status || '').toLowerCase();
+  const focusedMargin = String(focusedMenuItem?.marginBand || '').toLowerCase();
 
   const baseCombo = {
     promoType: 'combo',
@@ -189,6 +195,85 @@ function buildSuggestionBlueprints(input, itemProfile, cuisineProfile) {
       suggestionType: 'loyalty_offer',
       },
     ];
+  }
+
+  if (focusedStatus === 'slow_mover') {
+    blueprints = blueprints
+      .map((row, idx) => ({
+        ...row,
+        score: idx === 0 ? Math.min(0.97, row.score + 0.05) : row.score,
+        badge: idx === 0 ? 'Slow Mover Priority' : row.badge,
+        supportLine: idx === 0
+          ? `${row.supportLine}. Tuned for slow-mover recovery.`
+          : row.supportLine,
+      }))
+      .sort((a, b) => b.score - a.score);
+    if (focusedMargin === 'high') {
+      blueprints[0] = {
+        ...blueprints[0],
+        valueLine: 'High-margin boost without deep discount',
+      };
+    }
+  } else if (focusedStatus === 'best_seller') {
+    blueprints[0] = {
+      ...blueprints[0],
+      badge: 'Defend Best Seller',
+      supportLine: `${blueprints[0].supportLine}. Protect and extend top performer demand.`,
+      score: Math.min(0.97, blueprints[0].score + 0.03),
+    };
+  } else if (Number(menuSummary.slowMoverCount || 0) > 0) {
+    blueprints = blueprints.sort((a, b) => b.score - a.score);
+    blueprints[0] = {
+      ...blueprints[0],
+      badge: 'Menu Recovery Opportunity',
+      score: Math.min(0.95, blueprints[0].score + 0.02),
+    };
+  }
+
+  if (campaignGoal === 'aov') {
+    blueprints = blueprints.map((row) => (
+      row.promoType === 'bundle'
+        ? { ...row, score: Math.min(0.98, row.score + 0.05), badge: 'AOV Priority' }
+        : row
+    )).sort((a, b) => b.score - a.score);
+  } else if (campaignGoal === 'repeat_visits') {
+    blueprints = blueprints.map((row) => (
+      row.promoType === 'win_back'
+        ? { ...row, score: Math.min(0.98, row.score + 0.05), badge: 'Repeat Visits Priority' }
+        : row
+    )).sort((a, b) => b.score - a.score);
+  } else if (campaignGoal === 'traffic') {
+    const ops = input.operationsContext || {};
+    const hasSlowHours = Array.isArray(ops.slowHours) && ops.slowHours.length > 0;
+    const slowLabel = hasSlowHours ? `${ops.slowHours[0].start || ''} – ${ops.slowHours[0].end || ''}` : '';
+    blueprints = blueprints.map((row) => {
+      if (row.promoType === 'discount' || row.targetMoment === 'afternoon') {
+        const boosted = { ...row, score: Math.min(0.98, row.score + 0.04), badge: 'Traffic Booster' };
+        if (hasSlowHours) boosted.supportLine = `${row.supportLine}. Ideal for your quiet ${slowLabel} window.`;
+        return boosted;
+      }
+      return row;
+    }).sort((a, b) => b.score - a.score);
+  }
+
+  const ops = input.operationsContext || {};
+  const primaryGoal = String(ops.primaryGoal || '').toLowerCase();
+  if (primaryGoal === 'move_slow_items' && focusedStatus === 'slow_mover') {
+    blueprints[0] = {
+      ...blueprints[0],
+      supportLine: `${blueprints[0].supportLine}. Matches your growth priority.`,
+    };
+  }
+
+  const busiestDays = Array.isArray(ops.busiestDays) ? ops.busiestDays : [];
+  if (busiestDays.length > 0 && busiestDays.length < 7) {
+    const quietDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].filter((d) => !busiestDays.includes(d));
+    if (quietDays.length && blueprints.length > 1) {
+      blueprints[1] = {
+        ...blueprints[1],
+        supportLine: `${blueprints[1].supportLine}. Consider launching on ${quietDays.slice(0, 2).join('/')} when traffic is lighter.`,
+      };
+    }
   }
 
   return blueprints.map((row, index) => ({

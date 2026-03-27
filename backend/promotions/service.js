@@ -484,10 +484,36 @@ async function createOfferSuggestions(payload = {}) {
   const requestedAssetIds = Array.isArray(payload.uploadedAssetIds) ? payload.uploadedAssetIds : [];
   const assets = getAssetsByIds(requestedAssetIds);
   const result = await buildSuggestionsResult(payload, assets);
+  const ranked = Array.isArray(result.suggestions) ? [...result.suggestions].sort((a, b) => Number(b.score || 0) - Number(a.score || 0)) : [];
+  const optionLabels = ['safe', 'balanced', 'aggressive'];
+  const rankedCampaignOptions = ranked.slice(0, 3).map((suggestion, index) => ({
+    route: optionLabels[index] || `option_${index + 1}`,
+    score: Number(suggestion.score || 0),
+    title: suggestion.title,
+    why: suggestion.supportLine || suggestion.subtitle || 'Aligned to campaign intent and store context.',
+    suggestionId: suggestion.id,
+  }));
   return {
     suggestions: result.suggestions,
     normalizedInput: result.normalizedInput,
     analysis: result.analysis,
+    recommendationSummary: {
+      bestNextMove: rankedCampaignOptions[0] || null,
+      confidence: rankedCampaignOptions[0]?.score || 0,
+      rationale: rankedCampaignOptions[0]?.why || 'No recommendation available yet.',
+    },
+    orchestrator: {
+      rankedCampaignOptions,
+      riskGuardrails: {
+        marginGuard: 'Avoid deep discount for high-margin slow movers by default.',
+        trustGuard: 'Fallback to deterministic templates if AI confidence is low.',
+      },
+    },
+    analyticsTags: {
+      promotionIntent: result.normalizedInput?.promotionIntent || '',
+      hasMenuData: Boolean(result.normalizedInput?.businessContext?.menuItems?.length),
+      suggestionCount: rankedCampaignOptions.length,
+    },
   };
 }
 

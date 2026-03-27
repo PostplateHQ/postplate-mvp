@@ -12,6 +12,9 @@ const { buildPromptPackage } = require('./suggestion-engine/preview-prompt-build
 const { validateSuggestionPreview } = require('./suggestion-engine/preview-validator');
 const { cuisineAwareFallback } = require('./suggestion-engine/preview-fallback-service');
 const { ensureDistinctSuggestions } = require('./suggestion-engine/suggestion-dedupe-service');
+const FEATURE_FLAGS = {
+  menu_intelligence_v1: true,
+};
 
 let createOfferEngineProviders = createProviderRegistry();
 
@@ -70,6 +73,12 @@ function normalizeInput(payload = {}) {
 
   const restaurantName = asString(business.restaurantName, 'Your Restaurant');
   const userIntent = payload.userIntent && typeof payload.userIntent === 'object' ? payload.userIntent : {};
+  const menuItems = Array.isArray(business.menuItems) ? business.menuItems : [];
+  const menuSignalsSummary = business.menuSignalsSummary && typeof business.menuSignalsSummary === 'object'
+    ? business.menuSignalsSummary
+    : {};
+  const offerConfig = payload.offerConfig && typeof payload.offerConfig === 'object' ? payload.offerConfig : {};
+  const channelPlan = payload.channelPlan && typeof payload.channelPlan === 'object' ? payload.channelPlan : {};
   return {
     entryMode: asString(payload.entryMode, 'create_new'),
     lifecycleStage: asString(payload.lifecycleStage, 'draft'),
@@ -90,11 +99,40 @@ function normalizeInput(payload = {}) {
       tags: Array.isArray(userIntent.tags) ? userIntent.tags.map((value) => asString(value).toLowerCase()).filter(Boolean) : [],
       parsed: userIntent.parsed && typeof userIntent.parsed === 'object' ? userIntent.parsed : {},
     },
+    campaignGoal: asString(payload.campaignGoal, 'traffic'),
+    offerConfig: {
+      offerType: asString(offerConfig.offerType, 'percentage_off'),
+      customRule: offerConfig.customRule && typeof offerConfig.customRule === 'object' ? offerConfig.customRule : {},
+    },
+    channelPlan: {
+      channels: Array.isArray(channelPlan.channels) ? channelPlan.channels.map((row) => asString(row)).filter(Boolean) : [],
+      soundtrackMood: asString(channelPlan.soundtrackMood, 'upbeat'),
+    },
     businessContext: {
       restaurantName,
       cuisineType: detectCuisineType(restaurantName, business.cuisineType),
       businessType: asString(business.businessType, 'casual_restaurant'),
       location: asString(business.location, 'Local area'),
+      menuItems: menuItems
+        .map((row) => ({
+          id: asString(row?.id),
+          name: asString(row?.name),
+          category: asString(row?.category).toLowerCase(),
+          status: asString(row?.status, 'regular').toLowerCase(),
+          marginBand: asString(row?.marginBand).toLowerCase(),
+          note: asString(row?.note),
+          imageAssetId: asString(row?.imageAssetId),
+          imageUrl: asString(row?.imageUrl),
+        }))
+        .filter((row) => row.name)
+        .slice(0, 20),
+      menuSignalsSummary: {
+        totalItems: asNumber(menuSignalsSummary.totalItems),
+        bestSellerCount: asNumber(menuSignalsSummary.bestSellerCount),
+        slowMoverCount: asNumber(menuSignalsSummary.slowMoverCount),
+        withImageCount: asNumber(menuSignalsSummary.withImageCount),
+        highMarginCount: asNumber(menuSignalsSummary.highMarginCount),
+      },
     },
     uploadedAssetIds: Array.from(new Set((Array.isArray(payload.uploadedAssetIds) ? payload.uploadedAssetIds : [])
       .map((value) => asString(value))
@@ -104,6 +142,12 @@ function normalizeInput(payload = {}) {
       totalRedemptions: asNumber(performance.totalRedemptions),
       totalRepeatCustomers: asNumber(performance.totalRepeatCustomers),
       totalRevenueInfluenced: asNumber(performance.totalRevenueInfluenced),
+    },
+    operationsContext: {
+      peakHours: Array.isArray(payload.operationsContext?.peakHours) ? payload.operationsContext.peakHours : [],
+      slowHours: Array.isArray(payload.operationsContext?.slowHours) ? payload.operationsContext.slowHours : [],
+      busiestDays: Array.isArray(payload.operationsContext?.busiestDays) ? payload.operationsContext.busiestDays : [],
+      primaryGoal: asString(payload.operationsContext?.primaryGoal),
     },
   };
 }
@@ -450,14 +494,36 @@ function parseMenuSignals(normalizedInput, assetAnalysis) {
   const text = normalizedInput.itemDescription.toLowerCase();
   const tokens = text.split(/[^a-z0-9]+/).filter(Boolean);
   const pairingHints = [];
+  const menuItems = FEATURE_FLAGS.menu_intelligence_v1
+    ? (Array.isArray(normalizedInput.businessContext?.menuItems) ? normalizedInput.businessContext.menuItems : [])
+    : [];
+  const menuSummary = FEATURE_FLAGS.menu_intelligence_v1
+    ? (normalizedInput.businessContext?.menuSignalsSummary || {})
+    : {};
   if (tokens.includes('drink') || tokens.includes('soda')) pairingHints.push('drink_pairing');
   if (tokens.includes('fries') || tokens.includes('side')) pairingHints.push('side_pairing');
   if (assetAnalysis.menuScreenshots.length > 0 && pairingHints.length === 0) pairingHints.push('menu_combo_opportunity');
+  const focusedMenuItem = menuItems.find((item) => text.includes(String(item.name || '').toLowerCase()));
+  if (focusedMenuItem?.status === 'slow_mover') pairingHints.push('slow_mover_focus');
+  if (focusedMenuItem?.status === 'best_seller') pairingHints.push('best_seller_focus');
 
   return {
     extractedItems: tokens.slice(0, 6),
     pairingHints,
-    menuSignalStrength: assetAnalysis.menuScreenshots.length ? 0.74 : 0.28,
+    menuSignalStrength: Math.min(
+      0.95,
+      (assetAnalysis.menuScreenshots.length ? 0.45 : 0.2)
+      + (asNumber(menuSummary.totalItems) >= 3 ? 0.2 : 0)
+      + (focusedMenuItem ? 0.2 : 0),
+    ),
+    menuPerformance: {
+      hasMenuData: asNumber(menuSummary.totalItems) > 0,
+      focusedItemStatus: asString(focusedMenuItem?.status, 'unknown'),
+      focusedItemMarginBand: asString(focusedMenuItem?.marginBand, ''),
+      bestSellerCount: asNumber(menuSummary.bestSellerCount),
+      slowMoverCount: asNumber(menuSummary.slowMoverCount),
+      withImageCount: asNumber(menuSummary.withImageCount),
+    },
   };
 }
 

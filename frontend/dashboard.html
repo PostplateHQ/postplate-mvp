@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Pacifico&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="assets/growth-home/growth-home.css?v=iife2" />
+  <link rel="stylesheet" href="assets/growth-home/growth-home.css?v=iife3" />
 </head>
 <body class="pp-theme-growth">
   <div class="pp-shell pp-growth-shell pp-growth-shell--topnav" id="growthAppShell">
@@ -130,7 +130,13 @@
   </div>
 
   <script src="ui-data-adapter.js"></script>
-  <script src="assets/growth-home/growth-home.js?v=iife2"></script>
+  <!-- Classic scripts have no `process`; growth-home IIFE must not throw before setting PostPlateGrowthHome. -->
+  <script>
+    if (typeof globalThis.process === "undefined") {
+      globalThis.process = { env: { NODE_ENV: "production" } };
+    }
+  </script>
+  <script src="assets/growth-home/growth-home.js?v=iife3"></script>
   <script src="growth-os-app.js"></script>
 </body>
 </html>

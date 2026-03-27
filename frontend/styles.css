@@ -8609,6 +8609,81 @@ select:focus {
   scrollbar-gutter: stable;
 }
 
+/* Settings menu: section groups + jump dropdown */
+.pp-menu-settings-toolbar {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.pp-menu-settings-jump-label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.pp-menu-settings-jump-label .pp-select {
+  max-width: min(100%, 320px);
+}
+
+.pp-menu-settings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pp-menu-settings-section {
+  border: 1px solid #d6e3f3;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.pp-menu-settings-section-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #ecfeff 0%, #f0fdfa 100%);
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pp-menu-settings-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.pp-menu-settings-section[open] > .pp-menu-settings-section-summary {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pp-menu-settings-section-body {
+  padding: 8px;
+  background: #fbfdff;
+}
+
+.pp-menu-settings-section-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.pp-menu-settings-section-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f766e;
+  background: #ccfbf1;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
 .pp-menu-item-compact {
   border: 1px solid #e2e8f0;
   border-radius: 12px;

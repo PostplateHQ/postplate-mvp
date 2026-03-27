@@ -1294,6 +1294,55 @@
     bindActionButtons();
   }
 
+  const MENU_SETTINGS_CATEGORY_LABELS = {
+    starter: 'Starters',
+    main: 'Mains',
+    drink: 'Drinks',
+    dessert: 'Desserts',
+    other: 'Other',
+  };
+  const MENU_SETTINGS_CATEGORY_ORDER = ['starter', 'main', 'drink', 'dessert', 'other'];
+
+  function groupMenuItemsForSettings(items = []) {
+    const bucket = { starter: [], main: [], drink: [], dessert: [], other: [] };
+    items.forEach((item, index) => {
+      const raw = asString(item.category, 'main').toLowerCase();
+      const key = ['starter', 'main', 'drink', 'dessert'].includes(raw) ? raw : 'other';
+      bucket[key].push({ item, index });
+    });
+    return MENU_SETTINGS_CATEGORY_ORDER.filter((k) => bucket[k].length).map((key) => ({
+      key,
+      label: MENU_SETTINGS_CATEGORY_LABELS[key],
+      rows: bucket[key],
+    }));
+  }
+
+  function renderMenuItemCompactRow(item, index, expandedIndex) {
+    const isOpen = expandedIndex === index;
+    const displayName = asString(item.name, '') || 'Untitled item';
+    const st = asString(item.status, 'regular').replaceAll('_', ' ');
+    const cat = asString(item.category, 'main');
+    const imgLabel = item.imageAssetId ? 'Image' : 'No image';
+    return `
+      <div class="pp-menu-item-compact" data-menu-row="${escapeHtml(String(index))}">
+        <div class="pp-menu-item-compact-head">
+          <div class="pp-menu-item-compact-summary">
+            <div class="pp-menu-item-title">${escapeHtml(displayName)}</div>
+            <div class="pp-menu-item-meta" aria-hidden="true">
+              <span class="pp-menu-pill">${escapeHtml(st)}</span>
+              <span class="pp-menu-pill muted">${escapeHtml(cat)}</span>
+              <span class="pp-menu-pill muted">${escapeHtml(imgLabel)}</span>
+            </div>
+          </div>
+          <div class="pp-menu-item-compact-actions">
+            <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-toggle-expand="${index}" aria-expanded="${isOpen ? 'true' : 'false'}">${isOpen ? 'Collapse' : 'Edit'}</button>
+            <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-remove="${index}">Remove</button>
+          </div>
+        </div>
+        ${isOpen ? `<div class="pp-menu-item-compact-body">${renderMenuItemFieldBlock(item, index, { compactBody: true })}</div>` : ''}
+      </div>`;
+  }
+
   function renderMenuItemFieldBlock(item, index, opts = {}) {
     const compactBody = Boolean(opts.compactBody);
     const idx = escapeHtml(String(index));
@@ -1341,33 +1390,24 @@
     }
 
     if (variant === 'compact' && ctx === 'settings') {
-      return items
-        .map((item, index) => {
-          const isOpen = expandedIndex === index;
-          const displayName = asString(item.name, '') || 'Untitled item';
-          const st = asString(item.status, 'regular').replaceAll('_', ' ');
-          const cat = asString(item.category, 'main');
-          const imgLabel = item.imageAssetId ? 'Image' : 'No image';
-          return `
-      <div class="pp-menu-item-compact" data-menu-row="${escapeHtml(String(index))}">
-        <div class="pp-menu-item-compact-head">
-          <div class="pp-menu-item-compact-summary">
-            <div class="pp-menu-item-title">${escapeHtml(displayName)}</div>
-            <div class="pp-menu-item-meta" aria-hidden="true">
-              <span class="pp-menu-pill">${escapeHtml(st)}</span>
-              <span class="pp-menu-pill muted">${escapeHtml(cat)}</span>
-              <span class="pp-menu-pill muted">${escapeHtml(imgLabel)}</span>
-            </div>
-          </div>
-          <div class="pp-menu-item-compact-actions">
-            <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-toggle-expand="${index}" aria-expanded="${isOpen ? 'true' : 'false'}">${isOpen ? 'Collapse' : 'Edit'}</button>
-            <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-remove="${index}">Remove</button>
-          </div>
+      const groups = Array.isArray(options.menuGroups)
+        ? options.menuGroups
+        : groupMenuItemsForSettings(items);
+      const sections = groups
+        .map(
+          (g) => `
+      <details class="pp-menu-settings-section" id="settings-menu-section-${escapeHtml(g.key)}" open>
+        <summary class="pp-menu-settings-section-summary">
+          <span class="pp-menu-settings-section-title">${escapeHtml(g.label)}</span>
+          <span class="pp-menu-settings-section-count">${g.rows.length}</span>
+        </summary>
+        <div class="pp-menu-settings-section-body">
+          ${g.rows.map(({ item, index }) => renderMenuItemCompactRow(item, index, expandedIndex)).join('')}
         </div>
-        ${isOpen ? `<div class="pp-menu-item-compact-body">${renderMenuItemFieldBlock(item, index, { compactBody: true })}</div>` : ''}
-      </div>`;
-        })
+      </details>`
+        )
         .join('');
+      return `<div class="pp-menu-settings-sections">${sections}</div>`;
     }
 
     return items
@@ -4002,6 +4042,26 @@
       state.settings.menuExpandedIndex = null;
     }
     const menuExpandedIndex = state.settings.menuExpandedIndex;
+    const menuGroups =
+      FEATURE_FLAGS.menu_intelligence_v1 && menuItemsDraft.length
+        ? groupMenuItemsForSettings(menuItemsDraft)
+        : [];
+    const settingsMenuJumpToolbar =
+      menuGroups.length > 1
+        ? `<div class="pp-menu-settings-toolbar">
+        <label class="pp-menu-settings-jump-label">Jump to section
+          <select id="settingsMenuSectionJump" class="pp-select" aria-label="Jump to menu section">
+            <option value="">Select section…</option>
+            ${menuGroups
+              .map(
+                (g) =>
+                  `<option value="${escapeHtml(g.key)}">${escapeHtml(g.label)} (${g.rows.length})</option>`
+              )
+              .join('')}
+          </select>
+        </label>
+      </div>`
+        : '';
     refs.routeMount.innerHTML = `
       ${createSectionHeader('Settings', 'Settings', 'Manage profile, brand, channels, and notification preferences.')}
       <section class="pp-grid pp-grid-2 pp-settings-layout-grid">
@@ -4039,9 +4099,15 @@
                 <h3>Menu items (${menuItemsDraft.length})</h3>
                 <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add item</button>
               </div>
-              <div class="pp-muted-copy">Rows stay collapsed so long lists stay scannable. Click <strong>Edit</strong> to change fields or upload a photo. Bulk import: <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button></div>
+              <div class="pp-muted-copy">Items are grouped by category—use each section header to expand or collapse. With multiple groups, use <strong>Jump to section</strong>. Click <strong>Edit</strong> on a row to change details or upload a photo. Bulk import: <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button></div>
+              ${settingsMenuJumpToolbar}
               <div id="settingsMenuItemsMount" class="pp-card-stack pp-menu-items-scroll-region">
-                ${renderMenuItemsEditor(menuItemsDraft, { context: 'settings', variant: 'compact', expandedIndex: menuExpandedIndex })}
+                ${renderMenuItemsEditor(menuItemsDraft, {
+                  context: 'settings',
+                  variant: 'compact',
+                  expandedIndex: menuExpandedIndex,
+                  menuGroups,
+                })}
               </div>
             </div>
           ` : ''}
@@ -4153,7 +4219,16 @@
         const field = asString(event.target.dataset.menuField);
         if (!Number.isFinite(idx) || !menuItemsDraft[idx]) return;
         menuItemsDraft[idx][field] = asString(event.target.value);
+        if (field === 'category') renderSettingsRoute();
       });
+    });
+
+    refs.routeMount.querySelector('#settingsMenuSectionJump')?.addEventListener('change', (event) => {
+      const sel = event.target;
+      const v = asString(sel?.value, '');
+      if (!v) return;
+      document.getElementById(`settings-menu-section-${v}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      sel.value = '';
     });
 
     refs.routeMount.querySelectorAll('[data-menu-remove]').forEach((button) => {

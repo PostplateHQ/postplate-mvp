@@ -4,6 +4,7 @@ PostPlate helps restaurants launch promotions, track redemptions, and turn walk-
 ## Butter Campaign Flow Delivery (Handoff)
 
 ### Phase 1 - UX Foundation
+- Owner IA and patterns: [docs/ux-growth-os-spec.md](docs/ux-growth-os-spec.md) (home → campaigns → reminders continuity, trust labels).
 - Guided-first campaign entry with intent cards and manual fallback.
 - Smart input model: promote items, offer type presets + custom rule, campaign goal, duration, channels.
 - Look-and-feel controls and soundtrack mood capture for social-ready generation.

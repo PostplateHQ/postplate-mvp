@@ -54,6 +54,7 @@
     settings: null,
     loadingRoute: false,
     routeError: '',
+    reactHomeUnmount: null,
     menuWizard: {
       open: false,
       step: 1,
@@ -187,6 +188,9 @@
   const refs = {
     routeMount: document.getElementById('appRouteMount'),
     sidebarNav: document.getElementById('appSidebarNav'),
+    topNav: document.getElementById('appTopNav'),
+    topNavSub: document.getElementById('appTopNavSub'),
+    notificationsButton: document.getElementById('appNotificationsButton'),
     businessName: document.getElementById('appBusinessName'),
     businessLocation: document.getElementById('appBusinessLocation'),
     businessAvatar: document.getElementById('appBusinessAvatar'),
@@ -467,6 +471,9 @@
   }
 
   function navigate(route, params = {}) {
+    if (route === 'smart-reminders' && state.route !== 'smart-reminders') {
+      resetSmartRemindersFlow();
+    }
     if (state.route === 'campaigns' && route !== 'campaigns') {
       state.campaignListSearch = '';
       if (refs.globalSearchInput) refs.globalSearchInput.value = '';
@@ -493,14 +500,19 @@
     refs.routeMount.querySelector('[data-route-retry]')?.addEventListener('click', () => refreshRoute());
   }
 
-  function renderSidebarActive() {
-    refs.sidebarNav.querySelectorAll('[data-route]').forEach((button) => {
-      const r = button.dataset.route;
-      const onDetail = state.route === 'campaign-detail';
-      const detail = state.campaignDetail;
-      const detailIsLive = onDetail && detail && asString(detail.status, '').toLowerCase() === 'active';
-      button.classList.toggle('active', r === state.route || (onDetail && r === 'campaigns') || (detailIsLive && r === 'live'));
-    });
+  function renderNavActive() {
+    function mark(container) {
+      if (!container) return;
+      container.querySelectorAll('[data-route]').forEach((button) => {
+        const r = button.dataset.route;
+        const onDetail = state.route === 'campaign-detail';
+        const detail = state.campaignDetail;
+        const detailIsLive = onDetail && detail && asString(detail.status, '').toLowerCase() === 'active';
+        button.classList.toggle('active', r === state.route || (onDetail && r === 'campaigns') || (detailIsLive && r === 'live'));
+      });
+    }
+    mark(refs.sidebarNav);
+    mark(refs.topNav);
   }
 
   function renderProfile() {
@@ -514,6 +526,9 @@
       return;
     }
     refs.businessAvatar.textContent = name.split(' ').map((x) => x[0]).join('').slice(0, 2).toUpperCase();
+    if (refs.topNavSub) {
+      refs.topNavSub.textContent = name;
+    }
   }
 
   function createSectionHeader(kicker, title, subtitle, actionHtml = '') {
@@ -777,7 +792,6 @@
     const intent = asString(action.intent, '');
 
     if (targetRoute === 'smart-reminders' || intent === 'send_reminder') {
-      resetSmartRemindersFlow();
       navigate('smart-reminders');
       return;
     }
@@ -887,12 +901,32 @@
           </div>
         </section>`;
     } else {
-      const outcomeBlock = sr.sendResult
-        ? `${sr.sendResult.error
-          ? '<p class="pp-cb-error">We could not send reminders. Check your connection and try again.</p>'
-          : `<p class="pp-success-inline">Sent <strong>${sr.sendResult.sent || 0}</strong> reminder(s).</p>`}
-          <button type="button" class="pp-primary-btn" data-sr-action="home">Done</button>`
-        : '';
+      let outcomeBlock = '';
+      if (sr.sendResult) {
+        if (sr.sendResult.error) {
+          outcomeBlock = `
+            <p class="pp-cb-error">We could not send reminders. Check your connection and try again.</p>
+            <div class="pp-inline-actions">
+              <button type="button" class="pp-secondary-btn" data-sr-action="back">Back</button>
+              <button type="button" class="pp-primary-btn" data-sr-action="home">Home</button>
+            </div>`;
+        } else {
+          const sent = Number(sr.sendResult.sent) || 0;
+          const skipped = Number(sr.sendResult.skipped) || 0;
+          const mode = asString(sr.sendResult.mode, '');
+          const modeNote = mode === 'smtp'
+            ? '<p class="pp-muted-copy">Messages were handed to your configured mail server.</p>'
+            : '<p class="pp-muted-copy"><strong>Preview mode:</strong> No SMTP configured — reminders are logged for dev. Add SMTP env vars for real delivery.</p>';
+          outcomeBlock = `
+            <p class="pp-success-inline">Sent <strong>${sent}</strong> reminder email(s).</p>
+            ${skipped > 0 ? `<p class="pp-muted-copy">${skipped} guest record(s) in this batch were not emailed (ineligible or already reminded).</p>` : ''}
+            ${modeNote}
+            <div class="pp-inline-actions">
+              <button type="button" class="pp-primary-btn" data-sr-action="home">Back to Home</button>
+              <button type="button" class="pp-secondary-btn" data-sr-action="campaigns">Manage campaigns</button>
+            </div>`;
+        }
+      }
       body = `
         <section class="pp-card pp-reminder-step">
           <h3>Send reminders</h3>
@@ -927,14 +961,21 @@
           await renderSmartRemindersRoute();
           try {
             const res = await dataAdapter.sendReminderBatch(state.storeId);
-            sr.sendResult = { sent: res.sent || 0, mode: res.mode };
-            trackFlowCompleted('reminders_sent', { sent: sr.sendResult.sent });
+            sr.sendResult = {
+              sent: Number(res.sent) || 0,
+              skipped: Number(res.skipped) || 0,
+              mode: asString(res.mode, ''),
+              error: false,
+            };
+            trackFlowCompleted('reminders_sent', { sent: sr.sendResult.sent, mode: sr.sendResult.mode });
           } catch (_e) {
-            sr.sendResult = { sent: 0, error: true };
+            sr.sendResult = { sent: 0, skipped: 0, mode: '', error: true };
           }
           sr.sending = false;
           sr.step = 3;
           await renderSmartRemindersRoute();
+        } else if (act === 'campaigns') {
+          navigate('campaigns');
         }
       });
     });
@@ -970,209 +1011,300 @@
     });
   }
 
-  async function renderHomeRoute() {
-    state.growthHub = await dataAdapter.getGrowthHubData({ storeId: state.storeId });
-    const profile = state.growthHub?.profile || state.profile || {};
-    const liveCampaigns = Array.isArray(state.growthHub?.liveCampaigns) ? state.growthHub.liveCampaigns : [];
-    const hasAnalyticsData = liveCampaigns.length > 0;
-    const toneLabel = asString(profile.brandTone, 'Not set').replaceAll('_', ' ');
-    const restaurantName = asString(profile.restaurantName, 'Your Restaurant');
-    const restaurantLocation = asString(profile.restaurantLocation, 'Primary location');
-    const cuisineLabel = asString(profile.cuisineType, 'Not set').replaceAll('_', ' ');
-    const businessTypeLabel = asString(profile.businessType, 'Not set').replaceAll('_', ' ');
-    const profileLastUpdated = formatLastUpdated(profile.updatedAt || new Date().toISOString());
+  function buildGrowthHomePayload(hub, campaignListResult) {
+    const profile = hub.profile || {};
+    const live = Array.isArray(hub.liveCampaigns) ? hub.liveCampaigns : [];
+    const totals = campaignListResult.totals || { active: 0, drafts: 0, scheduled: 0, completed: 0 };
+    const smartActions = Array.isArray(hub.smartActions) ? hub.smartActions : [];
+    const learningFeed = Array.isArray(hub.learningFeed) ? hub.learningFeed : [];
+    const menuItems = Array.isArray(profile.menuItems) ? profile.menuItems : [];
+    const menuItemsCount = menuItems.length;
 
-    const highLevelCards = hasAnalyticsData
-      ? [
-          {
-            label: 'Live now',
-            value: String(liveCampaigns.length),
-            note: 'Offers collecting scans and redemptions',
-          },
-          {
-            label: 'Customers gained',
-            value: String(liveCampaigns.reduce((sum, row) => sum + asNumber(row.customersGained), 0)),
-            note: 'From active campaigns',
-          },
-          {
-            label: 'Engagement lift',
-            value: `${Math.round(liveCampaigns.reduce((sum, row) => sum + asNumber(row.engagementLift), 0) / Math.max(1, liveCampaigns.length))}%`,
-            note: 'Average across live offers',
-          },
-          {
-            label: 'Revenue impact',
-            value: money(liveCampaigns.reduce((sum, row) => sum + asNumber(row.revenueImpact), 0)),
-            note: 'Estimated influenced revenue',
-          },
-        ]
-      : [];
-
-    let topPerformerLine = 'No live offers yet—start one to see a top performer here.';
-    if (liveCampaigns.length) {
-      const sorted = [...liveCampaigns].sort((a, b) => asNumber(b.revenueImpact) - asNumber(a.revenueImpact));
-      const top = sorted[0];
-      topPerformerLine = `${escapeHtml(top.title)} · ${escapeHtml(money(asNumber(top.revenueImpact)))} est. impact`;
+    function prettyBizName(name) {
+      const s = asString(name, '');
+      if (!s) return 'Rasa Kitchen';
+      return s.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
     }
 
-    let attentionLine = '';
-    if (!liveCampaigns.length) {
-      attentionLine = 'Add a live offer so guests have something to redeem. Open Live to execute, or Manage campaigns for the full list.';
-    } else {
-      const zeroGain = liveCampaigns.filter((c) => asNumber(c.customersGained) === 0).length;
-      attentionLine = zeroGain > 0
-        ? `${zeroGain} live offer(s) have not recorded customer gains yet—we will add sharper alerts when redemption data is fully wired.`
-        : 'No urgent flags from current signals. Check Live for execution details.';
+    function displayLocation() {
+      const loc = asString(profile.restaurantLocation, '');
+      if (!loc || loc === 'Primary location') return 'Fort Lauderdale';
+      if (loc.length <= 3) return `Fort Lauderdale · ${loc}`;
+      return loc;
     }
 
-    refs.routeMount.innerHTML = `
-      ${createSectionHeader('Home', 'Business control center', 'Decisions and nudges live here. Execution is on Live; every draft and completed run is under Manage campaigns.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
+    const businessName = prettyBizName(profile.restaurantName || 'Your Restaurant');
+    const location = displayLocation();
+    const logo = asString(profile.logoAsset, '');
+    const storefrontImageUrl = logo && (logo.startsWith('http') || logo.startsWith('data:')) ? logo : null;
 
-      <section class="pp-agent-dashboard-hero">
-        <article class="pp-card pp-agent-profile-card">
-          <div class="pp-agent-profile-top">
-            <div class="pp-agent-logo">
-              ${profile.logoAsset
-                ? `<img src="${escapeHtml(profile.logoAsset)}" alt="${escapeHtml(restaurantName)} logo" />`
-                : escapeHtml(restaurantName.split(' ').map((x) => x[0]).join('').slice(0, 2).toUpperCase())}
-            </div>
-            <div>
-              <p class="pp-card-kicker">Restaurant Profile</p>
-              <h3>${escapeHtml(restaurantName)}</h3>
-              <p class="pp-muted-copy">${escapeHtml(restaurantLocation)}</p>
-            </div>
-          </div>
-          <div class="pp-agent-profile-meta">
-            <span class="pp-card-chip">Tone: ${escapeHtml(toneLabel)}</span>
-            <span class="pp-card-chip">Cuisine: ${escapeHtml(cuisineLabel)}</span>
-            <span class="pp-card-chip">Type: ${escapeHtml(businessTypeLabel)}</span>
-          </div>
-        </article>
-        <article class="pp-card pp-agent-analytics-card">
-          <div class="pp-card-head compact">
-            <p class="pp-card-kicker">Today at a glance</p>
-            <span class="pp-muted-copy">Last updated ${escapeHtml(profileLastUpdated)}</span>
-          </div>
-          ${hasAnalyticsData ? `
-            <div class="pp-grid pp-grid-4">
-              ${highLevelCards.map((item) => `
-                <div class="pp-agent-kpi">
-                  <span class="pp-kpi-label">${escapeHtml(item.label)}</span>
-                  <strong>${escapeHtml(item.value)}</strong>
-                  <p>${escapeHtml(item.note)}</p>
-                </div>
-              `).join('')}
-            </div>
-          ` : `
-            <div class="pp-agent-empty-analytics">
-              <h3>No analytics yet</h3>
-              <p>Publish a live offer. Once guests interact, we will summarize impact here.</p>
-              <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>Start first campaign</button>
-            </div>
-          `}
-        </article>
-      </section>
+    let statusChip = 'Growth active';
+    if (live.length === 1) statusChip = 'Campaign running';
+    else if (live.length > 1) statusChip = `${live.length} campaigns running`;
+    else if (totals.drafts > 0) statusChip = `${totals.drafts} draft${totals.drafts === 1 ? '' : 's'} ready`;
 
-      <section class="pp-card pp-home-today-snapshot">
-        <div class="pp-card-head"><h3>Snapshot</h3></div>
-        <p class="pp-home-snapshot-line"><strong>Top performer:</strong> ${topPerformerLine}</p>
-        <p class="pp-home-snapshot-line pp-muted-copy"><strong>Needs attention:</strong> ${attentionLine}</p>
-        <div class="pp-inline-actions pp-home-snapshot-actions">
-          <button type="button" class="pp-primary-btn pp-inline-btn" data-route="live">Open Live</button>
-          <button type="button" class="pp-secondary-btn pp-inline-btn" data-route="campaigns">Manage campaigns</button>
-        </div>
-      </section>
+    const revenueTotal = live.reduce((s, c) => s + asNumber(c.revenueImpact), 0);
+    const custTotal = live.reduce((s, c) => s + asNumber(c.customersGained), 0);
+    const avgLift = live.length
+      ? Math.round(live.reduce((s, c) => s + asNumber(c.engagementLift), 0) / live.length)
+      : 0;
+    const sortedRev = [...live].sort((a, b) => asNumber(b.revenueImpact) - asNumber(a.revenueImpact));
+    const topCamp = sortedRev[0];
+    const topTitle = topCamp ? asString(topCamp.title, 'Top campaign') : '—';
 
-      ${FEATURE_FLAGS.menu_intelligence_v1 && (!Array.isArray(profile.menuItems) || profile.menuItems.length < 3) ? `
-        <section class="pp-wizard-hero-card">
-          <div class="pp-wizard-hero-content">
-            <h3>Let's grow your store together</h3>
-            <p>Upload your menu and we'll organize it for you. Tag your best sellers, tell us your rhythm — and every campaign after this will be smarter.</p>
-            <div class="pp-inline-actions">
-              <button class="pp-primary-btn" type="button" data-route="menu-import">Upload & Optimize Menu</button>
-              <button class="pp-secondary-btn pp-inline-btn" type="button" data-open-menu-wizard>Quick Setup</button>
-            </div>
-          </div>
-        </section>
-      ` : (FEATURE_FLAGS.menu_intelligence_v1 ? `
-        <section class="pp-wizard-hero-card compact">
-          <div class="pp-wizard-hero-content">
-            <p><strong>${(profile.menuItems || []).length} menu items loaded</strong> · <button class="pp-link-btn" type="button" data-open-menu-wizard>Update menu setup</button></p>
-          </div>
-        </section>
-      ` : '')}
+    const kpis = [
+      {
+        id: 'kpi_rev',
+        label: 'Revenue from campaigns',
+        value: money(revenueTotal),
+        hint: live.length ? 'Influenced this cycle' : 'Publish a live offer to populate',
+        barPct: live.length ? Math.min(95, 38 + Math.round(revenueTotal / Math.max(1, live.length) / 50)) : 18,
+      },
+      {
+        id: 'kpi_cust',
+        label: 'Customers engaged',
+        value: live.length ? String(custTotal) : '—',
+        hint: live.length ? 'Scans and redemptions' : 'Waiting on first activity',
+        barPct: live.length ? Math.min(95, 30 + custTotal * 2) : 14,
+      },
+      {
+        id: 'kpi_conv',
+        label: 'Conversion rate',
+        value: live.length ? `${avgLift}%` : '—',
+        hint: 'Across live offers',
+        barPct: live.length ? Math.min(92, 28 + avgLift) : 20,
+      },
+      {
+        id: 'kpi_top',
+        label: 'Top campaign',
+        value: topTitle,
+        hint: topCamp ? asString(topCamp.offerValue, asString(topCamp.headline, 'Leads the pack')) : 'No live data yet',
+        barPct: topCamp ? Math.min(95, 45 + asNumber(topCamp.engagementLift)) : 12,
+      },
+      {
+        id: 'kpi_active',
+        label: 'Active campaigns',
+        value: String(totals.active ?? live.length),
+        hint: 'Live right now',
+        barPct: Math.min(90, 22 + (totals.active || live.length) * 18),
+      },
+      {
+        id: 'kpi_draft',
+        label: 'Drafts ready',
+        value: String(totals.drafts ?? 0),
+        hint: totals.drafts ? 'Ready to ship' : 'None waiting',
+        barPct: totals.drafts ? Math.min(92, 24 + totals.drafts * 14) : 16,
+      },
+    ];
 
-      <section class="pp-page-section">
-        <div class="pp-card-head">
-          <div>
-            <p class="pp-card-kicker">Recommended Next Steps</p>
-            <h3>Smart Actions</h3>
-          </div>
-        </div>
-        <div class="pp-grid pp-grid-3">
-          ${state.growthHub.smartActions.map((action, index) => renderSmartActionCard(action, index)).join('')}
-        </div>
-        <p class="pp-smart-actions-meta">${escapeHtml(state.growthHub.smartActionsMeta?.windowLabel || 'Tips update as you add menu items and campaigns.')}</p>
-      </section>
+    const weekly = {
+      label: 'Weekly campaign rhythm',
+      trendLabel: live.length ? 'Planning guide' : 'Sample curve',
+      chartCaption: live.length
+        ? 'Bar pattern is illustrative — use it to time posts; detailed analytics will reflect your store soon.'
+        : 'Illustrative week shape until live campaigns feed real weekly stats.',
+      days: [
+        { label: 'Mon', value: 14 },
+        { label: 'Tue', value: 18 },
+        { label: 'Wed', value: 16 },
+        { label: 'Thu', value: 22 },
+        { label: 'Fri', value: 27 },
+        { label: 'Sat', value: 36, highlight: true },
+        { label: 'Sun', value: 21 },
+      ],
+    };
 
-      <section class="pp-page-section">
-        <div class="pp-card-head"><h3>Quick Actions</h3></div>
-        <div class="pp-grid pp-grid-3">
-          ${state.growthHub.quickActions.map((quick) => `
-            <button class="pp-card pp-quick-action-card" type="button" data-action='${escapeHtml(JSON.stringify(quick.action))}'>
-              <span class="pp-nav-icon">${escapeHtml(quick.icon)}</span>
-              <strong>${escapeHtml(quick.title)}</strong>
-            </button>
-          `).join('')}
-        </div>
-      </section>
+    const spotlightCampaign = sortedRev[0] || null;
+    const insightLine = (learningFeed[0] && (learningFeed[0].detail || learningFeed[0].title))
+      || 'Performs best after 6 PM — pair counter QR with a story reminder.';
+    const redemptionLabel = spotlightCampaign ? String(asNumber(spotlightCampaign.customersGained) || 0) : '0';
+    const reachN = spotlightCampaign
+      ? Math.max(400, Math.round(600 + asNumber(spotlightCampaign.engagementLift) * 85 + asNumber(spotlightCampaign.customersGained) * 12))
+      : 0;
+    const reachLabel = reachN >= 1000 ? `${(reachN / 1000).toFixed(1)}k` : String(reachN);
 
-      <section class="pp-page-section">
-        <div class="pp-card-head"><h3>Learning feed</h3></div>
-        <div class="pp-card-stack">
-          ${state.growthHub.learningFeed.map((insight) => `
-            <div class="pp-insight-card">
-              <strong>${escapeHtml(insight.title)}</strong>
-              <p>${escapeHtml(insight.detail)}</p>
-            </div>
-          `).join('')}
-        </div>
-      </section>
-    `;
+    const spotlight = {
+      campaign: spotlightCampaign
+        ? {
+            id: asString(spotlightCampaign.id, ''),
+            title: asString(spotlightCampaign.title, 'Live offer'),
+            goal: asString(spotlightCampaign.goal, ''),
+            offerValue: asString(spotlightCampaign.offerValue, ''),
+            headline: asString(spotlightCampaign.headline, ''),
+            status: asString(spotlightCampaign.status, 'active'),
+            customersGained: asNumber(spotlightCampaign.customersGained),
+            engagementLift: asNumber(spotlightCampaign.engagementLift),
+            revenueImpact: asNumber(spotlightCampaign.revenueImpact),
+            channels: Array.isArray(spotlightCampaign.channels) ? spotlightCampaign.channels : [],
+          }
+        : null,
+      insight: insightLine,
+      peakTimeLabel: '6–9 PM',
+      reachLabel: spotlightCampaign ? reachLabel : '—',
+      redemptionLabel,
+    };
 
-    state.profile = state.growthHub.profile || state.profile;
+    const attention = [];
+    const weakSort = [...live].sort((a, b) => asNumber(a.engagementLift) - asNumber(b.engagementLift));
+    const weak = weakSort[0];
+    if (weak && live.length && asNumber(weak.engagementLift) < 16) {
+      attention.push({
+        id: `under_${weak.id}`,
+        title: `${asString(weak.title, 'One offer')} is softer than your other live runs`,
+        detail: 'Tighten the hook or refresh creative — small edits often lift redemptions.',
+        cta: 'Fix now',
+        action: { targetRoute: 'create', intent: 'improve_campaign', metadata: { mode: 'offer', sourceCampaignId: weak.id } },
+        tone: 'warm',
+      });
+    }
 
-    refs.routeMount.querySelectorAll('[data-open-create]').forEach((node) => {
-      node.addEventListener('click', () => { resetCampaignBuilder(); navigate('create-campaign'); });
-    });
-    refs.routeMount.querySelectorAll('[data-open-menu-wizard]').forEach((node) => {
-      node.addEventListener('click', () => openMenuWizard());
-    });
-    refs.routeMount.querySelectorAll('[data-route="menu-import"]').forEach((button) => {
-      button.addEventListener('click', () => navigate('menu-import'));
-    });
-    refs.routeMount.querySelectorAll('[data-route="live"]').forEach((button) => {
-      button.addEventListener('click', () => navigate('live'));
-    });
-    refs.routeMount.querySelectorAll('[data-route="campaigns"]').forEach((button) => {
-      button.addEventListener('click', () => navigate('campaigns'));
-    });
-    bindActionButtons();
-
-    requestAnimationFrame(() => {
-      refs.routeMount.querySelectorAll('[data-smart-action-id]').forEach((el) => {
-        const id = el.getAttribute('data-smart-action-id');
-        if (!id) return;
-        const obs = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              trackSmartActionImpression(id);
-              obs.disconnect();
-            }
-          });
-        }, { threshold: 0.4 });
-        obs.observe(el);
+    smartActions.slice(0, 2).forEach((sa, i) => {
+      attention.push({
+        id: asString(sa.id, `sa_${i}`),
+        title: sa.title,
+        detail: sa.reason,
+        cta: sa.ctaLabel,
+        action: sa.action,
+        tone: i === 0 ? 'warm' : 'default',
       });
     });
+
+    if (totals.drafts > 0) {
+      attention.push({
+        id: 'drafts_queue',
+        title: `${totals.drafts} draft${totals.drafts === 1 ? '' : 's'} ready to publish`,
+        detail: 'Ship one before the weekend rush.',
+        cta: 'Publish draft',
+        action: { targetRoute: 'campaigns', metadata: { filter: 'drafts' } },
+      });
+    }
+
+    attention.push({
+      id: 'qr_nudge',
+      title: 'Add QR where guests already wait',
+      detail: 'Counter and pickup zones lift scans without extra ad spend.',
+      cta: 'See Live',
+      action: { targetRoute: 'live' },
+    });
+
+    const attentionTrim = attention.slice(0, 4);
+
+    const baseQuick = Array.isArray(hub.quickActions)
+      ? hub.quickActions.map((q) => ({
+        id: asString(q.id, q.title),
+        title: q.title,
+        icon: q.icon || '→',
+        action: q.action,
+      }))
+      : [];
+
+    const quickActions = [...baseQuick];
+    quickActions.push({
+      id: 'qa_weekend',
+      title: 'Launch weekend offer',
+      icon: '☀',
+      action: { targetRoute: 'create', intent: 'boost_weekend_traffic', metadata: { preset: 'weekend_combo' } },
+    });
+    if (topCamp) {
+      quickActions.push({
+        id: 'qa_dup_top',
+        title: 'Duplicate top campaign',
+        icon: '⎘',
+        action: {
+          targetRoute: 'create',
+          intent: 'duplicate_winning_offer',
+          metadata: { mode: 'offer', sourceCampaignId: topCamp.id },
+        },
+      });
+    }
+
+    const scheduleRows = [];
+    if (totals.scheduled > 0) {
+      scheduleRows.push({ label: 'Scheduled launches', value: `${totals.scheduled} queued` });
+    }
+    if (totals.drafts > 0) {
+      scheduleRows.push({ label: 'Drafts ready', value: `${totals.drafts} to publish` });
+    }
+    scheduleRows.push({ label: 'Reminder', value: 'Review Live before Friday dinner' });
+
+    return {
+      businessName,
+      location,
+      tagline: 'Your growth control center — clarity first, then confident moves.',
+      statusChip,
+      storefrontImageUrl,
+      kpis,
+      kpiFootnote: 'KPI counts match your campaign list. Weekly bars are a visual guide, not a revenue forecast.',
+      weekly,
+      spotlight,
+      attention: attentionTrim,
+      quickActions,
+      schedule: scheduleRows.length ? { title: 'On your radar', rows: scheduleRows } : null,
+      menuHint: {
+        show: FEATURE_FLAGS.menu_intelligence_v1 && menuItemsCount < 3,
+        itemCount: menuItemsCount,
+        onUploadPath: true,
+      },
+    };
+  }
+
+  function getGrowthHomeBundle() {
+    const g = globalScope.PostPlateGrowthHome;
+    if (g && typeof g.mountGrowthHome === 'function' && typeof g.unmountGrowthHome === 'function') return g;
+    return null;
+  }
+
+  async function renderHomeRoute() {
+    state.growthHub = await dataAdapter.getGrowthHubData({ storeId: state.storeId });
+    const campaignListResult = await dataAdapter.getCampaignList({ storeId: state.storeId, status: 'all' });
+    state.profile = state.growthHub.profile || state.profile;
+    const payload = buildGrowthHomePayload(state.growthHub, campaignListResult);
+
+    refs.routeMount.innerHTML = '<div id="growthHomeReactRoot" class="growth-home-mount"></div>';
+    const container = refs.routeMount.querySelector('#growthHomeReactRoot');
+    if (!container) {
+      setRouteError('Home mount point missing.');
+      return;
+    }
+
+    try {
+      const mod = getGrowthHomeBundle();
+      if (!mod) {
+        setRouteError('Home dashboard script did not load. Confirm assets/growth-home/growth-home.js exists, then run: npm run build:growth-home — and hard-refresh the page (Shift+Reload).');
+        return;
+      }
+      if (state.reactHomeUnmount) {
+        try {
+          state.reactHomeUnmount();
+        } catch (_e) { /* ignore */ }
+        state.reactHomeUnmount = null;
+      }
+      state.reactHomeUnmount = () => {
+        mod.unmountGrowthHome();
+      };
+      mod.mountGrowthHome(container, {
+        data: payload,
+        bridge: {
+          navigate: (route, params) => navigate(route, params || {}),
+          onAction: (action) => handleAction(action),
+          onNewCampaign: () => { resetCampaignBuilder(); navigate('create-campaign'); },
+          onOpenMenuWizard: () => openMenuWizard(),
+          onEditBusiness: () => navigate('settings'),
+          onViewCampaign: (campaignId) => navigate('campaign-detail', { campaignId: asString(campaignId, '') }),
+          onPauseCampaign: async (campaignId) => {
+            try {
+              await dataAdapter.pauseCampaign(campaignId);
+              await refreshRoute();
+            } catch (_error) {
+              setRouteError('Could not pause that campaign right now.');
+            }
+          },
+        },
+      });
+    } catch (renderErr) {
+      console.error('Growth Home render failed', renderErr);
+      setRouteError('Home dashboard hit a render error. Check the browser console. Rebuild with: npm run build:growth-home');
+    }
   }
 
   function filterCampaignItemsBySearch(items, rawQuery) {
@@ -1426,7 +1558,7 @@
       });
     });
     bindActionButtons();
-    renderSidebarActive();
+    renderNavActive();
   }
 
   async function renderContentStudioRoute() {
@@ -6082,8 +6214,17 @@
   }
 
   function bindGlobalEvents() {
-    refs.sidebarNav.querySelectorAll('[data-route]').forEach((button) => {
-      button.addEventListener('click', () => navigate(button.dataset.route));
+    function bindNav(container) {
+      if (!container) return;
+      container.querySelectorAll('[data-route]').forEach((button) => {
+        button.addEventListener('click', () => navigate(button.dataset.route));
+      });
+    }
+    bindNav(refs.sidebarNav);
+    bindNav(refs.topNav);
+
+    refs.notificationsButton?.addEventListener('click', () => {
+      /* Reserved: owner alerts / redemption spikes — wire when backend is ready */
     });
 
     refs.primaryCreateButton.addEventListener('click', () => { resetCampaignBuilder(); navigate('create-campaign'); });
@@ -6130,7 +6271,7 @@
   function syncGlobalSearchPlaceholder() {
     if (!refs.globalSearchInput) return;
     const map = {
-      campaigns: 'Search campaigns by name, offer, or channel…',
+      campaigns: 'Search all campaigns by name, offer, or channel…',
       home: 'Search actions, campaigns, assets…',
       live: 'Search live campaigns by name or offer…',
       'content-studio': 'Search posts, reels, and drafts…',
@@ -6147,9 +6288,15 @@
   }
 
   async function refreshRoute() {
+    if (state.reactHomeUnmount) {
+      try {
+        state.reactHomeUnmount();
+      } catch (_e) { /* ignore */ }
+      state.reactHomeUnmount = null;
+    }
     state.loadingRoute = true;
     state.routeError = '';
-    renderSidebarActive();
+    renderNavActive();
     renderLoadingShell();
 
     try {

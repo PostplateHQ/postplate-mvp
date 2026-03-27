@@ -342,6 +342,7 @@
       smartActionsMeta: smartBundle.smartActionsMeta,
       quickActions: [
         { id: 'quick_offer', title: 'New campaign', icon: '◌', action: getRouteAction('create', 'create_offer', { mode: 'offer' }) },
+        { id: 'quick_reminders', title: 'Guest reminders', icon: '✉', action: getRouteAction('smart-reminders', 'send_reminder', {}) },
         { id: 'quick_reel', title: 'Create Reel', icon: '▶', action: getRouteAction('reel-guide', 'create_reel', { mode: 'reel' }) },
         { id: 'quick_post', title: 'Create Post', icon: '✦', action: getRouteAction('create', 'create_post', { mode: 'post' }) },
       ],

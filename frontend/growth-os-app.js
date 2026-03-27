@@ -4004,8 +4004,8 @@
     const menuExpandedIndex = state.settings.menuExpandedIndex;
     refs.routeMount.innerHTML = `
       ${createSectionHeader('Settings', 'Settings', 'Manage profile, brand, channels, and notification preferences.')}
-      <section class="pp-grid pp-grid-2">
-        <article class="pp-card">
+      <section class="pp-grid pp-grid-2 pp-settings-layout-grid">
+        <article class="pp-card pp-settings-profile-card">
           <div class="pp-card-head"><h3>Restaurant Profile</h3></div>
           <form id="settingsProfileForm" class="pp-form-grid pp-settings-form-grid" novalidate>
             <label>Restaurant Name<input id="settingsRestaurantName" type="text" value="${escapeHtml(profile.restaurantName || '')}" /></label>
@@ -4028,26 +4028,26 @@
               </select>
             </label>
             <p class="pp-muted-copy pp-form-field-full pp-form-hint">Used as the starting audience for new campaigns. You can change it per campaign anytime in Create Campaign. We also use it to tune poster copy and photo mood.</p>
-            ${FEATURE_FLAGS.menu_intelligence_v1 ? `
-              <div class="pp-menu-editor-wrap pp-form-field-full pp-menu-editor-settings">
-                <div class="pp-card-head compact">
-                  <h3>Menu items (${menuItemsDraft.length})</h3>
-                  <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add item</button>
-                </div>
-                <p class="pp-muted-copy">Rows stay collapsed so long lists stay scannable. Click <strong>Edit</strong> to change fields or upload a photo. Bulk import: <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button>.</p>
-                <div id="settingsMenuItemsMount" class="pp-card-stack pp-menu-items-scroll-region">
-                  ${renderMenuItemsEditor(menuItemsDraft, { context: 'settings', variant: 'compact', expandedIndex: menuExpandedIndex })}
-                </div>
-              </div>
-            ` : ''}
             <div class="pp-inline-actions pp-form-field-full">
               <button id="settingsSaveButton" type="submit" class="pp-primary-btn pp-inline-btn">Save Profile</button>
               <span id="settingsSaveStatus" class="pp-muted-copy"></span>
             </div>
           </form>
+          ${FEATURE_FLAGS.menu_intelligence_v1 ? `
+            <div class="pp-menu-editor-wrap pp-menu-editor-settings pp-settings-menu-outside-form" aria-label="Menu items editor">
+              <div class="pp-card-head compact">
+                <h3>Menu items (${menuItemsDraft.length})</h3>
+                <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add item</button>
+              </div>
+              <div class="pp-muted-copy">Rows stay collapsed so long lists stay scannable. Click <strong>Edit</strong> to change fields or upload a photo. Bulk import: <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button></div>
+              <div id="settingsMenuItemsMount" class="pp-card-stack pp-menu-items-scroll-region">
+                ${renderMenuItemsEditor(menuItemsDraft, { context: 'settings', variant: 'compact', expandedIndex: menuExpandedIndex })}
+              </div>
+            </div>
+          ` : ''}
         </article>
 
-        <article class="pp-card">
+        <article class="pp-card pp-settings-secondary-card">
           <div class="pp-card-head"><h3>Other Settings</h3></div>
           <div class="pp-card-stack pp-settings-nav-stack">
             <button type="button" class="pp-settings-nav-card" data-settings-tab="brand"><strong>Brand Preferences</strong><p>Typography, color, and tone presets (expansion-ready).</p></button>

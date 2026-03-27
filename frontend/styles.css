@@ -4372,7 +4372,8 @@ select:focus {
 }
 
 .pp-filter-search,
-.pp-form-grid input {
+.pp-form-grid input,
+.pp-settings-menu-outside-form .pp-menu-item-compact-body input[type="text"] {
   height: 42px;
   padding: 0 14px;
   border-radius: 14px;
@@ -4380,6 +4381,7 @@ select:focus {
   background: #ffffff;
   font-size: 14px;
   margin: 0;
+  box-sizing: border-box;
 }
 
 .pp-content-card {
@@ -4474,14 +4476,6 @@ select:focus {
 
 .pp-form-grid label {
   margin: 0;
-}
-
-.pp-form-grid span {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #334155;
 }
 
 @media (max-width: 1280px) {
@@ -8633,6 +8627,8 @@ select:focus {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
+  min-height: 48px;
+  box-sizing: border-box;
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
@@ -8825,6 +8821,25 @@ select:focus {
   color: #5f7595;
 }
 
+/* Settings: two-column layout — align tops, allow grid shrink */
+.pp-settings-layout-grid {
+  align-items: start;
+}
+
+.pp-settings-profile-card,
+.pp-settings-secondary-card {
+  min-width: 0;
+}
+
+.pp-settings-menu-outside-form {
+  margin-top: 18px;
+}
+
+.pp-settings-menu-outside-form > .pp-muted-copy {
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
 /* Settings: profile form full-width rows and brand tone stack */
 .pp-settings-form-grid .pp-form-field-full {
   grid-column: 1 / -1;
@@ -8980,6 +8995,18 @@ select:focus {
 .pp-form-grid select {
   margin-top: 6px;
   margin-bottom: 0;
+}
+
+.pp-settings-menu-outside-form .pp-menu-item-compact-body select.pp-select {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 6px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid #d9e2ec;
+  background: #ffffff;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .pp-inline-actions {

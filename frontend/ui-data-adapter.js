@@ -341,7 +341,7 @@
       smartActions: smartBundle.smartActions,
       smartActionsMeta: smartBundle.smartActionsMeta,
       quickActions: [
-        { id: 'quick_offer', title: 'Create Offer', icon: '◌', action: getRouteAction('create', 'create_offer', { mode: 'offer' }) },
+        { id: 'quick_offer', title: 'New campaign', icon: '◌', action: getRouteAction('create', 'create_offer', { mode: 'offer' }) },
         { id: 'quick_reel', title: 'Create Reel', icon: '▶', action: getRouteAction('reel-guide', 'create_reel', { mode: 'reel' }) },
         { id: 'quick_post', title: 'Create Post', icon: '✦', action: getRouteAction('create', 'create_post', { mode: 'post' }) },
       ],
@@ -393,7 +393,7 @@
       actions: [
         getRouteAction('create', 'run_again', { mode: 'offer', sourceCampaignId: selected.id }),
         getRouteAction('create', 'improve_campaign', { mode: 'offer', sourceCampaignId: selected.id }),
-        getRouteAction('create', 'create_variant', { mode: 'post', sourceCampaignId: selected.id }),
+        getRouteAction('content-studio', 'open_studio_posts', { tab: 'posts', sourceCampaignId: selected.id }),
       ],
     };
   }

@@ -3,7 +3,7 @@
   if (!dataAdapter) return;
 
   const DEFAULT_STORE_ID = 'taco123';
-  const ROUTES = ['home', 'campaigns', 'campaign-detail', 'content-studio', 'menu-import', 'create-campaign', 'create', 'analytics', 'settings', 'smart-reminders', 'reel-guide'];
+  const ROUTES = ['home', 'live', 'campaigns', 'campaign-detail', 'content-studio', 'menu-import', 'create-campaign', 'create', 'analytics', 'settings', 'smart-reminders', 'reel-guide'];
   const CAMPAIGN_STATUSES = ['active', 'scheduled', 'drafts', 'completed'];
   const CONTENT_TABS = ['posts', 'reels', 'offers', 'drafts'];
   const FEATURE_FLAGS = {
@@ -11,7 +11,7 @@
   };
   const CREATE_STEPS = ['Intent', 'Offer Basics + Schedule', 'Poster Design', 'Preview + Publish'];
   const CREATE_INTENTS = [
-    { id: 'create_offer', title: 'Create New Offer', desc: 'Start a fresh offer with recommended defaults.', mode: 'offer' },
+    { id: 'create_offer', title: 'New offer', desc: 'Start a fresh offer with recommended defaults.', mode: 'offer' },
     { id: 'increase_sales', title: 'Boost Slow Hours', desc: 'Use a simple value offer to increase traffic.', mode: 'offer' },
     { id: 'promote_item', title: 'Promote Menu Item', desc: 'Highlight one item and publish quickly.', mode: 'offer' },
   ];
@@ -43,6 +43,10 @@
     profile: null,
     growthHub: null,
     campaigns: { status: 'active', items: [], totals: {} },
+    campaignListSearch: '',
+    liveListSearch: '',
+    livePageItems: [],
+    liveLearningFeed: [],
     campaignDetail: null,
     campaignDetailTab: 'overview',
     contentStudio: { tab: 'posts', items: [] },
@@ -187,6 +191,7 @@
     businessLocation: document.getElementById('appBusinessLocation'),
     businessAvatar: document.getElementById('appBusinessAvatar'),
     primaryCreateButton: document.getElementById('appPrimaryCreateButton'),
+    globalSearchInput: document.getElementById('appGlobalSearch'),
     accountButton: document.getElementById('appAccountButton'),
 
     createModal: document.getElementById('unifiedCreateModal'),
@@ -462,6 +467,14 @@
   }
 
   function navigate(route, params = {}) {
+    if (state.route === 'campaigns' && route !== 'campaigns') {
+      state.campaignListSearch = '';
+      if (refs.globalSearchInput) refs.globalSearchInput.value = '';
+    }
+    if (state.route === 'live' && route !== 'live') {
+      state.liveListSearch = '';
+      if (refs.globalSearchInput) refs.globalSearchInput.value = '';
+    }
     state.route = route;
     state.routeParams = params;
     setUrl(route, params);
@@ -482,7 +495,11 @@
 
   function renderSidebarActive() {
     refs.sidebarNav.querySelectorAll('[data-route]').forEach((button) => {
-      button.classList.toggle('active', button.dataset.route === state.route || (state.route === 'campaign-detail' && button.dataset.route === 'campaigns'));
+      const r = button.dataset.route;
+      const onDetail = state.route === 'campaign-detail';
+      const detail = state.campaignDetail;
+      const detailIsLive = onDetail && detail && asString(detail.status, '').toLowerCase() === 'active';
+      button.classList.toggle('active', r === state.route || (onDetail && r === 'campaigns') || (detailIsLive && r === 'live'));
     });
   }
 
@@ -552,6 +569,17 @@
   function renderCampaignCard(campaign) {
     const isLive = campaign.status === 'active';
     const pauseLabel = isLive ? 'Pause' : 'Resume';
+    const studioTab = isLive ? 'posts' : 'drafts';
+    const nextStudioAction = JSON.stringify({
+      targetRoute: 'content-studio',
+      intent: 'open_studio',
+      metadata: { tab: studioTab },
+    });
+    const nextReelAction = JSON.stringify({
+      targetRoute: 'reel-guide',
+      intent: 'create_reel',
+      metadata: {},
+    });
     return `
       <article class="pp-card pp-campaign-card" data-campaign-id="${escapeHtml(campaign.id)}">
         <div class="pp-campaign-row-top">
@@ -566,10 +594,46 @@
           <span><strong>State:</strong> ${escapeHtml(campaign.performanceState)}</span>
           <span><strong>Value:</strong> ${escapeHtml(campaign.offerValue)}</span>
         </div>
+        <p class="pp-campaign-next-action">
+          <span class="pp-muted-copy">Next:</span>
+          <button type="button" class="pp-link-btn" data-action='${escapeHtml(nextStudioAction)}'>Content Studio</button>
+          <span class="pp-muted-copy">·</span>
+          <button type="button" class="pp-link-btn" data-action='${escapeHtml(nextReelAction)}'>Reel guide</button>
+        </p>
         <div class="pp-inline-actions">
           <button type="button" class="pp-primary-btn pp-inline-btn" data-view-campaign="${escapeHtml(campaign.id)}">View</button>
           <button type="button" class="pp-secondary-btn pp-inline-btn" data-pause-campaign="${escapeHtml(campaign.id)}">${pauseLabel}</button>
           <button type="button" class="pp-secondary-btn pp-inline-btn" data-duplicate-campaign="${escapeHtml(campaign.id)}">Duplicate</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderLiveExecutionCard(campaign, insight) {
+    const boostAction = JSON.stringify({ targetRoute: 'create', intent: 'boost_weekend_traffic', metadata: { preset: 'weekend_combo' } });
+    const improveAction = JSON.stringify({ targetRoute: 'create', intent: 'improve_campaign', metadata: { mode: 'offer', sourceCampaignId: campaign.id } });
+    return `
+      <article class="pp-card pp-live-execution-card" data-campaign-id="${escapeHtml(campaign.id)}">
+        <div class="pp-live-execution-top">
+          <div>
+            <p class="pp-card-kicker">Live now</p>
+            <h2 class="pp-live-title">${escapeHtml(campaign.title)}</h2>
+            <p class="pp-muted-copy">${escapeHtml(campaign.goal)}</p>
+          </div>
+          <span class="pp-status-badge ready">${escapeHtml(campaign.status)}</span>
+        </div>
+        <p class="pp-live-offer-line">${escapeHtml(campaign.offerValue)}</p>
+        <div class="pp-live-metrics">
+          <div class="pp-live-metric"><span>Customers gained</span><strong>${escapeHtml(String(campaign.customersGained ?? 0))}</strong></div>
+          <div class="pp-live-metric"><span>Engagement lift</span><strong>${escapeHtml(String(campaign.engagementLift ?? 0))}%</strong></div>
+          <div class="pp-live-metric"><span>Revenue (est.)</span><strong>${escapeHtml(money(asNumber(campaign.revenueImpact)))}</strong></div>
+        </div>
+        <p class="pp-live-ai-insight"><strong>Tip:</strong> ${escapeHtml(insight)}</p>
+        <div class="pp-inline-actions pp-live-actions">
+          <button type="button" class="pp-primary-btn pp-inline-btn" data-action='${escapeHtml(boostAction)}'>Boost</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-action='${escapeHtml(improveAction)}'>Improve</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-pause-campaign>Pause</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-view-campaign="${escapeHtml(campaign.id)}">View</button>
         </div>
       </article>
     `;
@@ -679,6 +743,30 @@
       return;
     }
 
+    if (intent === 'run_again' || intent === 'improve_campaign') {
+      const cid = asString(meta.sourceCampaignId, '');
+      const fromList = Array.isArray(state.campaigns?.items) ? state.campaigns.items : [];
+      const camp = live.find((c) => c.id === cid)
+        || fromList.find((c) => c.id === cid)
+        || (state.campaignDetail && state.campaignDetail.id === cid ? state.campaignDetail : null);
+      if (camp) {
+        cb.intent = 'deal';
+        cb.offerType = 'combo';
+        cb.comboDescription = asString(camp.offerValue, asString(camp.headline, ''));
+        cb.selectedItem = asString(camp.title, asString(camp.headline, 'Featured item'));
+        cb.selectedItemId = '';
+        cb.tone = intent === 'improve_campaign' ? 'bold' : 'friendly';
+        cb.duplicateSourceCampaignId = camp.id;
+        cb.channels = Array.isArray(camp.channels) && camp.channels.length
+          ? [...camp.channels]
+          : ['Instagram Post', 'In-store QR'];
+        cb.headline = asString(camp.headline, camp.title);
+        cb.offerLine = asString(camp.offerValue, '');
+      }
+      cb.step = 2;
+      return;
+    }
+
     cb.step = 1;
   }
 
@@ -691,6 +779,11 @@
     if (targetRoute === 'smart-reminders' || intent === 'send_reminder') {
       resetSmartRemindersFlow();
       navigate('smart-reminders');
+      return;
+    }
+
+    if (targetRoute === 'content-studio') {
+      navigate('content-studio', { tab: asString(action.metadata?.tab, 'posts') });
       return;
     }
 
@@ -861,7 +954,7 @@
         <h3>Sound</h3>
         <p class="pp-muted-copy">Pick a trending audio in Instagram — that helps local discovery. Stay on-brand; avoid copyrighted music you do not have rights to.</p>
         <div class="pp-inline-actions">
-          <button type="button" class="pp-primary-btn" data-reel-create-campaign>Create poster first</button>
+          <button type="button" class="pp-primary-btn" data-reel-create-campaign>New campaign first</button>
           <a class="pp-secondary-btn" href="https://www.instagram.com/reels/create/" target="_blank" rel="noopener noreferrer">Open Instagram Reels</a>
         </div>
         <p class="pp-muted-copy pp-reel-footnote">We do not post for you yet — you stay in control. After your poster is ready, download it and use it as a cover or cut-in.</p>
@@ -892,30 +985,47 @@
     const highLevelCards = hasAnalyticsData
       ? [
           {
-            label: 'Live Campaigns',
+            label: 'Live now',
             value: String(liveCampaigns.length),
-            note: 'Campaigns currently collecting results',
+            note: 'Offers collecting scans and redemptions',
           },
           {
-            label: 'Customers Gained',
+            label: 'Customers gained',
             value: String(liveCampaigns.reduce((sum, row) => sum + asNumber(row.customersGained), 0)),
             note: 'From active campaigns',
           },
           {
-            label: 'Engagement Lift',
+            label: 'Engagement lift',
             value: `${Math.round(liveCampaigns.reduce((sum, row) => sum + asNumber(row.engagementLift), 0) / Math.max(1, liveCampaigns.length))}%`,
-            note: 'Average across active campaigns',
+            note: 'Average across live offers',
           },
           {
-            label: 'Revenue Impact',
+            label: 'Revenue impact',
             value: money(liveCampaigns.reduce((sum, row) => sum + asNumber(row.revenueImpact), 0)),
             note: 'Estimated influenced revenue',
           },
         ]
       : [];
 
+    let topPerformerLine = 'No live offers yet—start one to see a top performer here.';
+    if (liveCampaigns.length) {
+      const sorted = [...liveCampaigns].sort((a, b) => asNumber(b.revenueImpact) - asNumber(a.revenueImpact));
+      const top = sorted[0];
+      topPerformerLine = `${escapeHtml(top.title)} · ${escapeHtml(money(asNumber(top.revenueImpact)))} est. impact`;
+    }
+
+    let attentionLine = '';
+    if (!liveCampaigns.length) {
+      attentionLine = 'Add a live offer so guests have something to redeem. Open Live to execute, or Manage campaigns for the full list.';
+    } else {
+      const zeroGain = liveCampaigns.filter((c) => asNumber(c.customersGained) === 0).length;
+      attentionLine = zeroGain > 0
+        ? `${zeroGain} live offer(s) have not recorded customer gains yet—we will add sharper alerts when redemption data is fully wired.`
+        : 'No urgent flags from current signals. Check Live for execution details.';
+    }
+
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Home / Agent Dashboard', 'Agent Dashboard', 'Simple at-a-glance guidance for your restaurant.', '<button class="pp-primary-btn" type="button" data-open-create>Create Campaign</button>')}
+      ${createSectionHeader('Home', 'Business control center', 'Decisions and nudges live here. Execution is on Live; every draft and completed run is under Manage campaigns.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
 
       <section class="pp-agent-dashboard-hero">
         <article class="pp-card pp-agent-profile-card">
@@ -939,7 +1049,7 @@
         </article>
         <article class="pp-card pp-agent-analytics-card">
           <div class="pp-card-head compact">
-            <p class="pp-card-kicker">High-Level Analytics</p>
+            <p class="pp-card-kicker">Today at a glance</p>
             <span class="pp-muted-copy">Last updated ${escapeHtml(profileLastUpdated)}</span>
           </div>
           ${hasAnalyticsData ? `
@@ -955,12 +1065,23 @@
           ` : `
             <div class="pp-agent-empty-analytics">
               <h3>No analytics yet</h3>
-              <p>Create your first campaign. Once customers start redeeming, we will analyze performance and suggest improvements automatically.</p>
-              <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>Start First Campaign</button>
+              <p>Publish a live offer. Once guests interact, we will summarize impact here.</p>
+              <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>Start first campaign</button>
             </div>
           `}
         </article>
       </section>
+
+      <section class="pp-card pp-home-today-snapshot">
+        <div class="pp-card-head"><h3>Snapshot</h3></div>
+        <p class="pp-home-snapshot-line"><strong>Top performer:</strong> ${topPerformerLine}</p>
+        <p class="pp-home-snapshot-line pp-muted-copy"><strong>Needs attention:</strong> ${attentionLine}</p>
+        <div class="pp-inline-actions pp-home-snapshot-actions">
+          <button type="button" class="pp-primary-btn pp-inline-btn" data-route="live">Open Live</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-route="campaigns">Manage campaigns</button>
+        </div>
+      </section>
+
       ${FEATURE_FLAGS.menu_intelligence_v1 && (!Array.isArray(profile.menuItems) || profile.menuItems.length < 3) ? `
         <section class="pp-wizard-hero-card">
           <div class="pp-wizard-hero-content">
@@ -1005,27 +1126,16 @@
         </div>
       </section>
 
-      <section class="pp-grid pp-grid-2">
-        <article class="pp-card">
-          <div class="pp-card-head"><h3>Live Campaigns</h3></div>
-          <div class="pp-card-stack">
-            ${state.growthHub.liveCampaigns.length
-              ? state.growthHub.liveCampaigns.map(renderCampaignCard).join('')
-              : emptyState('No live campaigns yet', 'Create one campaign and we will keep guiding your next best actions.', 'Create Campaign', { targetRoute: 'create', intent: 'first_campaign', metadata: { mode: 'offer' } })}
-          </div>
-        </article>
-
-        <article class="pp-card">
-          <div class="pp-card-head"><h3>Learning Feed</h3></div>
-          <div class="pp-card-stack">
-            ${state.growthHub.learningFeed.map((insight) => `
-              <div class="pp-insight-card">
-                <strong>${escapeHtml(insight.title)}</strong>
-                <p>${escapeHtml(insight.detail)}</p>
-              </div>
-            `).join('')}
-          </div>
-        </article>
+      <section class="pp-page-section">
+        <div class="pp-card-head"><h3>Learning feed</h3></div>
+        <div class="pp-card-stack">
+          ${state.growthHub.learningFeed.map((insight) => `
+            <div class="pp-insight-card">
+              <strong>${escapeHtml(insight.title)}</strong>
+              <p>${escapeHtml(insight.detail)}</p>
+            </div>
+          `).join('')}
+        </div>
       </section>
     `;
 
@@ -1037,8 +1147,16 @@
     refs.routeMount.querySelectorAll('[data-open-menu-wizard]').forEach((node) => {
       node.addEventListener('click', () => openMenuWizard());
     });
+    refs.routeMount.querySelectorAll('[data-route="menu-import"]').forEach((button) => {
+      button.addEventListener('click', () => navigate('menu-import'));
+    });
+    refs.routeMount.querySelectorAll('[data-route="live"]').forEach((button) => {
+      button.addEventListener('click', () => navigate('live'));
+    });
+    refs.routeMount.querySelectorAll('[data-route="campaigns"]').forEach((button) => {
+      button.addEventListener('click', () => navigate('campaigns'));
+    });
     bindActionButtons();
-    bindCampaignCardButtons();
 
     requestAnimationFrame(() => {
       refs.routeMount.querySelectorAll('[data-smart-action-id]').forEach((el) => {
@@ -1057,13 +1175,132 @@
     });
   }
 
+  function filterCampaignItemsBySearch(items, rawQuery) {
+    const q = asString(rawQuery, '').toLowerCase().trim();
+    if (!q) return items;
+    return items.filter((c) => {
+      const hay = [c.title, c.goal, c.offerValue, c.headline, ...(Array.isArray(c.channels) ? c.channels : [])]
+        .map((x) => String(x).toLowerCase()).join(' ');
+      return hay.includes(q);
+    });
+  }
+
+  function remountCampaignCardsOnly() {
+    if (state.route !== 'campaigns') return;
+    const grid = refs.routeMount.querySelector('#ppCampaignsGrid');
+    if (!grid || !Array.isArray(state.campaigns?.items)) return;
+    const q = state.campaignListSearch.trim();
+    const filtered = filterCampaignItemsBySearch(state.campaigns.items, q);
+    if (!filtered.length && q) {
+      grid.innerHTML = emptyState('No matches', 'Try a different search term.', '', null);
+    } else if (!filtered.length) {
+      grid.innerHTML = emptyState('No campaigns in this status', 'Start a new campaign to build repeat demand.', 'New campaign', { targetRoute: 'create', intent: 'create_campaign', metadata: { mode: 'offer' } });
+    } else {
+      grid.innerHTML = filtered.map(renderCampaignCard).join('');
+    }
+    bindActionButtons();
+    bindCampaignCardButtons();
+  }
+
+  function remountLiveCardsOnly() {
+    if (state.route !== 'live') return;
+    const grid = refs.routeMount.querySelector('#ppLiveGrid');
+    if (!grid || !Array.isArray(state.livePageItems)) return;
+    const q = state.liveListSearch.trim();
+    const filtered = filterCampaignItemsBySearch(state.livePageItems, q);
+    const feed = state.liveLearningFeed || [];
+    const defaultInsight = 'Keep QR and counter cards visible during peak hours to lift redemptions.';
+    if (!filtered.length && q) {
+      grid.innerHTML = emptyState('No matches', 'Try a different search term.', '', null);
+    } else if (!filtered.length) {
+      grid.innerHTML = `
+        <section class="pp-card pp-empty-state" role="status">
+          <h3>No live campaigns</h3>
+          <p>Nothing is active right now. Start a new offer or open Manage campaigns for drafts and scheduled.</p>
+          <div class="pp-inline-actions">
+            <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>New campaign</button>
+            <button class="pp-secondary-btn pp-inline-btn" type="button" data-route-nav="campaigns">Manage campaigns</button>
+          </div>
+        </section>`;
+    } else {
+      grid.innerHTML = filtered.map((c, i) => {
+        const ins = feed.length ? feed[i % feed.length].detail : defaultInsight;
+        return renderLiveExecutionCard(c, ins);
+      }).join('');
+    }
+    refs.routeMount.querySelector('[data-open-create]')?.addEventListener('click', () => { resetCampaignBuilder(); navigate('create-campaign'); });
+    refs.routeMount.querySelectorAll('[data-route-nav]').forEach((btn) => {
+      btn.addEventListener('click', () => navigate(btn.dataset.routeNav));
+    });
+    bindActionButtons();
+    bindCampaignCardButtons();
+  }
+
+  async function renderLiveRoute() {
+    const [listData, hub] = await Promise.all([
+      dataAdapter.getCampaignList({ storeId: state.storeId, status: 'active' }),
+      dataAdapter.getGrowthHubData({ storeId: state.storeId }),
+    ]);
+    state.growthHub = hub;
+    state.profile = hub.profile || state.profile;
+    state.livePageItems = Array.isArray(listData.items) ? listData.items : [];
+    state.liveLearningFeed = Array.isArray(hub.learningFeed) ? hub.learningFeed : [];
+    const feed = state.liveLearningFeed;
+    const defaultInsight = 'Keep QR and counter cards visible during peak hours to lift redemptions.';
+    const q = state.liveListSearch.trim();
+    const filtered = filterCampaignItemsBySearch(state.livePageItems, q);
+    let gridInner = '';
+    if (!filtered.length && q) {
+      gridInner = emptyState('No matches', 'Try a different search term.', '', null);
+    } else if (!filtered.length) {
+      gridInner = `
+        <section class="pp-card pp-empty-state" role="status">
+          <h3>No live campaigns</h3>
+          <p>Nothing is active right now. Start a new offer or open Manage campaigns for drafts and scheduled.</p>
+          <div class="pp-inline-actions">
+            <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>New campaign</button>
+            <button class="pp-secondary-btn pp-inline-btn" type="button" data-route-nav="campaigns">Manage campaigns</button>
+          </div>
+        </section>`;
+    } else {
+      gridInner = filtered.map((c, i) => {
+        const ins = feed.length ? feed[i % feed.length].detail : defaultInsight;
+        return renderLiveExecutionCard(c, ins);
+      }).join('');
+    }
+
+    refs.routeMount.innerHTML = `
+      ${createSectionHeader('Live', 'What\'s running now', 'Act on live offers—boost, improve, or pause. For drafts, scheduled, and history, use Manage campaigns.', '<button class="pp-secondary-btn" type="button" data-route-nav="campaigns">Manage campaigns</button>')}
+      <section id="ppLiveGrid" class="pp-live-grid">
+        ${gridInner}
+      </section>
+    `;
+    refs.routeMount.querySelector('[data-open-create]')?.addEventListener('click', () => { resetCampaignBuilder(); navigate('create-campaign'); });
+    refs.routeMount.querySelectorAll('[data-route-nav]').forEach((btn) => {
+      btn.addEventListener('click', () => navigate(btn.dataset.routeNav));
+    });
+    bindActionButtons();
+    bindCampaignCardButtons();
+  }
+
   async function renderCampaignsRoute() {
     const status = asString(state.routeParams.status, state.campaigns.status || 'active').toLowerCase();
     state.campaigns = await dataAdapter.getCampaignList({ storeId: state.storeId, status: status === 'drafts' ? 'draft' : status });
 
     const totals = state.campaigns.totals;
+    const q = state.campaignListSearch.trim();
+    const filtered = filterCampaignItemsBySearch(state.campaigns.items, q);
+    let gridInner = '';
+    if (!filtered.length && q) {
+      gridInner = emptyState('No matches', 'Try a different search term.', '', null);
+    } else if (!filtered.length) {
+      gridInner = emptyState('No campaigns in this status', 'Start a new campaign to build repeat demand.', 'New campaign', { targetRoute: 'create', intent: 'create_campaign', metadata: { mode: 'offer' } });
+    } else {
+      gridInner = filtered.map(renderCampaignCard).join('');
+    }
+
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Campaigns', 'Campaigns', 'Track all campaigns and launch faster iterations.', '<button class="pp-primary-btn" type="button" data-open-create>Create New Campaign</button>')}
+      ${createSectionHeader('Manage campaigns', 'All your campaigns', 'Organize and manage every status—active, scheduled, drafts, and completed. Live is for what\'s on air right now.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
       <section class="pp-grid pp-grid-4">
         <article class="pp-card pp-kpi-card"><span class="pp-kpi-label">Active</span><strong>${escapeHtml(String(totals.active || 0))}</strong><p>Live now</p></article>
         <article class="pp-card pp-kpi-card"><span class="pp-kpi-label">Scheduled</span><strong>${escapeHtml(String(totals.scheduled || 0))}</strong><p>Queued next</p></article>
@@ -1080,10 +1317,8 @@
         }).join('')}
       </section>
 
-      <section class="pp-grid pp-grid-2">
-        ${state.campaigns.items.length
-          ? state.campaigns.items.map(renderCampaignCard).join('')
-          : emptyState('No campaigns in this status', 'Create a campaign to start building repeat demand.', 'Create New Campaign', { targetRoute: 'create', intent: 'create_campaign', metadata: { mode: 'offer' } })}
+      <section id="ppCampaignsGrid" class="pp-grid pp-grid-2">
+        ${gridInner}
       </section>
     `;
 
@@ -1126,7 +1361,7 @@
             <strong>Primary Action</strong>
             <p>Keep this campaign running and publish a supporting reel variant.</p>
             <div class="pp-inline-actions">
-              <button type="button" class="pp-primary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify({ targetRoute: 'create', intent: 'improve_campaign', metadata: { mode: 'reel' } }))}'>Improve Campaign</button>
+              <button type="button" class="pp-primary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify({ targetRoute: 'create', intent: 'improve_campaign', metadata: { mode: 'offer', sourceCampaignId: detail.id } }))}'>Improve in builder</button>
             </div>
           </article>
         </section>
@@ -1170,14 +1405,15 @@
     }
 
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Campaigns / Detail', detail.title, 'Understand performance and take the next best action.', '<button class="pp-secondary-btn" type="button" data-route="campaigns">Back to Campaigns</button>')}
+      ${createSectionHeader('Manage campaigns / Detail', detail.title, 'Understand performance and take the next best action.', '<button class="pp-secondary-btn" type="button" data-route="campaigns">Back to Manage campaigns</button>')}
       <section class="pp-tab-row">${tabButtons}</section>
       ${tabBody}
       <section class="pp-inline-actions pp-route-actions-row">
-        <button type="button" class="pp-primary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify(detail.actions[0]))}'>Run Again</button>
-        <button type="button" class="pp-secondary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify(detail.actions[1]))}'>Improve Campaign</button>
-        <button type="button" class="pp-secondary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify(detail.actions[2]))}'>Create Variant</button>
+        <button type="button" class="pp-primary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify(detail.actions[0]))}'>Run again</button>
+        <button type="button" class="pp-secondary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify(detail.actions[1]))}'>Improve in builder</button>
+        <button type="button" class="pp-secondary-btn pp-inline-btn" data-action='${escapeHtml(JSON.stringify(detail.actions[2]))}'>Open Content Studio</button>
       </section>
+      <p class="pp-muted-copy pp-detail-action-hint">Run again and Improve open the campaign builder with this offer prefilled. Content Studio is for posts, reels, and reusable assets.</p>
     `;
 
     refs.routeMount.querySelectorAll('[data-route="campaigns"]').forEach((button) => {
@@ -1190,6 +1426,7 @@
       });
     });
     bindActionButtons();
+    renderSidebarActive();
   }
 
   async function renderContentStudioRoute() {
@@ -1197,7 +1434,7 @@
     state.contentStudio = await dataAdapter.getContentStudioAssets(tab);
 
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Content Studio', 'Content Studio', 'Reuse and optimize generated assets quickly.', '<button class="pp-primary-btn" type="button" data-open-create>Create Asset</button>')}
+      ${createSectionHeader('Content Studio', 'Content Studio', 'Reuse and optimize generated assets—separate from the campaign builder.', '<button class="pp-primary-btn" type="button" data-open-create>New asset</button>')}
       <section class="pp-tab-row">
         ${CONTENT_TABS.map((name) => (`<button class="pp-tab-btn${state.contentStudio.tab === name ? ' active' : ''}" type="button" data-content-tab="${name}">${name}</button>`)).join('')}
       </section>
@@ -1216,7 +1453,7 @@
               </div>
             </article>
           `).join('')
-          : emptyState('No assets yet', 'Generate your first asset using guided creation.', 'Create Asset', { targetRoute: 'create', intent: 'create_asset', metadata: { mode: 'post' } })}
+          : emptyState('No assets yet', 'Generate your first asset using guided creation.', 'New asset', { targetRoute: 'create', intent: 'create_asset', metadata: { mode: 'post' } })}
       </section>
     `;
 
@@ -1231,12 +1468,12 @@
 
   async function renderCreateRoute() {
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Create', 'Create Offer', 'Follow one guided flow to publish an offer fast.', '<button class="pp-primary-btn" type="button" data-open-create>Open Guided Creator</button>')}
+      ${createSectionHeader('New campaign', 'New campaign', 'Same guided flow as the sidebar and top bar—publish an offer fast.', '<button class="pp-primary-btn" type="button" data-open-create>Open builder</button>')}
       <section class="pp-card pp-create-route-cta">
         <h3>4-Step Offer Flow</h3>
         <p>Intent → Offer Basics + Schedule → Poster Design → Preview + Publish.</p>
         <div class="pp-inline-actions">
-          <button type="button" class="pp-primary-btn pp-inline-btn" data-open-create-mode="offer">Create Offer</button>
+          <button type="button" class="pp-primary-btn pp-inline-btn" data-open-create-mode="offer">Start in builder</button>
         </div>
       </section>
     `;
@@ -2404,7 +2641,7 @@
           </div>
           <div class="pp-mi-saved-actions">
             <button type="button" class="pp-primary-btn" data-mi-action="go-home">Go to Dashboard</button>
-            <button type="button" class="pp-secondary-btn" data-mi-action="create-campaign">Create a Campaign</button>
+            <button type="button" class="pp-secondary-btn" data-mi-action="create-campaign">New campaign</button>
           </div>
         </section>
       `;
@@ -2864,12 +3101,59 @@
       duplicateSourceCampaignId: '',
       audiencePrimary: defaultAudience,
       campaignGoal: CB_CAMPAIGN_GOALS.some((g) => g.id === defaultGoal) ? defaultGoal : 'traffic',
+      flashNotice: '',
+      flashTone: 'success',
       dragPositions: {
         badge:  { x: 5,  y: 4  },
         text:   { x: 5,  y: 60 },
         action: { x: 5,  y: 82 },
       },
     };
+  }
+
+  function mapApiOfferTypeToCbOffer(offer) {
+    const t = asString(offer.type, '').toLowerCase();
+    const reward = asString(offer.reward, '').toLowerCase();
+    if (t.includes('bogo') || reward.includes('buy 1') || reward.includes('bogo')) return 'bogo';
+    if (t.includes('combo') || t.includes('bundle')) return 'combo';
+    if (t.includes('percentage') || t.includes('%') || offer.discountValue != null || reward.includes('%')) return 'discount';
+    return 'no_discount';
+  }
+
+  function applyDuplicatedOfferToCampaignBuilder(offer) {
+    if (!offer || typeof offer !== 'object') return;
+    const cb = state.campaignBuilder;
+    cb.intent = 'deal';
+    cb.offerType = mapApiOfferTypeToCbOffer(offer);
+    const rawName = asString(offer.name, 'Campaign');
+    const name = rawName.replace(/\s+Copy\s*$/i, '').trim() || rawName;
+    cb.selectedItem = name;
+    cb.selectedItemId = asString(offer.eligibleItem, '') || '';
+    cb.headline = rawName;
+    cb.offerLine = asString(offer.reward, '');
+    if (cb.offerType === 'discount') {
+      const dv = offer.discountValue;
+      cb.discountValue = dv != null && dv !== ''
+        ? (String(dv).includes('%') ? String(dv) : `${dv}% Off`)
+        : (cb.offerLine || '10% Off');
+    } else {
+      cb.discountValue = '';
+    }
+    if (cb.offerType === 'combo' || cb.offerType === 'bogo') {
+      cb.comboDescription = cb.offerLine || name;
+    } else {
+      cb.comboDescription = '';
+    }
+    const ch = offer.selectedChannels;
+    cb.channels = Array.isArray(ch) && ch.length ? [...ch] : ['Instagram Post', 'In-store QR'];
+    const cg = asString(offer.campaignGoal, 'traffic');
+    cb.campaignGoal = CB_CAMPAIGN_GOALS.some((g) => g.id === cg) ? cg : 'traffic';
+    cb.audiencePrimary = normalizeBuilderAudience(asString(offer.audiencePrimary, 'general'));
+    cb.duplicateSourceCampaignId = asString(offer.clonedFromOfferId, asString(offer.id, ''));
+    cb.tone = 'friendly';
+    cb.step = 2;
+    cb.flashNotice = 'Draft saved—review details and publish when ready.';
+    cb.flashTone = 'success';
   }
 
   function renderCbStep1() {
@@ -3268,6 +3552,10 @@
 
   function renderCampaignBuilderRoute() {
     const cb = state.campaignBuilder;
+    const flash = asString(cb.flashNotice);
+    const flashTone = asString(cb.flashTone, 'success');
+    cb.flashNotice = '';
+    cb.flashTone = 'success';
     let stepHtml = '';
     if (cb.step === 1) stepHtml = renderCbStep1();
     else if (cb.step === 2) stepHtml = renderCbStep2();
@@ -3279,6 +3567,9 @@
     const showNext = cb.step === 1 || cb.step === 2 || cb.step === 4;
     const nextLabel = cb.step === 2 ? 'Create My Campaign' : (cb.step === 4 ? 'Preview & Continue →' : 'Next');
     const stepLabels = ['Goal', 'Offer & Tone', 'Creating…', 'Review', 'Launch'];
+    const flashHtml = flash
+      ? `<div class="pp-cb-flash pp-cb-flash-${escapeHtml(flashTone)}" role="status">${escapeHtml(flash)}</div>`
+      : '';
 
     refs.routeMount.innerHTML = `
       <div class="pp-cb-shell">
@@ -3295,6 +3586,7 @@
           <span></span>
         </div>
         <div class="pp-cb-content">
+          ${flashHtml}
           ${stepHtml}
         </div>
         ${showNext ? `
@@ -3964,7 +4256,7 @@
     const brandToneHint = asString(profile.brandTone, '') || '—';
 
     const brandBody = `
-      <p class="pp-muted-copy">Deeper brand controls are on the roadmap. You will be able to save typography, color, and tone presets that align with Create Campaign.</p>
+      <p class="pp-muted-copy">Deeper brand controls are on the roadmap. You will be able to save typography, color, and tone presets that align with New campaign.</p>
       <ul class="pp-settings-sub-list">
         <li>Typography presets (headline fonts and weights)</li>
         <li>Brand color palette for posters and social</li>
@@ -4087,7 +4379,7 @@
                 `).join('')}
               </select>
             </label>
-            <p class="pp-muted-copy pp-form-field-full pp-form-hint">Used as the starting audience for new campaigns. You can change it per campaign anytime in Create Campaign. We also use it to tune poster copy and photo mood.</p>
+            <p class="pp-muted-copy pp-form-field-full pp-form-hint">Used as the starting audience for new campaigns. You can change it per campaign anytime in New campaign. We also use it to tune poster copy and photo mood.</p>
             <div class="pp-inline-actions pp-form-field-full">
               <button id="settingsSaveButton" type="submit" class="pp-primary-btn pp-inline-btn">Save Profile</button>
               <span id="settingsSaveStatus" class="pp-muted-copy"></span>
@@ -4302,7 +4594,7 @@
 
     refs.routeMount.querySelectorAll('[data-pause-campaign]').forEach((button) => {
       button.addEventListener('click', async () => {
-        const card = button.closest('.pp-campaign-card');
+        const card = button.closest('.pp-campaign-card') || button.closest('.pp-live-execution-card');
         if (!card) return;
         const campaignId = asString(card.dataset.campaignId);
         const badge = card.querySelector('.pp-status-badge');
@@ -4339,9 +4631,10 @@
         const campaignId = asString(button.dataset.duplicateCampaign);
         button.disabled = true;
         try {
-          await dataAdapter.duplicateCampaign(campaignId);
-          setCreateNotice('Campaign duplicated. Opening create flow.', 'success');
-          openCreateFlow({ mode: 'offer', sourceCampaignId: campaignId });
+          const duplicated = await dataAdapter.duplicateCampaign(campaignId);
+          resetCampaignBuilder();
+          applyDuplicatedOfferToCampaignBuilder(duplicated);
+          navigate('create-campaign');
         } catch (_error) {
           setCreateNotice('Could not duplicate campaign right now.', 'error');
         } finally {
@@ -5821,6 +6114,36 @@
         closeCreateFlow();
       }
     });
+
+    refs.globalSearchInput?.addEventListener('input', () => {
+      const v = asString(refs.globalSearchInput?.value, '');
+      if (state.route === 'campaigns') {
+        state.campaignListSearch = v;
+        remountCampaignCardsOnly();
+      } else if (state.route === 'live') {
+        state.liveListSearch = v;
+        remountLiveCardsOnly();
+      }
+    });
+  }
+
+  function syncGlobalSearchPlaceholder() {
+    if (!refs.globalSearchInput) return;
+    const map = {
+      campaigns: 'Search campaigns by name, offer, or channel…',
+      home: 'Search actions, campaigns, assets…',
+      live: 'Search live campaigns by name or offer…',
+      'content-studio': 'Search posts, reels, and drafts…',
+      'campaign-detail': 'Search actions, campaigns, assets…',
+      'create-campaign': 'Search actions, campaigns, assets…',
+      'menu-import': 'Search actions, campaigns, assets…',
+      analytics: 'Search actions, campaigns, assets…',
+      settings: 'Search actions, campaigns, assets…',
+      'smart-reminders': 'Search actions, campaigns, assets…',
+      'reel-guide': 'Search actions, campaigns, assets…',
+      create: 'Search actions, campaigns, assets…',
+    };
+    refs.globalSearchInput.placeholder = map[state.route] || 'Search actions, campaigns, assets…';
   }
 
   async function refreshRoute() {
@@ -5831,6 +6154,7 @@
 
     try {
       if (state.route === 'home') await renderHomeRoute();
+      else if (state.route === 'live') await renderLiveRoute();
       else if (state.route === 'campaigns') await renderCampaignsRoute();
       else if (state.route === 'campaign-detail') await renderCampaignDetailRoute();
       else if (state.route === 'content-studio') await renderContentStudioRoute();
@@ -5846,6 +6170,7 @@
       setRouteError(error?.message || 'Unable to render this section.');
     } finally {
       state.loadingRoute = false;
+      syncGlobalSearchPlaceholder();
     }
   }
 

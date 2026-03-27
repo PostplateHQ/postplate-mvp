@@ -18,7 +18,7 @@
 
         <div class="landing-cta-row">
           <button class="primary-btn landing-cta-btn" onclick="openDashboard('home')">Open Dashboard</button>
-          <button class="secondary-btn landing-cta-btn" onclick="openDashboard('campaigns')">Open Campaigns</button>
+          <button class="secondary-btn landing-cta-btn" onclick="openDashboard('live')">Open Live</button>
         </div>
 
         <div class="landing-status-strip">
@@ -43,7 +43,7 @@
       <div class="landing-focus-card">
         <p class="panel-eyebrow">Start Here</p>
         <h2 id="landingFocusTitle">See what’s next, then ship</h2>
-        <p id="landingFocusCopy">Home suggests your next move. Campaigns lists everything live, scheduled, and in drafts. New campaign starts the builder.</p>
+        <p id="landingFocusCopy">Home is your control center. Live shows what is on air. Manage campaigns lists drafts, scheduled, and history. New campaign opens the builder.</p>
         <button id="landingFocusButton" class="primary-btn landing-focus-btn" onclick="openDashboard('home')">Open Home</button>
       </div>
     </section>
@@ -57,8 +57,8 @@
     <section class="landing-actions-grid">
       <button class="landing-action-card" onclick="openDashboard('campaigns')">
         <span class="landing-action-mark"></span>
-        <strong>All campaigns</strong>
-        <p>Manage what’s live, paused, or in drafts—then open New campaign when you want to build.</p>
+        <strong>Manage campaigns</strong>
+        <p>Everything you have created—active, paused, drafts, and completed. Live is for execution right now.</p>
       </button>
 
       <button id="generateQrAction" class="landing-action-card" onclick="openQrFlow()">
@@ -148,7 +148,7 @@
       document.getElementById("landingOfferName").innerText = offer?.name || "No live offer yet";
       document.getElementById("landingOfferMeta").innerText = offer
         ? `${offer.type} • ${offer.status === "active" ? "Live now" : "Saved"}`
-        : "Open Campaigns to create and save the first promotion";
+        : "Open Manage campaigns or Live to create and save the first promotion";
       document.getElementById("landingRedemptionCount").innerText = stats.totalRedemptions ?? 0;
       document.getElementById("landingRedemptionMeta").innerText = stats.totalRedemptions
         ? `${stats.pendingCount} still pending counter redemption`

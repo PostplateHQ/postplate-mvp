@@ -3,7 +3,7 @@
   if (!dataAdapter) return;
 
   const DEFAULT_STORE_ID = 'taco123';
-  const ROUTES = ['home', 'campaigns', 'campaign-detail', 'content-studio', 'menu-import', 'create-campaign', 'create', 'analytics', 'settings', 'smart-reminders', 'reel-guide'];
+  const ROUTES = ['home', 'live', 'campaigns', 'campaign-detail', 'content-studio', 'menu-import', 'create-campaign', 'create', 'analytics', 'settings', 'smart-reminders', 'reel-guide'];
   const CAMPAIGN_STATUSES = ['active', 'scheduled', 'drafts', 'completed'];
   const CONTENT_TABS = ['posts', 'reels', 'offers', 'drafts'];
   const FEATURE_FLAGS = {
@@ -44,6 +44,9 @@
     growthHub: null,
     campaigns: { status: 'active', items: [], totals: {} },
     campaignListSearch: '',
+    liveListSearch: '',
+    livePageItems: [],
+    liveLearningFeed: [],
     campaignDetail: null,
     campaignDetailTab: 'overview',
     contentStudio: { tab: 'posts', items: [] },
@@ -468,6 +471,10 @@
       state.campaignListSearch = '';
       if (refs.globalSearchInput) refs.globalSearchInput.value = '';
     }
+    if (state.route === 'live' && route !== 'live') {
+      state.liveListSearch = '';
+      if (refs.globalSearchInput) refs.globalSearchInput.value = '';
+    }
     state.route = route;
     state.routeParams = params;
     setUrl(route, params);
@@ -488,7 +495,11 @@
 
   function renderSidebarActive() {
     refs.sidebarNav.querySelectorAll('[data-route]').forEach((button) => {
-      button.classList.toggle('active', button.dataset.route === state.route || (state.route === 'campaign-detail' && button.dataset.route === 'campaigns'));
+      const r = button.dataset.route;
+      const onDetail = state.route === 'campaign-detail';
+      const detail = state.campaignDetail;
+      const detailIsLive = onDetail && detail && asString(detail.status, '').toLowerCase() === 'active';
+      button.classList.toggle('active', r === state.route || (onDetail && r === 'campaigns') || (detailIsLive && r === 'live'));
     });
   }
 
@@ -593,6 +604,36 @@
           <button type="button" class="pp-primary-btn pp-inline-btn" data-view-campaign="${escapeHtml(campaign.id)}">View</button>
           <button type="button" class="pp-secondary-btn pp-inline-btn" data-pause-campaign="${escapeHtml(campaign.id)}">${pauseLabel}</button>
           <button type="button" class="pp-secondary-btn pp-inline-btn" data-duplicate-campaign="${escapeHtml(campaign.id)}">Duplicate</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderLiveExecutionCard(campaign, insight) {
+    const boostAction = JSON.stringify({ targetRoute: 'create', intent: 'boost_weekend_traffic', metadata: { preset: 'weekend_combo' } });
+    const improveAction = JSON.stringify({ targetRoute: 'create', intent: 'improve_campaign', metadata: { mode: 'offer', sourceCampaignId: campaign.id } });
+    return `
+      <article class="pp-card pp-live-execution-card" data-campaign-id="${escapeHtml(campaign.id)}">
+        <div class="pp-live-execution-top">
+          <div>
+            <p class="pp-card-kicker">Live now</p>
+            <h2 class="pp-live-title">${escapeHtml(campaign.title)}</h2>
+            <p class="pp-muted-copy">${escapeHtml(campaign.goal)}</p>
+          </div>
+          <span class="pp-status-badge ready">${escapeHtml(campaign.status)}</span>
+        </div>
+        <p class="pp-live-offer-line">${escapeHtml(campaign.offerValue)}</p>
+        <div class="pp-live-metrics">
+          <div class="pp-live-metric"><span>Customers gained</span><strong>${escapeHtml(String(campaign.customersGained ?? 0))}</strong></div>
+          <div class="pp-live-metric"><span>Engagement lift</span><strong>${escapeHtml(String(campaign.engagementLift ?? 0))}%</strong></div>
+          <div class="pp-live-metric"><span>Revenue (est.)</span><strong>${escapeHtml(money(asNumber(campaign.revenueImpact)))}</strong></div>
+        </div>
+        <p class="pp-live-ai-insight"><strong>Tip:</strong> ${escapeHtml(insight)}</p>
+        <div class="pp-inline-actions pp-live-actions">
+          <button type="button" class="pp-primary-btn pp-inline-btn" data-action='${escapeHtml(boostAction)}'>Boost</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-action='${escapeHtml(improveAction)}'>Improve</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-pause-campaign>Pause</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-view-campaign="${escapeHtml(campaign.id)}">View</button>
         </div>
       </article>
     `;
@@ -944,30 +985,47 @@
     const highLevelCards = hasAnalyticsData
       ? [
           {
-            label: 'Live Campaigns',
+            label: 'Live now',
             value: String(liveCampaigns.length),
-            note: 'Campaigns currently collecting results',
+            note: 'Offers collecting scans and redemptions',
           },
           {
-            label: 'Customers Gained',
+            label: 'Customers gained',
             value: String(liveCampaigns.reduce((sum, row) => sum + asNumber(row.customersGained), 0)),
             note: 'From active campaigns',
           },
           {
-            label: 'Engagement Lift',
+            label: 'Engagement lift',
             value: `${Math.round(liveCampaigns.reduce((sum, row) => sum + asNumber(row.engagementLift), 0) / Math.max(1, liveCampaigns.length))}%`,
-            note: 'Average across active campaigns',
+            note: 'Average across live offers',
           },
           {
-            label: 'Revenue Impact',
+            label: 'Revenue impact',
             value: money(liveCampaigns.reduce((sum, row) => sum + asNumber(row.revenueImpact), 0)),
             note: 'Estimated influenced revenue',
           },
         ]
       : [];
 
+    let topPerformerLine = 'No live offers yet—start one to see a top performer here.';
+    if (liveCampaigns.length) {
+      const sorted = [...liveCampaigns].sort((a, b) => asNumber(b.revenueImpact) - asNumber(a.revenueImpact));
+      const top = sorted[0];
+      topPerformerLine = `${escapeHtml(top.title)} · ${escapeHtml(money(asNumber(top.revenueImpact)))} est. impact`;
+    }
+
+    let attentionLine = '';
+    if (!liveCampaigns.length) {
+      attentionLine = 'Add a live offer so guests have something to redeem. Open Live to execute, or Manage campaigns for the full list.';
+    } else {
+      const zeroGain = liveCampaigns.filter((c) => asNumber(c.customersGained) === 0).length;
+      attentionLine = zeroGain > 0
+        ? `${zeroGain} live offer(s) have not recorded customer gains yet—we will add sharper alerts when redemption data is fully wired.`
+        : 'No urgent flags from current signals. Check Live for execution details.';
+    }
+
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Home / Agent Dashboard', 'Agent Dashboard', 'Simple at-a-glance guidance for your restaurant. Start a new promotion with New campaign.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
+      ${createSectionHeader('Home', 'Business control center', 'Decisions and nudges live here. Execution is on Live; every draft and completed run is under Manage campaigns.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
 
       <section class="pp-agent-dashboard-hero">
         <article class="pp-card pp-agent-profile-card">
@@ -991,7 +1049,7 @@
         </article>
         <article class="pp-card pp-agent-analytics-card">
           <div class="pp-card-head compact">
-            <p class="pp-card-kicker">High-Level Analytics</p>
+            <p class="pp-card-kicker">Today at a glance</p>
             <span class="pp-muted-copy">Last updated ${escapeHtml(profileLastUpdated)}</span>
           </div>
           ${hasAnalyticsData ? `
@@ -1007,12 +1065,23 @@
           ` : `
             <div class="pp-agent-empty-analytics">
               <h3>No analytics yet</h3>
-              <p>Create your first campaign. Once customers start redeeming, we will analyze performance and suggest improvements automatically.</p>
+              <p>Publish a live offer. Once guests interact, we will summarize impact here.</p>
               <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>Start first campaign</button>
             </div>
           `}
         </article>
       </section>
+
+      <section class="pp-card pp-home-today-snapshot">
+        <div class="pp-card-head"><h3>Snapshot</h3></div>
+        <p class="pp-home-snapshot-line"><strong>Top performer:</strong> ${topPerformerLine}</p>
+        <p class="pp-home-snapshot-line pp-muted-copy"><strong>Needs attention:</strong> ${attentionLine}</p>
+        <div class="pp-inline-actions pp-home-snapshot-actions">
+          <button type="button" class="pp-primary-btn pp-inline-btn" data-route="live">Open Live</button>
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-route="campaigns">Manage campaigns</button>
+        </div>
+      </section>
+
       ${FEATURE_FLAGS.menu_intelligence_v1 && (!Array.isArray(profile.menuItems) || profile.menuItems.length < 3) ? `
         <section class="pp-wizard-hero-card">
           <div class="pp-wizard-hero-content">
@@ -1057,27 +1126,16 @@
         </div>
       </section>
 
-      <section class="pp-grid pp-grid-2">
-        <article class="pp-card">
-          <div class="pp-card-head"><h3>Live Campaigns</h3></div>
-          <div class="pp-card-stack">
-            ${state.growthHub.liveCampaigns.length
-              ? state.growthHub.liveCampaigns.map(renderCampaignCard).join('')
-              : emptyState('No live campaigns yet', 'Create one campaign and we will keep guiding your next best actions.', 'New campaign', { targetRoute: 'create', intent: 'first_campaign', metadata: { mode: 'offer' } })}
-          </div>
-        </article>
-
-        <article class="pp-card">
-          <div class="pp-card-head"><h3>Learning Feed</h3></div>
-          <div class="pp-card-stack">
-            ${state.growthHub.learningFeed.map((insight) => `
-              <div class="pp-insight-card">
-                <strong>${escapeHtml(insight.title)}</strong>
-                <p>${escapeHtml(insight.detail)}</p>
-              </div>
-            `).join('')}
-          </div>
-        </article>
+      <section class="pp-page-section">
+        <div class="pp-card-head"><h3>Learning feed</h3></div>
+        <div class="pp-card-stack">
+          ${state.growthHub.learningFeed.map((insight) => `
+            <div class="pp-insight-card">
+              <strong>${escapeHtml(insight.title)}</strong>
+              <p>${escapeHtml(insight.detail)}</p>
+            </div>
+          `).join('')}
+        </div>
       </section>
     `;
 
@@ -1092,8 +1150,13 @@
     refs.routeMount.querySelectorAll('[data-route="menu-import"]').forEach((button) => {
       button.addEventListener('click', () => navigate('menu-import'));
     });
+    refs.routeMount.querySelectorAll('[data-route="live"]').forEach((button) => {
+      button.addEventListener('click', () => navigate('live'));
+    });
+    refs.routeMount.querySelectorAll('[data-route="campaigns"]').forEach((button) => {
+      button.addEventListener('click', () => navigate('campaigns'));
+    });
     bindActionButtons();
-    bindCampaignCardButtons();
 
     requestAnimationFrame(() => {
       refs.routeMount.querySelectorAll('[data-smart-action-id]').forEach((el) => {
@@ -1139,6 +1202,87 @@
     bindCampaignCardButtons();
   }
 
+  function remountLiveCardsOnly() {
+    if (state.route !== 'live') return;
+    const grid = refs.routeMount.querySelector('#ppLiveGrid');
+    if (!grid || !Array.isArray(state.livePageItems)) return;
+    const q = state.liveListSearch.trim();
+    const filtered = filterCampaignItemsBySearch(state.livePageItems, q);
+    const feed = state.liveLearningFeed || [];
+    const defaultInsight = 'Keep QR and counter cards visible during peak hours to lift redemptions.';
+    if (!filtered.length && q) {
+      grid.innerHTML = emptyState('No matches', 'Try a different search term.', '', null);
+    } else if (!filtered.length) {
+      grid.innerHTML = `
+        <section class="pp-card pp-empty-state" role="status">
+          <h3>No live campaigns</h3>
+          <p>Nothing is active right now. Start a new offer or open Manage campaigns for drafts and scheduled.</p>
+          <div class="pp-inline-actions">
+            <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>New campaign</button>
+            <button class="pp-secondary-btn pp-inline-btn" type="button" data-route-nav="campaigns">Manage campaigns</button>
+          </div>
+        </section>`;
+    } else {
+      grid.innerHTML = filtered.map((c, i) => {
+        const ins = feed.length ? feed[i % feed.length].detail : defaultInsight;
+        return renderLiveExecutionCard(c, ins);
+      }).join('');
+    }
+    refs.routeMount.querySelector('[data-open-create]')?.addEventListener('click', () => { resetCampaignBuilder(); navigate('create-campaign'); });
+    refs.routeMount.querySelectorAll('[data-route-nav]').forEach((btn) => {
+      btn.addEventListener('click', () => navigate(btn.dataset.routeNav));
+    });
+    bindActionButtons();
+    bindCampaignCardButtons();
+  }
+
+  async function renderLiveRoute() {
+    const [listData, hub] = await Promise.all([
+      dataAdapter.getCampaignList({ storeId: state.storeId, status: 'active' }),
+      dataAdapter.getGrowthHubData({ storeId: state.storeId }),
+    ]);
+    state.growthHub = hub;
+    state.profile = hub.profile || state.profile;
+    state.livePageItems = Array.isArray(listData.items) ? listData.items : [];
+    state.liveLearningFeed = Array.isArray(hub.learningFeed) ? hub.learningFeed : [];
+    const feed = state.liveLearningFeed;
+    const defaultInsight = 'Keep QR and counter cards visible during peak hours to lift redemptions.';
+    const q = state.liveListSearch.trim();
+    const filtered = filterCampaignItemsBySearch(state.livePageItems, q);
+    let gridInner = '';
+    if (!filtered.length && q) {
+      gridInner = emptyState('No matches', 'Try a different search term.', '', null);
+    } else if (!filtered.length) {
+      gridInner = `
+        <section class="pp-card pp-empty-state" role="status">
+          <h3>No live campaigns</h3>
+          <p>Nothing is active right now. Start a new offer or open Manage campaigns for drafts and scheduled.</p>
+          <div class="pp-inline-actions">
+            <button class="pp-primary-btn pp-inline-btn" type="button" data-open-create>New campaign</button>
+            <button class="pp-secondary-btn pp-inline-btn" type="button" data-route-nav="campaigns">Manage campaigns</button>
+          </div>
+        </section>`;
+    } else {
+      gridInner = filtered.map((c, i) => {
+        const ins = feed.length ? feed[i % feed.length].detail : defaultInsight;
+        return renderLiveExecutionCard(c, ins);
+      }).join('');
+    }
+
+    refs.routeMount.innerHTML = `
+      ${createSectionHeader('Live', 'What\'s running now', 'Act on live offers—boost, improve, or pause. For drafts, scheduled, and history, use Manage campaigns.', '<button class="pp-secondary-btn" type="button" data-route-nav="campaigns">Manage campaigns</button>')}
+      <section id="ppLiveGrid" class="pp-live-grid">
+        ${gridInner}
+      </section>
+    `;
+    refs.routeMount.querySelector('[data-open-create]')?.addEventListener('click', () => { resetCampaignBuilder(); navigate('create-campaign'); });
+    refs.routeMount.querySelectorAll('[data-route-nav]').forEach((btn) => {
+      btn.addEventListener('click', () => navigate(btn.dataset.routeNav));
+    });
+    bindActionButtons();
+    bindCampaignCardButtons();
+  }
+
   async function renderCampaignsRoute() {
     const status = asString(state.routeParams.status, state.campaigns.status || 'active').toLowerCase();
     state.campaigns = await dataAdapter.getCampaignList({ storeId: state.storeId, status: status === 'drafts' ? 'draft' : status });
@@ -1156,7 +1300,7 @@
     }
 
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Campaigns', 'Campaigns', 'Track all campaigns and launch faster iterations. Manage what\'s live—use New campaign in the top bar or sidebar to build something new.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
+      ${createSectionHeader('Manage campaigns', 'All your campaigns', 'Organize and manage every status—active, scheduled, drafts, and completed. Live is for what\'s on air right now.', '<button class="pp-secondary-btn" type="button" data-open-create>New campaign</button>')}
       <section class="pp-grid pp-grid-4">
         <article class="pp-card pp-kpi-card"><span class="pp-kpi-label">Active</span><strong>${escapeHtml(String(totals.active || 0))}</strong><p>Live now</p></article>
         <article class="pp-card pp-kpi-card"><span class="pp-kpi-label">Scheduled</span><strong>${escapeHtml(String(totals.scheduled || 0))}</strong><p>Queued next</p></article>
@@ -1261,7 +1405,7 @@
     }
 
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Campaigns / Detail', detail.title, 'Understand performance and take the next best action.', '<button class="pp-secondary-btn" type="button" data-route="campaigns">Back to Campaigns</button>')}
+      ${createSectionHeader('Manage campaigns / Detail', detail.title, 'Understand performance and take the next best action.', '<button class="pp-secondary-btn" type="button" data-route="campaigns">Back to Manage campaigns</button>')}
       <section class="pp-tab-row">${tabButtons}</section>
       ${tabBody}
       <section class="pp-inline-actions pp-route-actions-row">
@@ -1282,6 +1426,7 @@
       });
     });
     bindActionButtons();
+    renderSidebarActive();
   }
 
   async function renderContentStudioRoute() {
@@ -4449,7 +4594,7 @@
 
     refs.routeMount.querySelectorAll('[data-pause-campaign]').forEach((button) => {
       button.addEventListener('click', async () => {
-        const card = button.closest('.pp-campaign-card');
+        const card = button.closest('.pp-campaign-card') || button.closest('.pp-live-execution-card');
         if (!card) return;
         const campaignId = asString(card.dataset.campaignId);
         const badge = card.querySelector('.pp-status-badge');
@@ -5971,8 +6116,14 @@
     });
 
     refs.globalSearchInput?.addEventListener('input', () => {
-      state.campaignListSearch = asString(refs.globalSearchInput?.value, '');
-      if (state.route === 'campaigns') remountCampaignCardsOnly();
+      const v = asString(refs.globalSearchInput?.value, '');
+      if (state.route === 'campaigns') {
+        state.campaignListSearch = v;
+        remountCampaignCardsOnly();
+      } else if (state.route === 'live') {
+        state.liveListSearch = v;
+        remountLiveCardsOnly();
+      }
     });
   }
 
@@ -5981,6 +6132,7 @@
     const map = {
       campaigns: 'Search campaigns by name, offer, or channel…',
       home: 'Search actions, campaigns, assets…',
+      live: 'Search live campaigns by name or offer…',
       'content-studio': 'Search posts, reels, and drafts…',
       'campaign-detail': 'Search actions, campaigns, assets…',
       'create-campaign': 'Search actions, campaigns, assets…',
@@ -6002,6 +6154,7 @@
 
     try {
       if (state.route === 'home') await renderHomeRoute();
+      else if (state.route === 'live') await renderLiveRoute();
       else if (state.route === 'campaigns') await renderCampaignsRoute();
       else if (state.route === 'campaign-detail') await renderCampaignDetailRoute();
       else if (state.route === 'content-studio') await renderContentStudioRoute();

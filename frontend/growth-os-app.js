@@ -1294,8 +1294,44 @@
     bindActionButtons();
   }
 
+  function renderMenuItemFieldBlock(item, index, opts = {}) {
+    const compactBody = Boolean(opts.compactBody);
+    const idx = escapeHtml(String(index));
+    const removeBtn = compactBody
+      ? ''
+      : `<button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-remove="${idx}">Remove</button>`;
+    return `
+        <label>Item Name<input type="text" data-menu-field="name" data-menu-index="${idx}" value="${escapeHtml(item.name || '')}" /></label>
+        <label>Status
+          <select class="pp-select" data-menu-field="status" data-menu-index="${idx}">
+            ${['best_seller', 'slow_mover', 'regular'].map((value) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${value.replaceAll('_', ' ')}</option>`).join('')}
+          </select>
+        </label>
+        <label>Category
+          <select class="pp-select" data-menu-field="category" data-menu-index="${idx}">
+            ${['starter', 'main', 'drink', 'dessert'].map((value) => `<option value="${value}" ${item.category === value ? 'selected' : ''}>${value}</option>`).join('')}
+          </select>
+        </label>
+        <label>Margin Band
+          <select class="pp-select" data-menu-field="marginBand" data-menu-index="${idx}">
+            ${['', 'high', 'medium', 'low'].map((value) => `<option value="${value}" ${item.marginBand === value ? 'selected' : ''}>${value || 'not set'}</option>`).join('')}
+          </select>
+        </label>
+        <label>Note<input type="text" data-menu-field="note" data-menu-index="${idx}" value="${escapeHtml(item.note || '')}" placeholder="Optional context" /></label>
+        <div class="pp-inline-actions">
+          <label class="pp-secondary-btn pp-inline-btn" for="menuImageUpload_${idx}">Upload Item Image</label>
+          <input id="menuImageUpload_${idx}" data-menu-image-index="${idx}" type="file" accept="image/*" class="hidden" />
+          ${item.imageAssetId ? `<span class="pp-card-chip accent">image added</span>` : '<span class="pp-muted-copy">no image</span>'}
+          ${removeBtn}
+        </div>
+    `;
+  }
+
   function renderMenuItemsEditor(items = [], options = {}) {
     const ctx = asString(options.context, '');
+    const variant = asString(options.variant, 'full');
+    const expandedIndex = options.expandedIndex;
+
     if (!items.length) {
       const emptyCopy =
         ctx === 'settings'
@@ -1303,33 +1339,46 @@
           : 'No menu items yet. Use the import options above to add your menu.';
       return `<div class="pp-empty-inline">${escapeHtml(emptyCopy)}</div>`;
     }
-    return items.map((item, index) => `
-      <div class="pp-menu-item-row" data-menu-row="${escapeHtml(String(index))}">
-        <label>Item Name<input type="text" data-menu-field="name" data-menu-index="${escapeHtml(String(index))}" value="${escapeHtml(item.name || '')}" /></label>
-        <label>Status
-          <select class="pp-select" data-menu-field="status" data-menu-index="${escapeHtml(String(index))}">
-            ${['best_seller', 'slow_mover', 'regular'].map((value) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${value.replaceAll('_', ' ')}</option>`).join('')}
-          </select>
-        </label>
-        <label>Category
-          <select class="pp-select" data-menu-field="category" data-menu-index="${escapeHtml(String(index))}">
-            ${['starter', 'main', 'drink', 'dessert'].map((value) => `<option value="${value}" ${item.category === value ? 'selected' : ''}>${value}</option>`).join('')}
-          </select>
-        </label>
-        <label>Margin Band
-          <select class="pp-select" data-menu-field="marginBand" data-menu-index="${escapeHtml(String(index))}">
-            ${['', 'high', 'medium', 'low'].map((value) => `<option value="${value}" ${item.marginBand === value ? 'selected' : ''}>${value || 'not set'}</option>`).join('')}
-          </select>
-        </label>
-        <label>Note<input type="text" data-menu-field="note" data-menu-index="${escapeHtml(String(index))}" value="${escapeHtml(item.note || '')}" placeholder="Optional context" /></label>
-        <div class="pp-inline-actions">
-          <label class="pp-secondary-btn pp-inline-btn" for="menuImageUpload_${escapeHtml(String(index))}">Upload Item Image</label>
-          <input id="menuImageUpload_${escapeHtml(String(index))}" data-menu-image-index="${escapeHtml(String(index))}" type="file" accept="image/*" class="hidden" />
-          ${item.imageAssetId ? `<span class="pp-card-chip accent">image added</span>` : '<span class="pp-muted-copy">no image</span>'}
-          <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-remove="${escapeHtml(String(index))}">Remove</button>
+
+    if (variant === 'compact' && ctx === 'settings') {
+      return items
+        .map((item, index) => {
+          const isOpen = expandedIndex === index;
+          const displayName = asString(item.name, '') || 'Untitled item';
+          const st = asString(item.status, 'regular').replaceAll('_', ' ');
+          const cat = asString(item.category, 'main');
+          const imgLabel = item.imageAssetId ? 'Image' : 'No image';
+          return `
+      <div class="pp-menu-item-compact" data-menu-row="${escapeHtml(String(index))}">
+        <div class="pp-menu-item-compact-head">
+          <div class="pp-menu-item-compact-summary">
+            <span class="pp-menu-item-title">${escapeHtml(displayName)}</span>
+            <div class="pp-menu-item-meta" aria-hidden="true">
+              <span class="pp-menu-pill">${escapeHtml(st)}</span>
+              <span class="pp-menu-pill muted">${escapeHtml(cat)}</span>
+              <span class="pp-menu-pill muted">${escapeHtml(imgLabel)}</span>
+            </div>
+          </div>
+          <div class="pp-menu-item-compact-actions">
+            <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-toggle-expand="${index}" aria-expanded="${isOpen ? 'true' : 'false'}">${isOpen ? 'Collapse' : 'Edit'}</button>
+            <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-remove="${index}">Remove</button>
+          </div>
         </div>
+        ${isOpen ? `<div class="pp-menu-item-compact-body">${renderMenuItemFieldBlock(item, index, { compactBody: true })}</div>` : ''}
+      </div>`;
+        })
+        .join('');
+    }
+
+    return items
+      .map(
+        (item, index) => `
+      <div class="pp-menu-item-row" data-menu-row="${escapeHtml(String(index))}">
+        ${renderMenuItemFieldBlock(item, index, { compactBody: false })}
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   // ── Menu Onboarding Wizard ──────────────────────────────────────────
@@ -3942,9 +3991,17 @@
     if (!state.settings || !Array.isArray(state.settings.menuItemsDraft)) {
       state.settings = {
         menuItemsDraft: normalizeMenuItems(profile.menuItems),
+        menuExpandedIndex: null,
       };
+    } else if (state.settings.menuExpandedIndex === undefined) {
+      state.settings.menuExpandedIndex = null;
     }
     const menuItemsDraft = state.settings.menuItemsDraft;
+    const expRaw = state.settings.menuExpandedIndex;
+    if (expRaw != null && (!Number.isFinite(expRaw) || expRaw < 0 || expRaw >= menuItemsDraft.length)) {
+      state.settings.menuExpandedIndex = null;
+    }
+    const menuExpandedIndex = state.settings.menuExpandedIndex;
     refs.routeMount.innerHTML = `
       ${createSectionHeader('Settings', 'Settings', 'Manage profile, brand, channels, and notification preferences.')}
       <section class="pp-grid pp-grid-2">
@@ -3970,16 +4027,16 @@
                 `).join('')}
               </select>
             </label>
-            <p class="pp-muted-copy pp-form-field-full pp-form-hint">We use this to tune poster copy and photo mood. Change it anytime per campaign in Create Campaign.</p>
+            <p class="pp-muted-copy pp-form-field-full pp-form-hint">Used as the starting audience for new campaigns. You can change it per campaign anytime in Create Campaign. We also use it to tune poster copy and photo mood.</p>
             ${FEATURE_FLAGS.menu_intelligence_v1 ? `
-              <div class="pp-menu-editor-wrap pp-form-field-full">
+              <div class="pp-menu-editor-wrap pp-form-field-full pp-menu-editor-settings">
                 <div class="pp-card-head compact">
-                  <h3>Menu Items (${menuItemsDraft.length})</h3>
-                  <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add Item</button>
+                  <h3>Menu items (${menuItemsDraft.length})</h3>
+                  <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add item</button>
                 </div>
-                <p class="pp-muted-copy">Edit item details here. To bulk-import, use the <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button> from the Dashboard.</p>
-                <div id="settingsMenuItemsMount" class="pp-card-stack">
-                  ${renderMenuItemsEditor(menuItemsDraft, { context: 'settings' })}
+                <p class="pp-muted-copy">Rows stay collapsed so long lists stay scannable. Click <strong>Edit</strong> to change fields or upload a photo. Bulk import: <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button>.</p>
+                <div id="settingsMenuItemsMount" class="pp-card-stack pp-menu-items-scroll-region">
+                  ${renderMenuItemsEditor(menuItemsDraft, { context: 'settings', variant: 'compact', expandedIndex: menuExpandedIndex })}
                 </div>
               </div>
             ` : ''}
@@ -4076,6 +4133,7 @@
         imageAssetId: '',
         imageUrl: '',
       });
+      state.settings.menuExpandedIndex = menuItemsDraft.length - 1;
       renderSettingsRoute();
     });
 
@@ -4102,7 +4160,19 @@
       button.addEventListener('click', () => {
         const idx = Number(button.dataset.menuRemove);
         if (!Number.isFinite(idx)) return;
+        const exp = state.settings.menuExpandedIndex;
+        if (exp === idx) state.settings.menuExpandedIndex = null;
+        else if (Number.isFinite(exp) && exp > idx) state.settings.menuExpandedIndex = exp - 1;
         menuItemsDraft.splice(idx, 1);
+        renderSettingsRoute();
+      });
+    });
+
+    refs.routeMount.querySelectorAll('[data-menu-toggle-expand]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const idx = Number(button.dataset.menuToggleExpand);
+        if (!Number.isFinite(idx)) return;
+        state.settings.menuExpandedIndex = state.settings.menuExpandedIndex === idx ? null : idx;
         renderSettingsRoute();
       });
     });

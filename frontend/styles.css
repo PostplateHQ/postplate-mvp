@@ -8738,6 +8738,93 @@ select:focus {
   color: #5f7595;
 }
 
+/* Settings: profile form full-width rows and brand tone stack */
+.pp-settings-form-grid .pp-form-field-full {
+  grid-column: 1 / -1;
+}
+
+.pp-settings-form-grid .pp-form-field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-settings-form-grid .pp-form-field-stack .pp-form-hint {
+  margin: 0;
+  font-weight: 400;
+}
+
+.pp-settings-form-grid .pp-form-field-full.pp-form-hint {
+  margin-top: -4px;
+}
+
+/* Settings: secondary navigation cards */
+.pp-settings-nav-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pp-settings-nav-card {
+  border: 1px solid #dce7f5;
+  border-radius: var(--pp-radius-md);
+  padding: 12px;
+  background: #fbfdff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pp-settings-nav-card strong {
+  display: block;
+  margin: 0 0 4px;
+  color: #1d2f4b;
+}
+
+.pp-settings-nav-card p {
+  margin: 0;
+  color: #5f7595;
+}
+
+.pp-settings-nav-card:hover {
+  border-color: #bae7e2;
+  background: #f4fcfb;
+  box-shadow: 0 1px 0 rgba(15, 118, 110, 0.06);
+}
+
+.pp-settings-nav-card:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+/* Settings: sub-pages (brand / channels / notifications) */
+.pp-settings-sub-shell {
+  max-width: 720px;
+}
+
+.pp-settings-sub-body .pp-settings-sub-list {
+  margin: 12px 0;
+  padding-left: 1.25rem;
+  color: #456084;
+  line-height: 1.45;
+}
+
+.pp-settings-sub-body .pp-settings-sub-list li {
+  margin: 6px 0;
+}
+
+.pp-settings-sub-meta {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #334155;
+}
+
 .pp-empty-state {
   text-align: left;
 }

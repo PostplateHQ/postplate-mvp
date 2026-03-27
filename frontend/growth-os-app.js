@@ -1294,9 +1294,14 @@
     bindActionButtons();
   }
 
-  function renderMenuItemsEditor(items = []) {
+  function renderMenuItemsEditor(items = [], options = {}) {
+    const ctx = asString(options.context, '');
     if (!items.length) {
-      return '<div class="pp-empty-inline">No menu items yet. Use the import options above to add your menu.</div>';
+      const emptyCopy =
+        ctx === 'settings'
+          ? 'No menu items yet. Use + Add Item or open the Menu Setup Wizard to build your list.'
+          : 'No menu items yet. Use the import options above to add your menu.';
+      return `<div class="pp-empty-inline">${escapeHtml(emptyCopy)}</div>`;
     }
     return items.map((item, index) => `
       <div class="pp-menu-item-row" data-menu-row="${escapeHtml(String(index))}">
@@ -3856,8 +3861,84 @@
 
   // ── End Campaign Builder Flow ──────────────────────────────────────
 
+  const SETTINGS_SUB_TABS = new Set(['brand', 'channels', 'notifications']);
+
+  function normalizeSettingsTab(raw) {
+    const t = asString(raw, '').toLowerCase();
+    return SETTINGS_SUB_TABS.has(t) ? t : '';
+  }
+
+  function renderSettingsSubView(subTab) {
+    const profile = state.profile || {};
+    const backAction =
+      '<button type="button" class="pp-secondary-btn pp-inline-btn" data-settings-back>← All settings</button>';
+    const brandToneHint = asString(profile.brandTone, '') || '—';
+
+    const brandBody = `
+      <p class="pp-muted-copy">Deeper brand controls are on the roadmap. You will be able to save typography, color, and tone presets that align with Create Campaign.</p>
+      <ul class="pp-settings-sub-list">
+        <li>Typography presets (headline fonts and weights)</li>
+        <li>Brand color palette for posters and social</li>
+        <li>Tone alignment with campaign defaults</li>
+      </ul>
+      <p class="pp-settings-sub-meta"><strong>Brand tone in profile:</strong> ${escapeHtml(brandToneHint)}</p>
+    `;
+
+    const channelsBody = `
+      <p class="pp-muted-copy">Connect the accounts you publish from. Account health and re-auth prompts will appear here.</p>
+      <ul class="pp-settings-sub-list">
+        <li>Instagram (posts &amp; stories)</li>
+        <li>Other destinations (coming soon)</li>
+      </ul>
+      <p class="pp-muted-copy">OAuth and token storage are not wired in this build—this page is a structured placeholder.</p>
+    `;
+
+    const notificationsBody = `
+      <p class="pp-muted-copy">Choose how you hear about reminders, campaign milestones, and growth nudges. Full channel toggles are coming next.</p>
+      <p class="pp-muted-copy">Guest reminder emails are available today—open the reminders flow to nudge people who have not redeemed yet.</p>
+      <div class="pp-inline-actions">
+        <button type="button" class="pp-primary-btn pp-inline-btn" data-settings-open-reminders>Open guest reminders</button>
+      </div>
+    `;
+
+    let title = '';
+    let subtitle = '';
+    let body = '';
+    if (subTab === 'brand') {
+      title = 'Brand preferences';
+      subtitle = 'Typography, color, and tone presets (expansion-ready).';
+      body = brandBody;
+    } else if (subTab === 'channels') {
+      title = 'Connected channels';
+      subtitle = 'Social publishing destinations and account health.';
+      body = channelsBody;
+    } else {
+      title = 'Notification preferences';
+      subtitle = 'Control reminders and growth alerts by channel.';
+      body = notificationsBody;
+    }
+
+    refs.routeMount.innerHTML = `
+      ${createSectionHeader('Settings', title, subtitle, backAction)}
+      <section class="pp-settings-sub-shell">
+        <article class="pp-card pp-settings-sub-card">
+          <div class="pp-settings-sub-body">${body}</div>
+        </article>
+      </section>
+    `;
+
+    refs.routeMount.querySelector('[data-settings-back]')?.addEventListener('click', () => navigate('settings'));
+    refs.routeMount.querySelector('[data-settings-open-reminders]')?.addEventListener('click', () => navigate('smart-reminders'));
+  }
+
   async function renderSettingsRoute() {
     const profile = state.profile || {};
+    const subTab = normalizeSettingsTab(state.routeParams?.tab);
+    if (subTab) {
+      renderSettingsSubView(subTab);
+      return;
+    }
+
     if (!state.settings || !Array.isArray(state.settings.menuItemsDraft)) {
       state.settings = {
         menuItemsDraft: normalizeMenuItems(profile.menuItems),
@@ -3869,7 +3950,7 @@
       <section class="pp-grid pp-grid-2">
         <article class="pp-card">
           <div class="pp-card-head"><h3>Restaurant Profile</h3></div>
-          <form id="settingsProfileForm" class="pp-form-grid" novalidate>
+          <form id="settingsProfileForm" class="pp-form-grid pp-settings-form-grid" novalidate>
             <label>Restaurant Name<input id="settingsRestaurantName" type="text" value="${escapeHtml(profile.restaurantName || '')}" /></label>
             <label>Location<input id="settingsRestaurantLocation" type="text" value="${escapeHtml(profile.restaurantLocation || '')}" /></label>
             <label>Logo URL<input id="settingsLogoAsset" type="url" placeholder="https://..." value="${escapeHtml(profile.logoAsset || '')}" /></label>
@@ -3878,28 +3959,31 @@
             <label>Business Type<input id="settingsBusinessType" type="text" value="${escapeHtml(profile.businessType || '')}" /></label>
             <label>Cuisine Type<input id="settingsCuisineType" type="text" value="${escapeHtml(profile.cuisineType || '')}" /></label>
             <label>Business Hours<input id="settingsBusinessHours" type="text" value="${escapeHtml(profile.businessHours || '')}" /></label>
-            <label>Brand Tone<input id="settingsBrandTone" type="text" value="${escapeHtml(profile.brandTone || '')}" /></label>
-            <label>Default audience for new campaigns
+            <div class="pp-form-field-stack">
+              <label>Brand Tone<input id="settingsBrandTone" type="text" value="${escapeHtml(profile.brandTone || '')}" placeholder="e.g. fun, premium, neighborhood" /></label>
+              <p class="pp-muted-copy pp-form-hint">How we describe your vibe in generated copy and visuals.</p>
+            </div>
+            <label class="pp-form-field-full">Default audience for new campaigns
               <select id="settingsAudiencePrimary" class="pp-select">
                 ${CB_AUDIENCE_CHIPS.map((a) => `
                   <option value="${escapeHtml(a.id)}" ${asString(profile.audiencePrimary, 'general') === a.id ? 'selected' : ''}>${escapeHtml(a.label)}</option>
                 `).join('')}
               </select>
             </label>
-            <p class="pp-muted-copy">We use this to tune poster copy and photo mood. Change it anytime per campaign in Create Campaign.</p>
+            <p class="pp-muted-copy pp-form-field-full pp-form-hint">We use this to tune poster copy and photo mood. Change it anytime per campaign in Create Campaign.</p>
             ${FEATURE_FLAGS.menu_intelligence_v1 ? `
-              <div class="pp-menu-editor-wrap">
+              <div class="pp-menu-editor-wrap pp-form-field-full">
                 <div class="pp-card-head compact">
                   <h3>Menu Items (${menuItemsDraft.length})</h3>
                   <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add Item</button>
                 </div>
                 <p class="pp-muted-copy">Edit item details here. To bulk-import, use the <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button> from the Dashboard.</p>
                 <div id="settingsMenuItemsMount" class="pp-card-stack">
-                  ${renderMenuItemsEditor(menuItemsDraft)}
+                  ${renderMenuItemsEditor(menuItemsDraft, { context: 'settings' })}
                 </div>
               </div>
             ` : ''}
-            <div class="pp-inline-actions">
+            <div class="pp-inline-actions pp-form-field-full">
               <button id="settingsSaveButton" type="submit" class="pp-primary-btn pp-inline-btn">Save Profile</button>
               <span id="settingsSaveStatus" class="pp-muted-copy"></span>
             </div>
@@ -3908,14 +3992,18 @@
 
         <article class="pp-card">
           <div class="pp-card-head"><h3>Other Settings</h3></div>
-          <div class="pp-card-stack">
-            <div class="pp-insight-card"><strong>Brand Preferences</strong><p>Typography, color, and tone presets (expansion-ready).</p></div>
-            <div class="pp-insight-card"><strong>Connected Channels</strong><p>Social publishing destinations and account health.</p></div>
-            <div class="pp-insight-card"><strong>Notification Preferences</strong><p>Control reminders and growth alerts by channel.</p></div>
+          <div class="pp-card-stack pp-settings-nav-stack">
+            <button type="button" class="pp-settings-nav-card" data-settings-tab="brand"><strong>Brand Preferences</strong><p>Typography, color, and tone presets (expansion-ready).</p></button>
+            <button type="button" class="pp-settings-nav-card" data-settings-tab="channels"><strong>Connected Channels</strong><p>Social publishing destinations and account health.</p></button>
+            <button type="button" class="pp-settings-nav-card" data-settings-tab="notifications"><strong>Notification Preferences</strong><p>Control reminders and growth alerts by channel.</p></button>
           </div>
         </article>
       </section>
     `;
+
+    refs.routeMount.querySelectorAll('[data-settings-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => navigate('settings', { tab: asString(btn.dataset.settingsTab, '') }));
+    });
 
     refs.routeMount.querySelector('#settingsProfileForm')?.addEventListener('submit', async (event) => {
       event.preventDefault();

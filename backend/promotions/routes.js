@@ -119,6 +119,9 @@ function registerPromotionRoutes(app) {
         success: true,
         suggestions: result.suggestions,
         normalizedInput: result.normalizedInput,
+        recommendationSummary: result.recommendationSummary || null,
+        orchestrator: result.orchestrator || null,
+        analyticsTags: result.analyticsTags || {},
         ...(includeDebug ? { debug: result.analysis } : {}),
       });
     } catch (error) {

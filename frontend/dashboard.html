@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PostPlate Growth OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -23,6 +26,8 @@
           <p class="pp-sidebar-heading">Workspace</p>
           <button class="pp-nav-link" data-route="home" type="button"><span class="pp-nav-icon">◫</span><span>Home</span></button>
           <button class="pp-nav-link" data-route="campaigns" type="button"><span class="pp-nav-icon">◎</span><span>Campaigns</span></button>
+          <button class="pp-nav-link" data-route="create-campaign" type="button"><span class="pp-nav-icon">✦</span><span>Create</span></button>
+          <button class="pp-nav-link" data-route="menu-import" type="button"><span class="pp-nav-icon">☰</span><span>Menu</span></button>
           <button class="pp-nav-link" data-route="content-studio" type="button"><span class="pp-nav-icon">✦</span><span>Content Studio</span></button>
           <button class="pp-nav-link" data-route="analytics" type="button"><span class="pp-nav-icon">▣</span><span>Analytics</span></button>
           <button class="pp-nav-link" data-route="settings" type="button"><span class="pp-nav-icon">⌂</span><span>Settings</span></button>
@@ -37,10 +42,10 @@
           <input id="appGlobalSearch" type="search" placeholder="Search actions, campaigns, assets..." />
         </div>
         <div class="pp-topbar-actions">
-          <button class="pp-icon-btn" type="button" aria-label="Notifications">◔</button>
-          <button class="pp-icon-btn" type="button" aria-label="Activity">⚑</button>
+          <button id="appNotificationsButton" class="pp-icon-btn" type="button" aria-label="Notifications (coming soon)" title="Coming soon" disabled>◔</button>
+          <button id="appActivityButton" class="pp-icon-btn" type="button" aria-label="Activity (coming soon)" title="Coming soon" disabled>⚑</button>
           <button id="appPrimaryCreateButton" class="pp-primary-btn" type="button">Create</button>
-          <button class="pp-avatar-btn" type="button" aria-label="Account">VD</button>
+          <button id="appAccountButton" class="pp-avatar-btn" type="button" aria-label="Account">VD</button>
         </div>
       </header>
 
@@ -81,6 +86,24 @@
       </div>
       <div class="pp-image-lightbox-body">
         <img id="createImageLightboxImg" src="" alt="Expanded poster preview" />
+      </div>
+    </div>
+  </div>
+
+  <div id="menuWizardModal" class="pp-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-labelledby="menuWizardTitle">
+    <div class="pp-modal-shell pp-wizard-shell">
+      <div class="pp-modal-head">
+        <div>
+          <h3 id="menuWizardTitle">Let's Grow Your Store Together</h3>
+          <p id="menuWizardSubtitle">A quick setup to unlock smarter campaigns.</p>
+        </div>
+        <button id="menuWizardClose" class="pp-modal-close" type="button" aria-label="Close menu setup">×</button>
+      </div>
+      <div class="pp-wizard-progress" id="menuWizardProgress"></div>
+      <div id="menuWizardBody"></div>
+      <div class="pp-modal-footer">
+        <button id="menuWizardBack" class="pp-secondary-btn hidden" type="button">Back</button>
+        <button id="menuWizardNext" class="pp-primary-btn" type="button">Let's Do This</button>
       </div>
     </div>
   </div>

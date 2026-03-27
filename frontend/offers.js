@@ -1,6 +1,4 @@
 const DEFAULT_STORE_ID = 'taco123';
-const CTA_PLACEHOLDER_ROUTE = 'dashboard.html?page=content-studio&intent=create-offer&source=offers';
-let createOfferFlowModal = null;
 
 const state = {
   storeId: DEFAULT_STORE_ID,
@@ -14,6 +12,7 @@ const state = {
     totalRevenueInfluenced: 0,
   },
   suggestions: [],
+  loadError: false,
 };
 
 const refs = {
@@ -32,6 +31,7 @@ const refs = {
   activeOffersModal: document.getElementById('activeOffersModal'),
   closeActiveOffersModal: document.getElementById('closeActiveOffersModal'),
   activeOffersModalRows: document.getElementById('activeOffersModalRows'),
+  offersPageError: document.getElementById('offersPageError'),
 };
 
 function apiUrl(pathname) {
@@ -294,6 +294,16 @@ function createOfferThumb(offer) {
 }
 
 function renderHeaderStats() {
+  if (state.loadError) {
+    refs.statActivePromotions.textContent = '--';
+    refs.statRedemptions.textContent = '--';
+    refs.statRepeatCustomers.textContent = '--';
+    refs.statRevenue.textContent = '--';
+    refs.offersLiveBadge.textContent = 'Unavailable';
+    refs.sidebarLiveBadge.textContent = 'Unavailable';
+    return;
+  }
+
   refs.statActivePromotions.textContent = `${formatCount(state.summary.liveOffersCount)} Live`;
   refs.statRedemptions.textContent = formatCount(state.summary.totalRedemptions);
   refs.statRepeatCustomers.textContent = formatCount(state.summary.totalRepeatCustomers);
@@ -302,6 +312,10 @@ function renderHeaderStats() {
   const liveLabel = `${formatCount(state.summary.liveOffersCount)} Live`;
   refs.offersLiveBadge.textContent = liveLabel;
   refs.sidebarLiveBadge.textContent = liveLabel;
+}
+
+function renderPageErrorState() {
+  refs.offersPageError?.classList.toggle('hidden', !state.loadError);
 }
 
 function renderCurrentOffers() {
@@ -384,10 +398,9 @@ function renderActiveOffersModalRows() {
 
 function mapSuggestionTypeToIntent(value = '') {
   const normalized = String(value || '').toLowerCase();
-  if (normalized.includes('win_back') || normalized.includes('bring_back')) return 'bring_back';
-  if (normalized.includes('discount') || normalized.includes('timed')) return 'discount';
-  if (normalized.includes('new_item') || normalized.includes('special')) return 'new_item';
-  return 'combo';
+  if (normalized.includes('win_back') || normalized.includes('bring_back')) return 'increase_sales';
+  if (normalized.includes('new_item') || normalized.includes('special')) return 'promote_item';
+  return 'create_offer';
 }
 
 function openActiveOffersModal() {
@@ -402,15 +415,13 @@ function closeActiveOffersModal() {
 }
 
 function routeToCreateOffer(suggestionType = '') {
-  if (createOfferFlowModal) {
-    createOfferFlowModal.open({
-      promotionIntent: suggestionType ? mapSuggestionTypeToIntent(suggestionType) : '',
-    });
-    return;
+  const url = new URL('dashboard.html', window.location.origin);
+  url.searchParams.set('page', 'campaigns');
+  url.searchParams.set('openCreate', '1');
+  url.searchParams.set('mode', 'offer');
+  if (suggestionType) {
+    url.searchParams.set('intent', mapSuggestionTypeToIntent(suggestionType));
   }
-
-  const url = new URL(CTA_PLACEHOLDER_ROUTE, window.location.origin);
-  if (suggestionType) url.searchParams.set('suggestion', suggestionType);
   window.location.href = url.pathname + url.search;
 }
 
@@ -435,20 +446,6 @@ function bindEvents() {
     if (event.key === 'Escape' && refs.activeOffersModal.getAttribute('aria-hidden') === 'false') {
       closeActiveOffersModal();
     }
-  });
-}
-
-function mountCreateOfferFlow() {
-  if (!window.PostPlateCreateOfferFlow || createOfferFlowModal) return;
-  const CreateOfferFlowModal = window.PostPlateCreateOfferFlow.CreateOfferFlowModal;
-  createOfferFlowModal = new CreateOfferFlowModal({
-    apiUrl,
-    getContext: () => ({
-      storeId: state.storeId,
-      profile: state.profile,
-      summary: state.summary,
-      offers: state.offers,
-    }),
   });
 }
 
@@ -477,6 +474,7 @@ async function loadOffers() {
 }
 
 function render() {
+  renderPageErrorState();
   renderProfile();
   renderHeaderStats();
   renderCurrentOffers();
@@ -486,12 +484,21 @@ function render() {
 async function boot() {
   state.storeId = getStoreId();
   bindEvents();
-  await Promise.all([loadProfile(), loadOffers()]);
-  mountCreateOfferFlow();
+  try {
+    await Promise.all([loadProfile(), loadOffers()]);
+    state.loadError = false;
+  } catch (_error) {
+    state.loadError = true;
+    state.liveOffers = [];
+    state.suggestions = [];
+  }
   render();
 }
 
 boot().catch(() => {
+  state.loadError = true;
+  renderPageErrorState();
   refs.currentOffersList.innerHTML = '<div class="pp-empty-inline">Unable to load offers right now. Please try again.</div>';
   refs.offersSuggestions.innerHTML = '<div class="pp-empty-inline">Suggestions are temporarily unavailable.</div>';
+  renderHeaderStats();
 });

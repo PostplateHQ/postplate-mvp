@@ -46,12 +46,16 @@
         <div class="pp-topbar-actions">
           <button class="pp-icon-btn" type="button">◔</button>
           <button class="pp-icon-btn" type="button">⚑</button>
-          <button id="createNewOfferCta" class="pp-primary-btn" type="button">Create New Offer</button>
+          <button id="createNewOfferCta" class="pp-primary-btn" type="button">Open Guided Creator</button>
           <button class="pp-avatar-btn" type="button">VD</button>
         </div>
       </header>
 
       <section class="pp-page active pp-offers-page-v2">
+        <div id="offersPageError" class="pp-card pp-state-card hidden" role="alert" aria-live="polite">
+          <h3>Could not load live offers data</h3>
+          <p>Campaign and KPI numbers may be unavailable right now. Retry in a moment.</p>
+        </div>
         <div class="pp-offers-v2-header">
           <div>
             <p class="pp-breadcrumb">Marketing / Offers</p>
@@ -109,8 +113,8 @@
           <article class="pp-card pp-offers-v2-panel">
             <div class="pp-card-head pp-offers-v2-panel-head">
               <div>
-                <h3>Optimize Your Offers</h3>
-                <p class="pp-muted-copy">Smart Suggestions</p>
+                <h3>What To Launch Next</h3>
+                <p class="pp-muted-copy">Tap a suggestion to open guided create</p>
               </div>
             </div>
 
@@ -139,123 +143,6 @@
     </div>
   </div>
 
-  <div id="createOfferFlowModal" class="pp-modal-backdrop hidden" aria-hidden="true" role="dialog" aria-labelledby="createOfferFlowTitle">
-    <div class="pp-modal-shell pp-create-offer-shell">
-      <div class="pp-modal-head">
-        <div>
-          <h3 id="createOfferFlowTitle">Create an Offer</h3>
-          <p>Owner-led flow with AI assist only where it adds value.</p>
-        </div>
-        <button id="closeCreateOfferFlow" class="pp-modal-close" type="button" aria-label="Close create offer flow">×</button>
-      </div>
-
-      <div class="pp-create-offer-stepbar">
-        <span id="createOfferStepLabel" class="pp-step-pill">Step 1 of 6</span>
-      </div>
-      <div id="createOfferFlowNotice" class="pp-create-offer-notice hidden" aria-live="polite"></div>
-
-      <div id="createOfferFlowBody">
-        <section class="pp-create-offer-step" data-step="1">
-          <h4>What do you want to do?</h4>
-          <div id="createOfferEntryOptions" class="pp-create-offer-intents"></div>
-          <div id="createOfferDuplicatePanel" class="pp-create-offer-upload-panel hidden">
-            <p class="pp-create-offer-field-label">Duplicate from previous offer</p>
-            <select id="createOfferDuplicateSelect" class="pp-select">
-              <option value="">Select previous offer</option>
-            </select>
-          </div>
-        </section>
-
-        <section class="pp-create-offer-step hidden" data-step="2">
-          <h4>What type of offer?</h4>
-          <div id="promotionIntentOptions" class="pp-create-offer-intents"></div>
-        </section>
-
-        <section class="pp-create-offer-step hidden" data-step="3">
-          <h4>What are you promoting?</h4>
-          <input id="createOfferItemDescription" class="pp-filter-search" type="text" placeholder="Example: Tikka Bowl + Drink" />
-
-          <p class="pp-create-offer-field-label">Visual style</p>
-          <div id="createOfferVisualStyleOptions" class="pp-create-offer-moods"></div>
-
-          <p class="pp-create-offer-field-label">Layout style</p>
-          <div id="createOfferLayoutStyleOptions" class="pp-create-offer-moods"></div>
-
-          <p class="pp-create-offer-field-label">How do you want it to feel?</p>
-          <div id="createOfferMoodOptions" class="pp-create-offer-moods"></div>
-
-          <p class="pp-create-offer-field-label">Image source</p>
-          <div id="createOfferImageSourceOptions" class="pp-create-offer-moods"></div>
-
-          <p class="pp-create-offer-field-label">Suggested tagline</p>
-          <div id="createOfferTaglineOptions" class="pp-create-offer-moods"></div>
-
-          <p class="pp-create-offer-field-label">Font style</p>
-          <div id="createOfferFontStyleOptions" class="pp-create-offer-moods"></div>
-
-          <p class="pp-create-offer-field-label">Tone style</p>
-          <div id="createOfferToneStyleOptions" class="pp-create-offer-moods"></div>
-
-          <div class="pp-create-offer-upload-panel">
-            <p class="pp-create-offer-field-label">Add photos to improve your promotion</p>
-            <p class="pp-muted-copy">Add real food or menu images to help us create better promotions and stronger suggestions.</p>
-            <p id="createOfferUploadHelper" class="pp-create-offer-upload-helper">Upload a menu screenshot and we’ll suggest items or combos to promote.</p>
-
-            <div class="pp-create-offer-upload-actions">
-              <select id="createOfferUploadType" class="pp-select">
-                <option value="food_image">Item Food Photo</option>
-                <option value="menu_screenshot">Menu Screenshot</option>
-                <option value="logo">Logo Image</option>
-                <option value="unknown">Other Image</option>
-              </select>
-              <button id="createOfferUploadButton" class="pp-secondary-btn" type="button">Upload Image</button>
-              <button id="createOfferUseExistingButton" class="pp-secondary-btn" type="button">Use Existing Images</button>
-              <button id="createOfferSkipImagesButton" class="pp-secondary-btn" type="button">Skip for now</button>
-            </div>
-
-            <input id="createOfferFileInput" type="file" accept="image/*" multiple class="hidden" />
-
-            <div id="createOfferExistingAssets" class="pp-create-offer-existing hidden"></div>
-            <div id="createOfferUploadedAssets" class="pp-create-offer-uploaded-list"></div>
-          </div>
-        </section>
-
-        <section class="pp-create-offer-step hidden" data-step="4">
-          <div id="createOfferSuggestionsLoading" class="pp-create-offer-loading">Creating smart suggestions...</div>
-          <div id="createOfferSuggestionsResults" class="hidden">
-            <h4>Top Suggestions for You</h4>
-            <p class="pp-muted-copy">Refined by your item, style choices, layout preference, and business context.</p>
-            <div id="createOfferSuggestionsList" class="pp-create-offer-suggestions"></div>
-          </div>
-        </section>
-
-        <section class="pp-create-offer-step hidden" data-step="5">
-          <h4>Final poster preview</h4>
-          <p class="pp-muted-copy">Review exactly what will be used before output.</p>
-          <div id="createOfferFinalPreview" class="pp-create-offer-final-preview"></div>
-          <div id="createOfferSelectedSummary" class="pp-create-offer-selected-summary"></div>
-        </section>
-
-        <section class="pp-create-offer-step hidden" data-step="6">
-          <h4>Ready to use</h4>
-          <p class="pp-muted-copy">Download, share, or save your offer assets.</p>
-          <div class="pp-inline-actions">
-            <button id="createOfferDownloadButton" class="pp-primary-btn" type="button">Download</button>
-            <button id="createOfferShareButton" class="pp-secondary-btn" type="button">Share</button>
-            <button id="createOfferSaveButton" class="pp-secondary-btn" type="button">Save</button>
-          </div>
-        </section>
-      </div>
-
-      <div class="pp-modal-footer">
-        <button id="createOfferCancelButton" class="pp-secondary-btn" type="button">Cancel</button>
-        <button id="createOfferBackButton" class="pp-secondary-btn" type="button">Back</button>
-        <button id="createOfferNextButton" class="pp-primary-btn" type="button">Next</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="create-offer-flow.js"></script>
   <script src="offers.js"></script>
 </body>
 </html>

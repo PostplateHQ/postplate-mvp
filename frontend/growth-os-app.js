@@ -1352,7 +1352,7 @@
       <div class="pp-menu-item-compact" data-menu-row="${escapeHtml(String(index))}">
         <div class="pp-menu-item-compact-head">
           <div class="pp-menu-item-compact-summary">
-            <span class="pp-menu-item-title">${escapeHtml(displayName)}</span>
+            <div class="pp-menu-item-title">${escapeHtml(displayName)}</div>
             <div class="pp-menu-item-meta" aria-hidden="true">
               <span class="pp-menu-pill">${escapeHtml(st)}</span>
               <span class="pp-menu-pill muted">${escapeHtml(cat)}</span>

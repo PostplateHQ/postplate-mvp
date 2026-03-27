@@ -12,6 +12,7 @@
 | **Home → reminders** | `ui-data-adapter.js` adds **Guest reminders** quick action; `handleAction` routes to the same flow. |
 | **Trust copy** | `buildGrowthHomePayload` supplies `kpiFootnote` and `weekly.chartCaption`; React home shows them via `BentoKpiRibbon` + `WeeklyPerformanceCard`. Weekly chip no longer claims a fake “+18% vs last week”. |
 | **Reminders exit** | After send: counts, skipped line, SMTP vs preview note, **Back to Home** + **Manage campaigns**. Entering reminders from another route runs `resetSmartRemindersFlow()` inside `navigate()` so a prior run does not stick. |
+| **Campaign builder (UX-06–08)** | Preset hint on steps 1–2 when coming from quick actions; **Back** from launch step clears publish error state; **generation** and **photo regen** wrapped in try/catch with return to step 2 or 4 + message; **Publish live** vs **Save as draft** labels + hint; success screens differ (**View Live** vs **View drafts**) via `savedAsDraft`. |
 
 ---
 

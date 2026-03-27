@@ -111,6 +111,7 @@
       duplicateSourceCampaignId: '',
       audiencePrimary: 'general',
       campaignGoal: 'traffic',
+      savedAsDraft: false,
     },
     smartReminders: {
       step: 1,
@@ -3235,6 +3236,7 @@
       campaignGoal: CB_CAMPAIGN_GOALS.some((g) => g.id === defaultGoal) ? defaultGoal : 'traffic',
       flashNotice: '',
       flashTone: 'success',
+      savedAsDraft: false,
       dragPositions: {
         badge:  { x: 5,  y: 4  },
         text:   { x: 5,  y: 60 },
@@ -3634,11 +3636,14 @@
   function renderCbStep5() {
     const cb = state.campaignBuilder;
     if (cb.publishStatus === 'published') {
+      const isDraft = Boolean(cb.savedAsDraft);
       return `
         <section class="pp-cb-step pp-cb-step5 pp-cb-success">
           <div class="pp-cb-success-icon">✓</div>
-          <h1>Campaign launched!</h1>
-          <p class="pp-cb-subtitle">Your campaign is now live and ready to drive traffic.</p>
+          <h1>${isDraft ? 'Draft saved' : 'Published live'}</h1>
+          <p class="pp-cb-subtitle">${isDraft
+        ? 'Your campaign is saved as a draft. Open Manage campaigns when you are ready to go live.'
+        : 'Your campaign is live and ready to drive traffic.'}</p>
           <div class="pp-cb-success-summary">
             ${buildComposedPosterMini(cb)}
             <div class="pp-cb-success-details">
@@ -3648,7 +3653,10 @@
             </div>
           </div>
           <div class="pp-cb-success-actions">
-            <button type="button" class="pp-primary-btn" data-cb-action="download-poster">⬇ Download Poster</button>
+            ${isDraft
+        ? '<button type="button" class="pp-primary-btn" data-cb-action="view-drafts">View drafts</button>'
+        : '<button type="button" class="pp-primary-btn" data-cb-action="view-live">View Live</button>'}
+            <button type="button" class="pp-secondary-btn" data-cb-action="download-poster">⬇ Download Poster</button>
             <button type="button" class="pp-secondary-btn" data-cb-action="go-home">Go to Dashboard</button>
             <button type="button" class="pp-secondary-btn" data-cb-action="create-another">Create Another</button>
           </div>
@@ -3671,13 +3679,14 @@
             <div class="pp-cb-summary-row"><span class="pp-cb-label">Duration</span><span>${cb.duration} days</span></div>
           </div>
         </div>
-        ${cb.publishStatus === 'error' ? '<p class="pp-cb-error">Something went wrong. Please try again.</p>' : ''}
-        ${cb.publishStatus === 'publishing' ? '<p class="pp-cb-status">Launching your campaign…</p>' : ''}
+        ${cb.publishStatus === 'error' ? '<p class="pp-cb-error">We could not save that. Check your connection and try again, or go back to edit your poster.</p>' : ''}
+        ${cb.publishStatus === 'publishing' ? '<p class="pp-cb-status">Saving…</p>' : ''}
         <div class="pp-cb-publish-actions">
-          <button type="button" class="pp-primary-btn pp-cb-launch-btn" data-cb-action="publish" ${cb.publishStatus === 'publishing' ? 'disabled' : ''}>Launch Campaign</button>
+          <button type="button" class="pp-primary-btn pp-cb-launch-btn" data-cb-action="publish" ${cb.publishStatus === 'publishing' ? 'disabled' : ''}>Publish live</button>
           <button type="button" class="pp-secondary-btn" data-cb-action="download-poster">⬇ Download Poster</button>
-          <button type="button" class="pp-secondary-btn" data-cb-action="save-draft" ${cb.publishStatus === 'publishing' ? 'disabled' : ''}>Save as Draft</button>
+          <button type="button" class="pp-secondary-btn" data-cb-action="save-draft" ${cb.publishStatus === 'publishing' ? 'disabled' : ''}>Save as draft</button>
         </div>
+        <p class="pp-cb-hint" style="margin-top:12px">Publish live turns the offer on now. Save as draft keeps it in Manage campaigns until you publish.</p>
       </section>
     `;
   }
@@ -3702,6 +3711,12 @@
     const flashHtml = flash
       ? `<div class="pp-cb-flash pp-cb-flash-${escapeHtml(flashTone)}" role="status">${escapeHtml(flash)}</div>`
       : '';
+    const errBanner = cb.errorMessage
+      ? `<div class="pp-cb-error pp-cb-error-banner" role="alert">${escapeHtml(cb.errorMessage)}</div>`
+      : '';
+    const presetHint = (cb.smartPresetId || cb.duplicateSourceCampaignId) && cb.step <= 2
+      ? '<p class="pp-cb-preset-hint pp-cb-hint">Started from a quick action — going back keeps these defaults until you change them.</p>'
+      : '';
 
     refs.routeMount.innerHTML = `
       <div class="pp-cb-shell">
@@ -3719,6 +3734,8 @@
         </div>
         <div class="pp-cb-content">
           ${flashHtml}
+          ${errBanner}
+          ${presetHint}
           ${stepHtml}
         </div>
         ${showNext ? `
@@ -4043,7 +4060,15 @@
 
     if (action === 'back') {
       if (cb.step === 4) syncStep4Inputs();
-      if (cb.step > 1) { cb.step -= 1; renderCampaignBuilderRoute(); }
+      if (cb.step === 5) {
+        cb.publishStatus = '';
+        cb.errorMessage = '';
+      }
+      if (cb.step > 1) {
+        cb.step -= 1;
+        if (cb.step === 1) cb.errorMessage = '';
+        renderCampaignBuilderRoute();
+      }
     }
     else if (action === 'next') {
       if (cb.step === 1) {
@@ -4074,16 +4099,24 @@
       syncStep4Inputs();
       cb.step = 3;
       cb.processingPhase = 'Designing a new photo…';
+      cb.errorMessage = '';
       renderCampaignBuilderRoute();
-      const result = await dataAdapter.regenerateCampaignContent({
-        regenerateTarget: 'poster', intent: cb.intent, item: cb.selectedItem, offerType: cb.offerType,
-        discountValue: cb.discountValue, comboDescription: cb.comboDescription, tone: cb.tone,
-        restaurantName: state.profile?.restaurantName || '', cuisineType: state.profile?.cuisineType || '',
-        brandTone: state.profile?.brandTone || '', audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
-        imageKeywords: cb.imageKeywords,
-      });
-      if (result.posterImageUrl) cb.generatedPoster = result.posterImageUrl;
-      cb.step = 4;
+      try {
+        const result = await dataAdapter.regenerateCampaignContent({
+          regenerateTarget: 'poster', intent: cb.intent, item: cb.selectedItem, offerType: cb.offerType,
+          discountValue: cb.discountValue, comboDescription: cb.comboDescription, tone: cb.tone,
+          restaurantName: state.profile?.restaurantName || '', cuisineType: state.profile?.cuisineType || '',
+          brandTone: state.profile?.brandTone || '', audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
+          imageKeywords: cb.imageKeywords,
+        });
+        if (result.posterImageUrl) cb.generatedPoster = result.posterImageUrl;
+        cb.step = 4;
+      } catch (_regenErr) {
+        cb.processingPhase = '';
+        cb.step = 4;
+        cb.flashNotice = 'Could not refresh the photo. Check your connection or adjust keywords and try again.';
+        cb.flashTone = 'error';
+      }
       renderCampaignBuilderRoute();
     }
     else if (action === 'preview-poster') {
@@ -4098,6 +4131,7 @@
     }
     else if (action === 'publish') {
       cb.publishStatus = 'publishing';
+      cb.savedAsDraft = false;
       renderCampaignBuilderRoute();
       try {
         await dataAdapter.createLiveCampaign({
@@ -4108,6 +4142,7 @@
           selectedChannels: cb.channels,
         });
         cb.publishStatus = 'published';
+        cb.savedAsDraft = false;
         trackFlowCompleted('campaign_publish', { smartPresetId: cb.smartPresetId || undefined });
         renderCampaignBuilderRoute();
       } catch (_error) {
@@ -4127,6 +4162,7 @@
           selectedChannels: cb.channels, status: 'draft',
         });
         cb.publishStatus = 'published';
+        cb.savedAsDraft = true;
         trackFlowCompleted('campaign_save_draft', { smartPresetId: cb.smartPresetId || undefined });
         renderCampaignBuilderRoute();
       } catch (_error) {
@@ -4139,6 +4175,8 @@
       await downloadComposedPoster();
     }
     else if (action === 'go-home') { navigate('home'); }
+    else if (action === 'view-drafts') { navigate('campaigns', { status: 'drafts' }); }
+    else if (action === 'view-live') { navigate('live'); }
     else if (action === 'create-another') { resetCampaignBuilder(); renderCampaignBuilderRoute(); }
   }
 
@@ -4330,46 +4368,57 @@
     const cb = state.campaignBuilder;
     cb.step = 3;
     cb.generating = true;
+    cb.errorMessage = '';
 
     const phases = ['Understanding your restaurant…', 'Designing your poster…', 'Writing campaign copy…', 'Generating your QR code…'];
 
-    cb.processingPhase = phases[0];
-    renderCampaignBuilderRoute();
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      cb.processingPhase = phases[0];
+      renderCampaignBuilderRoute();
+      await new Promise((r) => setTimeout(r, 800));
 
-    cb.processingPhase = phases[1];
-    renderCampaignBuilderRoute();
+      cb.processingPhase = phases[1];
+      renderCampaignBuilderRoute();
 
-    const genPromise = dataAdapter.generateCampaignContent({
-      intent: cb.intent, item: cb.selectedItem, offerType: cb.offerType,
-      discountValue: cb.discountValue, comboDescription: cb.comboDescription, tone: cb.tone,
-      restaurantName: state.profile?.restaurantName || '', cuisineType: state.profile?.cuisineType || '',
-      brandTone: state.profile?.brandTone || '', storeId: state.storeId,
-      audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
-      imageKeywords: cb.imageKeywords,
-    });
+      const genPromise = dataAdapter.generateCampaignContent({
+        intent: cb.intent, item: cb.selectedItem, offerType: cb.offerType,
+        discountValue: cb.discountValue, comboDescription: cb.comboDescription, tone: cb.tone,
+        restaurantName: state.profile?.restaurantName || '', cuisineType: state.profile?.cuisineType || '',
+        brandTone: state.profile?.brandTone || '', storeId: state.storeId,
+        audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
+        imageKeywords: cb.imageKeywords,
+      });
 
-    await new Promise((r) => setTimeout(r, 2000));
-    cb.processingPhase = phases[2];
-    renderCampaignBuilderRoute();
+      await new Promise((r) => setTimeout(r, 2000));
+      cb.processingPhase = phases[2];
+      renderCampaignBuilderRoute();
 
-    const result = await genPromise;
+      const result = await genPromise;
 
-    await new Promise((r) => setTimeout(r, 600));
-    cb.processingPhase = phases[3];
-    renderCampaignBuilderRoute();
-    await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 600));
+      cb.processingPhase = phases[3];
+      renderCampaignBuilderRoute();
+      await new Promise((r) => setTimeout(r, 400));
 
-    cb.headline = result.headline || cb.selectedItem.toUpperCase();
-    cb.offerLine = result.offerLine || `Try our ${cb.selectedItem} today`;
-    cb.cta = result.cta || 'Show this code to redeem';
-    cb.generatedPoster = result.posterImageUrl || '';
-    cb.qrDataUrl = result.qrDataUrl || '';
-    if (Array.isArray(result.suggestedChannels) && result.suggestedChannels.length) cb.channels = result.suggestedChannels;
-    if (result.suggestedDuration) cb.duration = result.suggestedDuration;
-    cb.generating = false;
-    cb.step = 4;
-    renderCampaignBuilderRoute();
+      cb.headline = result.headline || (cb.selectedItem ? String(cb.selectedItem).toUpperCase() : 'YOUR OFFER');
+      cb.offerLine = result.offerLine || (cb.selectedItem ? `Try our ${cb.selectedItem} today` : 'Try us today');
+      cb.cta = result.cta || 'Show this code to redeem';
+      cb.generatedPoster = result.posterImageUrl || '';
+      cb.qrDataUrl = result.qrDataUrl || '';
+      if (Array.isArray(result.suggestedChannels) && result.suggestedChannels.length) cb.channels = result.suggestedChannels;
+      if (result.suggestedDuration) cb.duration = result.suggestedDuration;
+      cb.step = 4;
+    } catch (_err) {
+      cb.processingPhase = '';
+      cb.step = 2;
+      cb.errorMessage = 'We could not generate your campaign. Check your connection, adjust any details, then tap Create My Campaign again — your choices are saved.';
+      if (globalScope.console && typeof globalScope.console.warn === 'function') {
+        globalScope.console.warn('Campaign generation failed', _err);
+      }
+    } finally {
+      cb.generating = false;
+      renderCampaignBuilderRoute();
+    }
   }
 
   // ── End Campaign Builder Flow ──────────────────────────────────────

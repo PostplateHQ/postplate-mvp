@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout | PostPlate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assets/order-guest/order-guest.css" />
+</head>
+<body class="pp-guest-flow pp-order-flow">
+  <div class="og-shell">
+    <header class="og-topbar">
+      <a class="og-back" href="#" id="ogBackCart" aria-label="Back to cart">←</a>
+      <div class="og-progress" aria-label="Step 3 of 3">
+        <span class="og-progress-dot is-done" title="Menu"></span>
+        <span class="og-progress-dot is-done" title="Cart"></span>
+        <span class="og-progress-dot is-active" title="Pay"></span>
+      </div>
+      <span style="width:44px" aria-hidden="true"></span>
+    </header>
+
+    <div class="og-host og-host--fade" style="margin-bottom:16px">
+      <div class="og-host__avatar" aria-hidden="true">✦</div>
+      <p class="og-host__text">Choose how you’d like to pay. Demo mode — no real charge.</p>
+    </div>
+
+    <div id="ogCheckoutRoot">
+      <button type="button" class="og-summary-toggle" id="ogSummaryToggle" aria-expanded="false">
+        <span>Order summary</span>
+        <span aria-hidden="true">▼</span>
+      </button>
+      <div class="og-summary-body" id="ogSummaryBody"></div>
+
+      <div class="og-pay-row">
+        <button type="button" class="og-cta og-pay-apple" id="ogPayApple">Apple Pay (demo)</button>
+        <button type="button" class="og-cta og-cta--dark og-pay-card" id="ogPayCard">Pay with card (demo)</button>
+      </div>
+      <div id="ogSplitPayRow" class="og-split-pay"></div>
+      <p class="og-trust">Secure checkout · Powered by PostPlate<br /><span style="opacity:0.85">Easy Pay — production keys not configured</span></p>
+    </div>
+  </div>
+
+  <p class="micro-copy og-foot-note">Powered by PostPlate</p>
+
+  <script src="order-guest.js"></script>
+  <script>
+    (function () {
+      var q = PPOrderGuest.getQuery();
+      document.getElementById("ogBackCart").href = "cart.html" + PPOrderGuest.queryStringFrom(q);
+    })();
+    PPOrderGuest.initCheckout();
+  </script>
+</body>
+</html>

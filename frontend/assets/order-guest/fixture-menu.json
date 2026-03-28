@@ -1,0 +1,92 @@
+{
+  "restaurant": {
+    "name": "Spice Taco House",
+    "tagline": "Fresh · Fast · Friendly"
+  },
+  "offer": {
+    "title": "You're in — 10% off your order today",
+    "sub": "Applied automatically at checkout when you order from this menu.",
+    "percentOff": 10,
+    "eligibleTag": "featured"
+  },
+  "categories": [
+    { "id": "mains", "name": "Mains", "accent": "coral" },
+    { "id": "sides", "name": "Sides", "accent": "violet" },
+    { "id": "drinks", "name": "Drinks", "accent": "teal" },
+    { "id": "desserts", "name": "Sweet endings", "accent": "rose" }
+  ],
+  "items": [
+    {
+      "id": "item_carne",
+      "name": "Carne Asada Tacos (2)",
+      "price": 12.5,
+      "categoryId": "mains",
+      "tags": ["main", "featured"],
+      "emoji": "🌮",
+      "offerBadge": true
+    },
+    {
+      "id": "item_bowl",
+      "name": "Cilantro Lime Bowl",
+      "price": 14,
+      "categoryId": "mains",
+      "tags": ["main"],
+      "emoji": "🥗",
+      "offerBadge": false
+    },
+    {
+      "id": "item_nachos",
+      "name": "Loaded Nachos",
+      "price": 11,
+      "categoryId": "sides",
+      "tags": ["side", "shareable"],
+      "emoji": "🧀",
+      "offerBadge": false
+    },
+    {
+      "id": "item_elote",
+      "name": "Street Corn Cup",
+      "price": 5.5,
+      "categoryId": "sides",
+      "tags": ["side"],
+      "emoji": "🌽",
+      "offerBadge": false
+    },
+    {
+      "id": "item_agua",
+      "name": "Agua Fresca",
+      "price": 4,
+      "categoryId": "drinks",
+      "tags": ["drink"],
+      "emoji": "🍹",
+      "offerBadge": false
+    },
+    {
+      "id": "item_horchata",
+      "name": "Horchata",
+      "price": 4.5,
+      "categoryId": "drinks",
+      "tags": ["drink"],
+      "emoji": "🥛",
+      "offerBadge": false
+    },
+    {
+      "id": "item_soda",
+      "name": "Mexican Coke",
+      "price": 3.5,
+      "categoryId": "drinks",
+      "tags": ["drink"],
+      "emoji": "🥤",
+      "offerBadge": false
+    },
+    {
+      "id": "item_churro",
+      "name": "Churro Bites",
+      "price": 6,
+      "categoryId": "desserts",
+      "tags": ["dessert"],
+      "emoji": "🍩",
+      "offerBadge": false
+    }
+  ]
+}

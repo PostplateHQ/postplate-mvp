@@ -7,11 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assets/growth-home/growth-home.css?v=iife3" />
 </head>
-<body>
-  <div class="pp-shell pp-growth-shell" id="growthAppShell">
-    <aside class="pp-sidebar" aria-label="Primary navigation">
+<body class="pp-theme-growth">
+  <div class="pp-shell pp-growth-shell pp-growth-shell--topnav" id="growthAppShell">
+    <aside class="pp-sidebar pp-sidebar--shell-hidden" aria-label="Primary navigation (legacy)">
       <div class="pp-business-switcher">
         <div class="pp-business-avatar" id="appBusinessAvatar">PP</div>
         <div class="pp-business-copy">
@@ -25,28 +27,55 @@
         <div class="pp-sidebar-group">
           <p class="pp-sidebar-heading">Workspace</p>
           <button class="pp-nav-link" data-route="home" type="button"><span class="pp-nav-icon">◫</span><span>Home</span></button>
-          <button class="pp-nav-link" data-route="live" type="button"><span class="pp-nav-icon">◉</span><span>Live</span></button>
-          <button class="pp-nav-link" data-route="campaigns" type="button"><span class="pp-nav-icon">◎</span><span>Manage campaigns</span></button>
-          <button class="pp-nav-link" data-route="create-campaign" type="button"><span class="pp-nav-icon">＋</span><span>New campaign</span></button>
+          <button class="pp-nav-link" data-route="campaigns" type="button"><span class="pp-nav-icon">◎</span><span>Campaigns</span></button>
+          <button class="pp-nav-link" data-route="create-campaign" type="button"><span class="pp-nav-icon">＋</span><span>Create</span></button>
+          <button class="pp-nav-link" data-route="smart-reminders" type="button"><span class="pp-nav-icon">✉</span><span>Customers</span></button>
+          <button class="pp-nav-link" data-route="content-studio" type="button"><span class="pp-nav-icon">▤</span><span>Content</span></button>
+          <button class="pp-nav-link" data-route="analytics" type="button"><span class="pp-nav-icon">▣</span><span>Insights</span></button>
           <button class="pp-nav-link" data-route="menu-import" type="button"><span class="pp-nav-icon">☰</span><span>Menu</span></button>
-          <button class="pp-nav-link" data-route="content-studio" type="button"><span class="pp-nav-icon">▤</span><span>Content Studio</span></button>
-          <button class="pp-nav-link" data-route="analytics" type="button"><span class="pp-nav-icon">▣</span><span>Analytics</span></button>
           <button class="pp-nav-link" data-route="settings" type="button"><span class="pp-nav-icon">⌂</span><span>Settings</span></button>
         </div>
       </nav>
     </aside>
 
-    <main class="pp-main">
-      <header class="pp-topbar">
-        <div class="pp-topbar-search">
-          <span class="pp-search-icon">⌕</span>
-          <input id="appGlobalSearch" type="search" placeholder="Search actions, campaigns, assets..." />
+    <main class="pp-main pp-main--topnav">
+      <header class="pp-app-chrome" aria-label="App header">
+        <div class="pp-app-chrome-primary">
+          <div class="pp-app-brand-block">
+            <span class="pp-app-brand-title">PostPlate</span>
+            <span class="pp-app-brand-sub" id="appTopNavSub">Offers &amp; growth</span>
+          </div>
+          <nav id="appTopNav" class="pp-primary-topnav" aria-label="Primary">
+            <button type="button" class="pp-topnav-link" data-route="home">Home</button>
+            <button type="button" class="pp-topnav-link" data-route="campaigns">Campaigns</button>
+            <button type="button" class="pp-topnav-link" data-route="create-campaign">Create</button>
+            <button type="button" class="pp-topnav-link" data-route="smart-reminders">Customers</button>
+            <button type="button" class="pp-topnav-link" data-route="content-studio">Content</button>
+            <button type="button" class="pp-topnav-link" data-route="analytics">Insights</button>
+            <button type="button" class="pp-topnav-link" data-route="settings">Settings</button>
+          </nav>
+          <div class="pp-app-chrome-actions">
+            <button id="appNotificationsButton" class="pp-icon-btn" type="button" aria-label="Notifications" title="Notifications">◔</button>
+            <button id="appPrimaryCreateButton" class="pp-primary-btn pp-primary-btn--compact" type="button">New campaign</button>
+            <button id="appAccountButton" class="pp-avatar-btn" type="button" aria-label="Account and business profile">VD</button>
+          </div>
         </div>
-        <div class="pp-topbar-actions">
-          <button id="appNotificationsButton" class="pp-icon-btn" type="button" aria-label="Notifications (coming soon)" title="Coming soon" disabled>◔</button>
-          <button id="appActivityButton" class="pp-icon-btn" type="button" aria-label="Activity (coming soon)" title="Coming soon" disabled>⚑</button>
-          <button id="appPrimaryCreateButton" class="pp-primary-btn" type="button">New campaign</button>
-          <button id="appAccountButton" class="pp-avatar-btn" type="button" aria-label="Account">VD</button>
+        <div class="pp-app-chrome-search">
+          <div class="pp-global-search-wrap" id="appGlobalSearchWrap">
+            <div class="pp-topbar-search pp-topbar-search--full">
+              <span class="pp-search-icon">⌕</span>
+              <input
+                id="appGlobalSearch"
+                type="search"
+                placeholder="Search actions, campaigns, assets..."
+                autocomplete="off"
+                aria-autocomplete="list"
+                aria-controls="appGlobalSearchPanel"
+                aria-expanded="false"
+              />
+            </div>
+            <div id="appGlobalSearchPanel" class="pp-global-search-panel hidden" role="listbox" aria-label="Search results" hidden></div>
+          </div>
         </div>
       </header>
 
@@ -110,6 +139,13 @@
   </div>
 
   <script src="ui-data-adapter.js"></script>
+  <!-- Classic scripts have no `process`; growth-home IIFE must not throw before setting PostPlateGrowthHome. -->
+  <script>
+    if (typeof globalThis.process === "undefined") {
+      globalThis.process = { env: { NODE_ENV: "production" } };
+    }
+  </script>
+  <script src="assets/growth-home/growth-home.js?v=iife3"></script>
   <script src="growth-os-app.js"></script>
 </body>
 </html>

@@ -34,12 +34,53 @@ function normalizeAudiencePrimary(raw) {
   return AUDIENCE_PRIMARY_SLUGS.has(slug) ? slug : "general";
 }
 
+const FOOD_TYPE_SLUGS = new Set(["veg", "non_veg", "egg_based", "vegan", "jain", "unspecified"]);
+const MEAT_TYPE_SLUGS = new Set(["", "chicken", "mutton", "beef", "seafood"]);
+
+function normalizeFoodTypeSlug(raw) {
+  const t = asString(raw, "unspecified").toLowerCase().replace(/-/g, "_");
+  return FOOD_TYPE_SLUGS.has(t) ? t : "unspecified";
+}
+
+function normalizeMeatTypeSlug(raw) {
+  const m = asString(raw, "").toLowerCase();
+  return MEAT_TYPE_SLUGS.has(m) ? m : "";
+}
+
+function truthyDiet(raw) {
+  return raw === true || raw === 1 || raw === "1" || String(raw).toLowerCase() === "true";
+}
+
+function parsePriceCentsFromRaw(raw = {}) {
+  if (raw.priceCents != null) {
+    const n = Number(raw.priceCents);
+    if (Number.isFinite(n) && n >= 0) return Math.round(n);
+  }
+  if (typeof raw.price === "number" && Number.isFinite(raw.price) && raw.price >= 0) {
+    return Math.round(raw.price * 100);
+  }
+  const ps = String(raw.price || "").replace(/,/g, "").replace(/\s/g, "");
+  if (ps) {
+    const cleaned = ps.replace(/[^0-9.]/g, "");
+    const n = parseFloat(cleaned);
+    if (Number.isFinite(n) && n >= 0) return Math.round(n * 100);
+  }
+  return null;
+}
+
+function displayPriceFromCents(cents) {
+  if (cents == null) return "";
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 function normalizeMenuItem(raw = {}, index = 0) {
   const name = asString(raw.name || raw.itemName);
   if (!name) return null;
   const category = asString(raw.category, "main").toLowerCase();
   const status = asString(raw.status, "regular").toLowerCase();
   const marginBand = asString(raw.marginBand, "").toLowerCase();
+  const priceCents = parsePriceCentsFromRaw(raw);
+  const displayPriceRaw = asString(raw.displayPrice);
   const item = {
     id: asString(raw.id, `menu_item_${Date.now()}_${index}`),
     name,
@@ -49,9 +90,31 @@ function normalizeMenuItem(raw = {}, index = 0) {
     note: asString(raw.note),
     imageAssetId: asString(raw.imageAssetId),
     imageUrl: asString(raw.imageUrl),
+    foodType: normalizeFoodTypeSlug(raw.foodType),
+    meatType: normalizeMeatTypeSlug(raw.meatType),
+    dietaryHalal: truthyDiet(raw.dietaryHalal),
+    dietaryContainsEgg: truthyDiet(raw.dietaryContainsEgg),
+    dietaryDairyFree: truthyDiet(raw.dietaryDairyFree),
+    priceCents,
+    displayPrice: displayPriceRaw || displayPriceFromCents(priceCents),
     updatedAt: asString(raw.updatedAt, new Date().toISOString()),
   };
   return item;
+}
+
+function normalizeRestaurantFoodProfile(raw) {
+  if (!raw || typeof raw !== "object") {
+    return { type: "unspecified", meatType: "", dietaryFlags: { halal: false, containsEgg: false, dairyFree: false } };
+  }
+  return {
+    type: normalizeFoodTypeSlug(raw.type),
+    meatType: normalizeMeatTypeSlug(raw.meatType),
+    dietaryFlags: {
+      halal: truthyDiet(raw.dietaryFlags?.halal ?? raw.halal),
+      containsEgg: truthyDiet(raw.dietaryFlags?.containsEgg ?? raw.containsEgg),
+      dairyFree: truthyDiet(raw.dietaryFlags?.dairyFree ?? raw.dairyFree),
+    },
+  };
 }
 
 function normalizeMenuItems(list = []) {
@@ -103,8 +166,13 @@ function getOwnerProfile(data, requestedStore = "") {
       primaryGoal: asString(saved.primaryGoal),
       audiencePrimary: normalizeAudiencePrimary(saved.audiencePrimary),
       menuImportedAt: saved.menuImportedAt || null,
+      restaurantFoodProfile: normalizeRestaurantFoodProfile(saved.restaurantFoodProfile),
       businessInitials: initialsForName(restaurantName),
       updatedAt: saved.updatedAt || null,
+      fulfillmentModes: Array.isArray(saved.fulfillmentModes) && saved.fulfillmentModes.length
+        ? saved.fulfillmentModes.map((m) => String(m).toLowerCase()).filter((m) => m === "pickup" || m === "delivery")
+        : ["pickup"],
+      defaultFulfillment: saved.defaultFulfillment === "delivery" ? "delivery" : "pickup",
     };
   }
 
@@ -131,7 +199,10 @@ function getOwnerProfile(data, requestedStore = "") {
       menuItems: [],
       menuSignalsSummary: buildMenuSignalsSummary([]),
       audiencePrimary: "general",
+      restaurantFoodProfile: normalizeRestaurantFoodProfile(null),
       businessInitials: "YR",
+      fulfillmentModes: ["pickup"],
+      defaultFulfillment: "pickup",
     };
   }
 
@@ -149,7 +220,10 @@ function getOwnerProfile(data, requestedStore = "") {
     menuItems: [],
     menuSignalsSummary: buildMenuSignalsSummary([]),
     audiencePrimary: normalizeAudiencePrimary(latest.audiencePrimary),
+    restaurantFoodProfile: normalizeRestaurantFoodProfile(null),
     businessInitials: initialsForName(latest.restaurant || "Your Restaurant"),
+    fulfillmentModes: ["pickup"],
+    defaultFulfillment: "pickup",
   };
 }
 
@@ -188,6 +262,13 @@ function updateOwnerProfile(data, store, payload = {}) {
         : current.audiencePrimary,
     ),
     menuImportedAt: payload.menuImportedAt || current.menuImportedAt || null,
+    restaurantFoodProfile: payload.restaurantFoodProfile !== undefined
+      ? normalizeRestaurantFoodProfile(payload.restaurantFoodProfile)
+      : normalizeRestaurantFoodProfile(current.restaurantFoodProfile),
+    fulfillmentModes: Array.isArray(payload.fulfillmentModes) && payload.fulfillmentModes.length
+      ? payload.fulfillmentModes.map((m) => String(m).toLowerCase()).filter((m) => m === "pickup" || m === "delivery")
+      : (Array.isArray(current.fulfillmentModes) && current.fulfillmentModes.length ? current.fulfillmentModes : ["pickup"]),
+    defaultFulfillment: payload.defaultFulfillment === "delivery" ? "delivery" : (current.defaultFulfillment || "pickup"),
     updatedAt: new Date().toISOString(),
   };
   data.ownerProfiles[storeId] = next;

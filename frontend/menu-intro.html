@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostPlate · Welcome</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assets/order-guest/order-guest.css" />
+</head>
+<body class="pp-guest-flow pp-order-flow pp-order-intro">
+  <div class="og-intro-splash" id="introSplash">
+    <div class="og-intro-splash__logo">PP</div>
+    <p class="og-intro-splash__brand">PostPlate</p>
+    <p class="og-intro-splash__tag">Order. Pay. Enjoy.</p>
+  </div>
+
+  <div class="og-intro-restaurant og-intro-restaurant--hidden" id="introRestaurant">
+    <p class="og-intro-restaurant__eyebrow">You’re ordering from</p>
+    <img id="introRestaurantLogo" class="og-intro-logo og-intro-logo--hidden" alt="" />
+    <h1 class="og-intro-restaurant__name" id="introRestaurantName">Restaurant</h1>
+    <p class="og-intro-restaurant__hint">Tap below to see the menu.</p>
+    <button type="button" class="primary-btn og-intro-cta" id="introContinue">Continue to menu</button>
+  </div>
+
+  <script src="order-guest.js"></script>
+  <script>
+    PPOrderGuest.initIntro();
+  </script>
+</body>
+</html>

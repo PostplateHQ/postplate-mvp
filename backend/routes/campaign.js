@@ -1,6 +1,7 @@
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
+const foodIntelligence = require('../lib/foodIntelligence');
 
 const CACHE_DIR = path.join(__dirname, '..', 'db', 'ai-cache');
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
@@ -69,6 +70,13 @@ function campaignGoalBrief(goal) {
   return map[goal] || map.traffic;
 }
 
+function parseMergedFoodProfile(body) {
+  const item = String(body.item || '').trim();
+  const restaurant = body.restaurantFoodProfile || body.foodProfile || {};
+  const itemFp = body.itemFoodProfile || {};
+  return foodIntelligence.mergeFoodProfiles(restaurant, itemFp, item);
+}
+
 function registerCampaignRoutes(app) {
 
   app.post('/api/campaign/generate', async (req, res) => {
@@ -87,21 +95,22 @@ function registerCampaignRoutes(app) {
     const storeId = String(body.storeId || 'store123').trim();
 
     const imageKeywords = String(body.imageKeywords || '').trim();
+    const foodProfile = parseMergedFoodProfile(body);
 
     const [copyResult, posterResult, qrResult] = await Promise.allSettled([
       generateCopy({
         intent, item, offerType, discountValue, comboDescription, tone, restaurantName, cuisineType,
-        brandTone, audiencePrimary, campaignGoal,
+        brandTone, audiencePrimary, campaignGoal, foodProfile,
       }),
       generatePoster({
         intent, item, offerType, discountValue, tone, restaurantName, cuisineType, imageKeywords,
-        audiencePrimary, campaignGoal, brandTone,
+        audiencePrimary, campaignGoal, brandTone, foodProfile,
       }),
       generateQR(storeId, item),
     ]);
 
     const copy = copyResult.status === 'fulfilled' ? copyResult.value : buildCopyFallback({
-      item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone,
+      item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile,
     });
     const poster = posterResult.status === 'fulfilled' ? posterResult.value : { imageUrl: '', source: 'none' };
     const qr = qrResult.status === 'fulfilled' ? qrResult.value : '';
@@ -136,6 +145,7 @@ function registerCampaignRoutes(app) {
     const audiencePrimary = String(body.audiencePrimary || 'general').trim().toLowerCase() || 'general';
     const campaignGoal = String(body.campaignGoal || 'traffic').trim().toLowerCase() || 'traffic';
     const imageKeywords = String(body.imageKeywords || '').trim();
+    const foodProfile = parseMergedFoodProfile(body);
 
     try {
       const result = {};
@@ -143,7 +153,7 @@ function registerCampaignRoutes(app) {
       if (target === 'copy' || target === 'all') {
         const copy = await generateCopy({
           intent, item, offerType, discountValue, comboDescription, tone, restaurantName, cuisineType,
-          brandTone, audiencePrimary, campaignGoal,
+          brandTone, audiencePrimary, campaignGoal, foodProfile,
         });
         result.headline = copy.headline;
         result.offerLine = copy.offerLine;
@@ -153,7 +163,7 @@ function registerCampaignRoutes(app) {
       if (target === 'poster' || target === 'all') {
         const poster = await generatePoster({
           intent, item, offerType, discountValue, tone, restaurantName, cuisineType, imageKeywords,
-          audiencePrimary, campaignGoal, brandTone,
+          audiencePrimary, campaignGoal, brandTone, foodProfile,
         });
         result.posterImageUrl = poster.imageUrl;
         result.posterSource = poster.source;
@@ -164,7 +174,7 @@ function registerCampaignRoutes(app) {
       console.error('[campaign/regenerate] failed:', error.message);
       if (target === 'copy' || target === 'all') {
         const fallback = buildCopyFallback({
-          item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone,
+          item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile,
         });
         return res.json({ ...fallback, posterImageUrl: '', posterSource: 'fallback' });
       }
@@ -180,40 +190,47 @@ function buildOfferContext(offerType, discountValue, comboDescription) {
   return '';
 }
 
-function buildCopyFallback({ item, offerType, discountValue, tone, audiencePrimary = 'general', campaignGoal = 'traffic', brandTone = '' }) {
-  const offerCtx = buildOfferContext(offerType, discountValue, '');
-  const toneMap = {
-    friendly: { prefix: 'Come try our', ctaSuffix: 'Visit us today' },
-    bold: { prefix: 'DON\'T MISS:', ctaSuffix: 'Grab it now' },
-    premium: { prefix: 'Experience', ctaSuffix: 'Reserve your table' },
-  };
-  const t = toneMap[tone] || toneMap.friendly;
-  const audHint = audiencePrimary === 'families' ? ' Bring the crew.' : audiencePrimary === 'students' ? ' Student-friendly value.' : '';
-  const goalHint = campaignGoal === 'repeat_visits' ? ' We missed you.' : '';
-  const brand = brandTone ? ` ${String(brandTone).slice(0, 40)}` : '';
-  return {
-    headline: offerCtx ? `${offerCtx.toUpperCase()} — ${item.toUpperCase()}` : item.toUpperCase(),
-    offerLine: offerCtx
-      ? `${t.prefix} ${item} — ${offerCtx}${audHint}${brand ? '.' : ''}`
-      : `${t.prefix} amazing ${item}${audHint}`,
-    cta: `Show this code to redeem. ${t.ctaSuffix}!${goalHint}`,
-  };
+function buildCopyFallback({
+  item, offerType, discountValue, tone, audiencePrimary = 'general', campaignGoal = 'traffic', brandTone = '',
+  comboDescription = '', foodProfile,
+}) {
+  const fp = foodProfile || foodIntelligence.mergeFoodProfiles({}, {}, item);
+  return foodIntelligence.buildTemplateCopy({
+    item,
+    offerType,
+    discountValue,
+    tone,
+    audiencePrimary,
+    campaignGoal,
+    brandTone,
+    comboDescription,
+    foodProfile: fp,
+  });
 }
 
 async function generateCopy({
   intent, item, offerType, discountValue, comboDescription, tone, restaurantName, cuisineType,
-  brandTone = '', audiencePrimary = 'general', campaignGoal = 'traffic',
+  brandTone = '', audiencePrimary = 'general', campaignGoal = 'traffic', foodProfile,
 }) {
+  const fp = foodProfile || foodIntelligence.mergeFoodProfiles({}, {}, item);
   if (isDevMode()) {
     console.log('[DEV_MODE] Skipping copy API — using smart fallback ($0)');
-    return buildCopyFallback({ item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone });
+    return buildCopyFallback({
+      item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile: fp,
+    });
   }
 
   const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) return buildCopyFallback({ item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone });
+  if (!openaiKey) {
+    return buildCopyFallback({
+      item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile: fp,
+    });
+  }
 
   const cacheKey = getCacheKey('copy', {
-    intent, item, offerType, discountValue, tone, restaurantName, audiencePrimary, campaignGoal, brandTone: String(brandTone).slice(0, 60),
+    intent, item, offerType, discountValue, tone, restaurantName, audiencePrimary, campaignGoal,
+    brandTone: String(brandTone).slice(0, 60),
+    food: JSON.stringify(fp),
   });
   const cached = readCache(cacheKey);
   if (cached) { console.log('[cache] copy hit'); return cached; }
@@ -232,7 +249,12 @@ async function generateCopy({
         messages: [
           {
             role: 'system',
-            content: 'You are a restaurant marketing copywriter. Write short, punchy promotional copy. Return ONLY a JSON object with keys: headline (max 8 words, uppercase), offerLine (max 15 words), cta (max 10 words). No markdown, no explanation. Do not invent statistics or demographics.',
+            content: [
+              'You are a restaurant marketing copywriter. Write short, punchy promotional copy.',
+              'Return ONLY a JSON object with keys: headline (max 8 words, uppercase), offerLine (max 15 words), cta (max 10 words).',
+              'No markdown, no explanation. Do not invent statistics or demographics.',
+              foodIntelligence.buildPromptRulesBlock(fp),
+            ].join('\n\n'),
           },
           {
             role: 'user',
@@ -246,7 +268,7 @@ async function generateCopy({
               `Item: ${item}`,
               offerContext ? `Offer: ${offerContext}` : 'No discount — just promote the item',
               `Tone: ${toneMap[tone] || toneMap.friendly}`,
-              'Write headline, offerLine, and cta as JSON.',
+              'Write headline, offerLine, and cta as JSON. Obey all FOOD & DIETARY CONSTRAINTS strictly.',
             ].filter(Boolean).join('\n'),
           },
         ],
@@ -257,25 +279,40 @@ async function generateCopy({
     const data = await response.json();
     const content = (data.choices?.[0]?.message?.content || '').trim();
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return buildCopyFallback({ item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone });
+    if (!jsonMatch) {
+      return buildCopyFallback({
+        item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile: fp,
+      });
+    }
     const parsed = JSON.parse(jsonMatch[0]);
-    const result = {
+    let result = {
       headline: String(parsed.headline || '').slice(0, 80) || item.toUpperCase(),
       offerLine: String(parsed.offerLine || '').slice(0, 120) || `Try our ${item} today`,
       cta: String(parsed.cta || '').slice(0, 80) || 'Show this code to redeem',
     };
+    const check = foodIntelligence.validateCopyAgainstProfile(fp, [result.headline, result.offerLine, result.cta]);
+    if (!check.ok) {
+      console.warn('[campaign] copy failed dietary validation:', check.violations.join('; '));
+      result = buildCopyFallback({
+        item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile: fp,
+      });
+    }
     writeCache(cacheKey, result);
     return result;
   } catch (error) {
     console.error('[campaign] copy generation failed:', error.message);
-    return buildCopyFallback({ item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone });
+    return buildCopyFallback({
+      item, offerType, discountValue, tone, audiencePrimary, campaignGoal, brandTone, comboDescription, foodProfile: fp,
+    });
   }
 }
 
 async function generatePoster({
   intent, item, offerType, discountValue, tone, restaurantName, cuisineType, imageKeywords,
-  audiencePrimary = 'general', campaignGoal = 'traffic', brandTone = '',
+  audiencePrimary = 'general', campaignGoal = 'traffic', brandTone = '', foodProfile,
 }) {
+  const fp = foodProfile || foodIntelligence.mergeFoodProfiles({}, {}, item);
+  const dietaryVisual = foodIntelligence.buildPosterDietaryLine(fp, item);
   if (isDevMode()) {
     const seed = Math.floor(Math.random() * 1000);
     const query = encodeURIComponent(item || 'restaurant food');
@@ -289,6 +326,7 @@ async function generatePoster({
 
   const cacheKey = getCacheKey('poster', {
     item, tone, cuisineType, imageKeywords, audiencePrimary, campaignGoal, brandTone: String(brandTone).slice(0, 40),
+    food: JSON.stringify(fp),
   });
   const cached = readCache(cacheKey);
   if (cached) { console.log('[cache] poster hit'); return cached; }
@@ -313,6 +351,7 @@ async function generatePoster({
 
   const prompt = [
     `A real photograph of ${item} at a restaurant, taken by a human with a Canon EOS R5, 50mm f/1.4 lens.`,
+    dietaryVisual ? `CRITICAL dietary / plating accuracy: ${dietaryVisual}` : '',
     cuisineType ? `Authentic ${cuisineType} cuisine — traditional plating, real serving dish, correct garnish for the culture.` : '',
     imageKeywords ? `Owner specifically wants: ${imageKeywords}.` : '',
     offerContext ? `Plating should suit a ${offerContext} style promotion.` : '',

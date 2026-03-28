@@ -11,19 +11,23 @@
   <link rel="stylesheet" href="assets/order-guest/order-guest.css" />
 </head>
 <body class="pp-guest-flow pp-order-flow pp-order-intro">
-  <div class="og-intro-splash" id="introSplash">
+  <div class="og-intro-splash" id="introSplash" aria-hidden="true">
     <div class="og-intro-splash__logo">PP</div>
-    <p class="og-intro-splash__brand">PostPlate</p>
-    <p class="og-intro-splash__tag">Order. Pay. Enjoy.</p>
+    <p class="og-intro-splash__tag">Loading…</p>
   </div>
 
   <div class="og-intro-restaurant og-intro-restaurant--hidden" id="introRestaurant">
     <p class="og-intro-restaurant__eyebrow">You’re ordering from</p>
-    <img id="introRestaurantLogo" class="og-intro-logo og-intro-logo--hidden" alt="" />
-    <h1 class="og-intro-restaurant__name" id="introRestaurantName">Restaurant</h1>
-    <p class="og-intro-restaurant__hint">Tap below to see the menu.</p>
+    <div class="og-intro-brand-block">
+      <img id="introRestaurantLogo" class="og-intro-logo og-intro-logo--hidden" alt="" />
+      <h1 class="og-intro-restaurant__name" id="introRestaurantName">Restaurant</h1>
+    </div>
+    <p class="og-intro-restaurant__hint">Tap below for the full menu. Order, pay, and enjoy.</p>
+    <p class="og-intro-restaurant__transparency" id="introTransparency">Menu, prices, and photos come from the restaurant’s PostPlate profile.</p>
     <button type="button" class="primary-btn og-intro-cta" id="introContinue">Continue to menu</button>
   </div>
+
+  <p class="micro-copy og-foot-note og-foot-note--intro">Ordering powered by PostPlate</p>
 
   <script src="order-guest.js"></script>
   <script>

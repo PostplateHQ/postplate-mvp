@@ -1,0 +1,35 @@
+---
+description: How to plan and ship many product flows without branch chaos or merge pain.
+alwaysApply: true
+---
+
+# Multi-flow delivery (many flows at once)
+
+When the backlog has **several flows** (Smart Actions paths, campaign builder, reminders, reel guide, menu wizard, offers, analytics, etc.):
+
+## Before coding
+
+1. **List flows** with a one-line outcome each (owner-visible result, not file names).
+2. **Mark dependencies:** e.g. API shape before UI; profile fields before generation prompts; shared `growth-os-app.js` sections last or batched.
+3. **Order batches:**
+   - **Batch A — Data & APIs:** routes, services, payload shapes, migrations to `data.json` patterns.
+   - **Batch B — Adapter & types:** `ui-data-adapter.js`, shared enums/labels.
+   - **Batch C — UI flows:** one branch per flow when possible; if two flows touch the same 500+ line file, **serialize** or do one branch that completes both with clear commits per flow.
+4. **Branch rule:** New branch per flow (or per small batch), never stack unrelated flows on one branch without user approval.
+
+## While coding
+
+- Prefer **vertical slices** (one flow end-to-end) when the flow is mostly isolated.
+- Prefer **horizontal slices** (shared API first) when multiple flows need the same endpoint or profile fields.
+- **Commit granularity:** commit per logical unit (`feat(reminders): eligible list`, `fix(cb): persist step 4 copy`) to make reverts and review easy.
+
+## Integration
+
+- Merge to `main` in dependency order (APIs → adapter → UI).
+- After each merge, **smoke test** the flows that share files with what you just merged.
+- If parallel work is needed, assign **non-overlapping** files per person/agent or use a short-lived integration branch.
+
+## With the user
+
+- Confirm **priority order** (P0–P2) and **“done”** per flow (e.g. “publish + analytics event”).
+- Call out **scope creep** as a new flow/branch instead of expanding the current one.

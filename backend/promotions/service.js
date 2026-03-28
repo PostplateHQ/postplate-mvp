@@ -2,6 +2,7 @@ const { composePoster, listPosterTemplates, loadPresetMap } = require('../../eng
 const { resolvePresetId } = require('../../engine/styleSystem');
 const { createProviderRegistry } = require('../../engine/providerRegistry');
 const QRCode = require('qrcode');
+const { DEFAULT_SEED_STORE_ID } = require('../lib/seedStoreId');
 const { normalizeDesignBrief, validateDesignBrief } = require('./validation');
 const {
   buildSuggestionsResult,
@@ -644,7 +645,7 @@ async function buildReviewPayload(payload = {}) {
     ? payload.draftInput
     : {};
   const business = draftInput.businessContext || {};
-  const store = String(draftInput.storeId || business.storeId || 'taco123');
+  const store = String(draftInput.storeId || business.storeId || DEFAULT_SEED_STORE_ID);
   const restaurantName = String(business.restaurantName || 'Your Restaurant');
   const offerTitle = String(selectedSuggestion.title || selectedSuggestion.headline || 'Offer');
   const location = String(business.location || 'Primary location');

@@ -81,10 +81,12 @@ function normalizeMenuItem(raw = {}, index = 0) {
   const marginBand = asString(raw.marginBand, "").toLowerCase();
   const priceCents = parsePriceCentsFromRaw(raw);
   const displayPriceRaw = asString(raw.displayPrice);
+  const sectionTitle = asString(raw.sectionTitle).slice(0, 80);
   const item = {
     id: asString(raw.id, `menu_item_${Date.now()}_${index}`),
     name,
     category: ["starter", "main", "drink", "dessert"].includes(category) ? category : "main",
+    ...(sectionTitle ? { sectionTitle } : {}),
     status: ["best_seller", "slow_mover", "regular"].includes(status) ? status : "regular",
     marginBand: ["high", "medium", "low"].includes(marginBand) ? marginBand : "",
     note: asString(raw.note),
@@ -173,6 +175,10 @@ function getOwnerProfile(data, requestedStore = "") {
         ? saved.fulfillmentModes.map((m) => String(m).toLowerCase()).filter((m) => m === "pickup" || m === "delivery")
         : ["pickup"],
       defaultFulfillment: saved.defaultFulfillment === "delivery" ? "delivery" : "pickup",
+      brandId: pickBrandId({}, saved, restaurantName),
+      locationId: pickLocationId({}, saved),
+      profileRevision: Number(saved.profileRevision) || 0,
+      profileChangeLog: Array.isArray(saved.profileChangeLog) ? saved.profileChangeLog.slice(-20) : [],
     };
   }
 
@@ -203,6 +209,10 @@ function getOwnerProfile(data, requestedStore = "") {
       businessInitials: "YR",
       fulfillmentModes: ["pickup"],
       defaultFulfillment: "pickup",
+      brandId: "",
+      locationId: "primary",
+      profileRevision: 0,
+      profileChangeLog: [],
     };
   }
 
@@ -224,7 +234,71 @@ function getOwnerProfile(data, requestedStore = "") {
     businessInitials: initialsForName(latest.restaurant || "Your Restaurant"),
     fulfillmentModes: ["pickup"],
     defaultFulfillment: "pickup",
+    brandId: pickBrandId({}, { brandId: latest.brandId }, latest.restaurant || "Your Restaurant"),
+    locationId: pickLocationId({}, { locationId: latest.locationId }),
+    profileRevision: 0,
+    profileChangeLog: [],
   };
+}
+
+const PROFILE_CHANGE_TRACK_KEYS = [
+  "restaurantName",
+  "restaurantLocation",
+  "logoAsset",
+  "category",
+  "businessType",
+  "cuisineType",
+  "businessHours",
+  "brandTone",
+  "menuItems",
+  "peakHours",
+  "slowHours",
+  "busiestDays",
+  "primaryGoal",
+  "audiencePrimary",
+  "menuImportedAt",
+  "restaurantFoodProfile",
+  "fulfillmentModes",
+  "defaultFulfillment",
+  "brandId",
+  "locationId",
+];
+
+const PROFILE_JSON_COMPARE_KEYS = new Set([
+  "menuItems",
+  "restaurantFoodProfile",
+  "peakHours",
+  "slowHours",
+  "busiestDays",
+  "fulfillmentModes",
+]);
+
+function listProfileFieldsChanged(payload, prev) {
+  const changed = [];
+  const p = prev || {};
+  for (const k of PROFILE_CHANGE_TRACK_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(payload, k)) continue;
+    const a = payload[k];
+    const b = p[k];
+    if (PROFILE_JSON_COMPARE_KEYS.has(k)) {
+      if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null)) changed.push(k);
+    } else if (String(a ?? "") !== String(b ?? "")) {
+      changed.push(k);
+    }
+  }
+  return changed;
+}
+
+function mergeProfileChangeTracking(payload, rawSaved) {
+  const changed = listProfileFieldsChanged(payload, rawSaved || {});
+  const prevRev = Number(rawSaved.profileRevision) || 0;
+  const prevLog = Array.isArray(rawSaved.profileChangeLog) ? rawSaved.profileChangeLog.slice() : [];
+  if (changed.length === 0) {
+    return { profileRevision: prevRev, profileChangeLog: prevLog };
+  }
+  prevLog.push({ at: new Date().toISOString(), changed });
+  while (prevLog.length > 40) prevLog.shift();
+  return { profileRevision: prevRev + 1, profileChangeLog: prevLog };
 }
 
 function updateOwnerProfile(data, store, payload = {}) {
@@ -237,9 +311,13 @@ function updateOwnerProfile(data, store, payload = {}) {
   if (!data.ownerProfiles || typeof data.ownerProfiles !== "object") {
     data.ownerProfiles = {};
   }
+  const rawSaved = data.ownerProfiles[storeId] || {};
   const current = getOwnerProfile(data, storeId);
   const restaurantName = String(payload.restaurantName || current.restaurantName || "").trim() || "Your Restaurant";
+  const brandId = pickBrandId(payload, rawSaved, restaurantName);
+  const locationId = pickLocationId(payload, rawSaved);
   const menuItems = normalizeMenuItems(Array.isArray(payload.menuItems) ? payload.menuItems : current.menuItems);
+  const { profileRevision, profileChangeLog } = mergeProfileChangeTracking(payload, rawSaved);
   const next = {
     storeId,
     restaurantName,
@@ -269,6 +347,10 @@ function updateOwnerProfile(data, store, payload = {}) {
       ? payload.fulfillmentModes.map((m) => String(m).toLowerCase()).filter((m) => m === "pickup" || m === "delivery")
       : (Array.isArray(current.fulfillmentModes) && current.fulfillmentModes.length ? current.fulfillmentModes : ["pickup"]),
     defaultFulfillment: payload.defaultFulfillment === "delivery" ? "delivery" : (current.defaultFulfillment || "pickup"),
+    brandId,
+    locationId,
+    profileRevision,
+    profileChangeLog,
     updatedAt: new Date().toISOString(),
   };
   data.ownerProfiles[storeId] = next;
@@ -278,9 +360,113 @@ function updateOwnerProfile(data, store, payload = {}) {
   };
 }
 
+/** Public store key: lowercase, digits, hyphens; 3–48 chars; no leading/trailing hyphen. */
+function normalizeStoreIdSlug(raw) {
+  let s = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (s.length > 48) s = s.slice(0, 48).replace(/-+$/g, "");
+  if (s.length < 3 || s.length > 48) return "";
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s)) return "";
+  return s;
+}
+
+function hasExplicitString(payload, key) {
+  return (
+    payload &&
+    payload[key] !== undefined &&
+    payload[key] !== null &&
+    String(payload[key]).trim() !== ""
+  );
+}
+
+function pickBrandId(payload, rawSaved, restaurantName) {
+  if (hasExplicitString(payload, "brandId")) {
+    const n = normalizeStoreIdSlug(payload.brandId);
+    if (n) return n;
+  }
+  if (rawSaved && rawSaved.brandId != null && String(rawSaved.brandId).trim()) {
+    const n = normalizeStoreIdSlug(rawSaved.brandId);
+    if (n) return n;
+  }
+  return normalizeStoreIdSlug(restaurantName) || "";
+}
+
+function pickLocationId(payload, rawSaved) {
+  if (hasExplicitString(payload, "locationId")) {
+    const n = normalizeStoreIdSlug(payload.locationId);
+    if (n) return n;
+  }
+  if (rawSaved && rawSaved.locationId != null && String(rawSaved.locationId).trim()) {
+    const n = normalizeStoreIdSlug(rawSaved.locationId);
+    if (n) return n;
+  }
+  return "primary";
+}
+
+/**
+ * Move owner profile + same-store offers/redemptions to a new store key.
+ * Updates embedded qrAssetUrl query params when they reference the old store.
+ */
+function rekeyOwnerStore(data, fromStore, toStore) {
+  const from = String(fromStore || "").trim();
+  const to = normalizeStoreIdSlug(toStore);
+  if (!from || !to) {
+    const err = new Error("Invalid store ID");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (from === to) return;
+  if (!data.ownerProfiles || typeof data.ownerProfiles !== "object") {
+    data.ownerProfiles = {};
+  }
+  if (!data.ownerProfiles[from]) {
+    const err = new Error(
+      "No saved profile for this store ID. Save your profile once, then you can change the ID.",
+    );
+    err.statusCode = 404;
+    throw err;
+  }
+  if (data.ownerProfiles[to]) {
+    const err = new Error("That store ID is already in use. Pick another.");
+    err.statusCode = 409;
+    throw err;
+  }
+  const prof = data.ownerProfiles[from];
+  delete data.ownerProfiles[from];
+  prof.storeId = to;
+  data.ownerProfiles[to] = prof;
+
+  const offers = Array.isArray(data.offers) ? data.offers : [];
+  offers.forEach((o) => {
+    const st = String(o.store || "").trim();
+    const sid = String(o.storeId || "").trim();
+    if (st === from || sid === from) {
+      o.store = to;
+      o.storeId = to;
+    }
+    if (typeof o.qrAssetUrl === "string" && o.qrAssetUrl.includes(`store=${from}`)) {
+      o.qrAssetUrl = o.qrAssetUrl.split(`store=${from}`).join(`store=${to}`);
+    }
+  });
+
+  const reds = Array.isArray(data.redemptions) ? data.redemptions : [];
+  reds.forEach((r) => {
+    if (String(r.store || "").trim() === from) {
+      r.store = to;
+    }
+  });
+}
+
 module.exports = {
   getOwnerProfile,
   updateOwnerProfile,
   normalizeAudiencePrimary,
+  normalizeStoreIdSlug,
+  rekeyOwnerStore,
   AUDIENCE_PRIMARY_SLUGS: Array.from(AUDIENCE_PRIMARY_SLUGS),
 };

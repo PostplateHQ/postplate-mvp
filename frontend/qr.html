@@ -27,7 +27,7 @@
           Opened from your dashboard — <strong>Store ID</strong> and <strong>restaurant</strong> are pre-filled. Tap generate below.
         </p>
         <label for="store">Store ID</label>
-        <input id="store" type="text" value="taco123" placeholder="Same ID as dashboard (e.g. taco123)" />
+        <input id="store" type="text" value="01-7402" placeholder="Same ID as dashboard (e.g. 01-7402)" />
         <p class="micro-copy left-align" style="margin-top:6px;margin-bottom:12px">
           This must match the store key in your owner profile so <code>/api/public/menu</code> loads your uploaded items.
         </p>
@@ -112,7 +112,7 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const fromDashboard = params.get("fromDashboard") === "1";
-    const storeParam = params.get("store") || (fromDashboard ? "" : "taco123");
+    const storeParam = params.get("store") || (fromDashboard ? "" : "01-7402");
     const restaurantParam =
       params.get("restaurant") !== null
         ? params.get("restaurant")

@@ -1,5 +1,6 @@
 const { getOwnerProfile } = require('../services/ownerProfile');
 const { getStoreOffers, getOfferStatusDisplay } = require('../services/offersDomain');
+const { DEFAULT_SEED_STORE_ID } = require('../lib/seedStoreId');
 
 function buildAction(targetRoute, intent, metadata = {}) {
   return {
@@ -33,7 +34,7 @@ function registerSmartActionsRoutes(app, deps) {
   });
 
   app.get('/api/stores/:storeId/smart-actions', (req, res) => {
-    const storeId = String(req.params.storeId || '').trim() || 'taco123';
+    const storeId = String(req.params.storeId || '').trim() || DEFAULT_SEED_STORE_ID;
     const data = loadData();
     const profile = getOwnerProfile(data, storeId);
     const offers = getStoreOffers(data, storeId, { includeArchived: false });

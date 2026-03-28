@@ -1,4 +1,4 @@
-const DEFAULT_STORE_ID = 'taco123';
+const DEFAULT_STORE_ID = '01-7402';
 
 const state = {
   storeId: DEFAULT_STORE_ID,

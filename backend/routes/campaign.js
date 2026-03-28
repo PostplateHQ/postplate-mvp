@@ -105,6 +105,7 @@ function registerCampaignRoutes(app) {
       generatePoster({
         intent, item, offerType, discountValue, tone, restaurantName, cuisineType, imageKeywords,
         audiencePrimary, campaignGoal, brandTone, foodProfile,
+        skipPosterCache: false,
       }),
       generateQR(storeId, item),
     ]);
@@ -164,6 +165,7 @@ function registerCampaignRoutes(app) {
         const poster = await generatePoster({
           intent, item, offerType, discountValue, tone, restaurantName, cuisineType, imageKeywords,
           audiencePrimary, campaignGoal, brandTone, foodProfile,
+          skipPosterCache: true,
         });
         result.posterImageUrl = poster.imageUrl;
         result.posterSource = poster.source;
@@ -310,13 +312,18 @@ async function generateCopy({
 async function generatePoster({
   intent, item, offerType, discountValue, tone, restaurantName, cuisineType, imageKeywords,
   audiencePrimary = 'general', campaignGoal = 'traffic', brandTone = '', foodProfile,
+  skipPosterCache = false,
 }) {
   const fp = foodProfile || foodIntelligence.mergeFoodProfiles({}, {}, item);
   const dietaryVisual = foodIntelligence.buildPosterDietaryLine(fp, item);
   if (isDevMode()) {
-    const seed = Math.floor(Math.random() * 1000);
-    const query = encodeURIComponent(item || 'restaurant food');
-    const freeUrl = `https://source.unsplash.com/1024x1024/?${query}&sig=${seed}`;
+    const kw = String(imageKeywords || '').trim().slice(0, 80);
+    let h = 0;
+    for (let i = 0; i < kw.length; i += 1) h = ((h << 5) - h + kw.charCodeAt(i)) | 0;
+    const sig = `${Date.now()}-${Math.abs(h)}`;
+    const terms = [item || 'restaurant food', kw].filter(Boolean).join(' ');
+    const query = encodeURIComponent(terms.slice(0, 200));
+    const freeUrl = `https://source.unsplash.com/1024x1024/?${query}&sig=${sig}`;
     console.log('[DEV_MODE] Skipping DALL-E — using Unsplash placeholder ($0)');
     return { imageUrl: freeUrl, source: 'dev-placeholder' };
   }
@@ -328,8 +335,10 @@ async function generatePoster({
     item, tone, cuisineType, imageKeywords, audiencePrimary, campaignGoal, brandTone: String(brandTone).slice(0, 40),
     food: JSON.stringify(fp),
   });
-  const cached = readCache(cacheKey);
-  if (cached) { console.log('[cache] poster hit'); return cached; }
+  if (!skipPosterCache) {
+    const cached = readCache(cacheKey);
+    if (cached) { console.log('[cache] poster hit'); return cached; }
+  }
 
   const offerContext = buildOfferContext(offerType, discountValue, '');
   const toneStyle = {
@@ -353,7 +362,10 @@ async function generatePoster({
     `A real photograph of ${item} at a restaurant, taken by a human with a Canon EOS R5, 50mm f/1.4 lens.`,
     dietaryVisual ? `CRITICAL dietary / plating accuracy: ${dietaryVisual}` : '',
     cuisineType ? `Authentic ${cuisineType} cuisine — traditional plating, real serving dish, correct garnish for the culture.` : '',
-    imageKeywords ? `Owner specifically wants: ${imageKeywords}.` : '',
+    imageKeywords ? `Owner specifically wants (visual cues only — interpret loosely; this is a single still photo, not video or audio): ${imageKeywords}.` : '',
+    imageKeywords
+      ? 'If the owner mentions music, sound, Reels, Instagram effects, or animation, ignore those — no audio, no motion, no UI overlays. Translate "smoke" or "dramatic Insta vibe" into real food photography only (e.g. steam, subtle haze, backlight, moody lighting).'
+      : '',
     offerContext ? `Plating should suit a ${offerContext} style promotion.` : '',
     brandTone ? `Overall brand vibe (do not render text): ${String(brandTone).slice(0, 120)}.` : '',
     `Setting and atmosphere: ${sceneMood}.${goalMood}`,

@@ -1,4 +1,8 @@
 require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
+// Default when unset: DEV_MODE=true (free placeholders / no paid AI). Set DEV_MODE=false in .env for real OpenAI (staging/prod).
+if (process.env.DEV_MODE === undefined || String(process.env.DEV_MODE).trim() === "") {
+  process.env.DEV_MODE = "true";
+}
 const express = require("express");
 const path = require("path");
 const QRCode = require("qrcode");
@@ -7,6 +11,8 @@ const { createDataStore } = require("./data/store");
 const { registerPromotionRoutes } = require("./promotions/routes");
 const { registerOfferRoutes } = require("./routes/offers");
 const { registerProfileRoutes } = require("./routes/profile");
+const { registerInternalRoutes } = require("./routes/internal");
+const { resolveOwnerStoreFromRequest } = require("./lib/postplateSession");
 const { registerRedemptionRoutes } = require("./routes/redemptions");
 const { registerLegacyPromoRoutes } = require("./routes/promo");
 const { registerQrRoutes } = require("./routes/qr");
@@ -64,7 +70,7 @@ app.use((error, _req, res, next) => {
   return next(error);
 });
 
-const PORT = 3000;
+const PORT = Number.parseInt(process.env.PORT || "3000", 10) || 3000;
 const dataPath = path.join(__dirname, "db", "data.json");
 const REMINDER_DELAY_MS = 30 * 60 * 1000;
 
@@ -278,11 +284,19 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "index.html"));
 });
 
+registerInternalRoutes(app, {
+  loadData,
+  saveData,
+  getOwnerProfile,
+  updateOwnerProfile,
+});
+
 registerProfileRoutes(app, {
   loadData,
   saveData,
   getOwnerProfile,
   updateOwnerProfile,
+  resolveOwnerStore: resolveOwnerStoreFromRequest,
 });
 
 registerOfferRoutes(app, {
@@ -341,7 +355,9 @@ const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   if (String(process.env.DEV_MODE || '').toLowerCase() === 'true') {
     console.log('⚡ DEV_MODE=true — All AI calls are FREE (using placeholders + cache)');
-    console.log('  → Set DEV_MODE=false in .env when ready for production');
+    console.log('  → Set DEV_MODE=false in .env when you want real OpenAI (and keep OPENAI_API_KEY set)');
+  } else {
+    console.log('DEV_MODE=false — Live OpenAI when OPENAI_API_KEY is configured (standard chat + image APIs).');
   }
 });
 

@@ -1,0 +1,19 @@
+---
+description: Use separate chats per product flow; attach the matching context file for scope.
+alwaysApply: true
+---
+
+# Chat windows and context
+
+This repo has **flow-scoped context packs** under [`.cursor/context/`](.cursor/context/README.md).
+
+## For the human
+
+- Open a **new Cursor Chat (or Composer)** per major flow (e.g. “Smart Actions only”, “Campaign API only”).
+- At the start of the chat, **attach** the right file with `@`, e.g. `@.cursor/context/03-campaign-builder.md`.
+- For cross-cutting changes (same huge file, two flows), use **one chat** and mention both context files, or **serialize** work to reduce merge conflicts.
+
+## For the agent
+
+- When the user names an area (dashboard, reminders, offers, generation, menu), **prefer** reading or following the matching `.cursor/context/*.md` so file lists and boundaries stay accurate.
+- Do not expand scope into unrelated flows without the user asking; suggest a **separate chat** + context file for the other area.

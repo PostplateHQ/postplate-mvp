@@ -17,14 +17,17 @@
   </button>
 
   <div class="og-shell">
-    <header class="og-topbar">
-      <span class="og-back" aria-hidden="true" style="visibility:hidden"></span>
-      <div class="og-progress" aria-label="Step 1 of 3">
-        <span class="og-progress-dot is-active" title="Menu"></span>
-        <span class="og-progress-dot" title="Cart"></span>
-        <span class="og-progress-dot" title="Pay"></span>
+    <header class="og-menu-header">
+      <div id="ogMenuHero" class="og-menu-hero" aria-label="Restaurant"></div>
+      <div class="og-topbar og-topbar--menu">
+        <span class="og-back" aria-hidden="true" style="visibility:hidden"></span>
+        <div class="og-progress" aria-label="Step 1 of 3">
+          <span class="og-progress-dot is-active" title="Menu"></span>
+          <span class="og-progress-dot" title="Cart"></span>
+          <span class="og-progress-dot" title="Pay"></span>
+        </div>
+        <span class="og-back" style="visibility:hidden" aria-hidden="true"></span>
       </div>
-      <span class="og-back" style="visibility:hidden" aria-hidden="true"></span>
     </header>
 
     <span id="ogRestaurantName" class="og-sr-only">Menu</span>
@@ -53,7 +56,7 @@
     </div>
   </div>
 
-  <p class="micro-copy og-foot-note">Powered by PostPlate</p>
+  <p class="micro-copy og-foot-note">Ordering powered by PostPlate</p>
 
   <script src="order-guest.js"></script>
   <script>

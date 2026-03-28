@@ -1,7 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const express = require("express");
-const { registerPublicMenuRoutes } = require("../backend/routes/publicMenu");
+const {
+  registerPublicMenuRoutes,
+  publicMenuItemFromOwnerItem,
+  buildGuestMenuSections,
+} = require("../backend/routes/publicMenu");
 
 function makeApp() {
   const app = express();
@@ -71,5 +75,49 @@ test("GET /api/public/menu returns items for store", async () => {
   assert.ok(typeof body.menuItems[0].price === "number");
   assert.equal(body.menuItems[0].priceCents, 1250);
   assert.ok(Array.isArray(body.categories));
+  assert.equal(body.brandId, "rasa-kitchen");
+  assert.equal(body.locationId, "primary");
   server.close();
+});
+
+test("publicMenuItemFromOwnerItem strips · Price from note and infers priceCents", () => {
+  const dto = publicMenuItemFromOwnerItem({
+    id: "s1",
+    name: "Tomato soup",
+    category: "starter",
+    note: "Classic recipe. · Price: $ 10.00",
+    priceCents: null,
+    displayPrice: "",
+  });
+  assert.equal(dto.description, "Classic recipe.");
+  assert.equal(dto.priceCents, 1000);
+  assert.equal(dto.displayPrice, "$10.00");
+});
+
+test("buildGuestMenuSections preserves custom section titles and order", () => {
+  const a = publicMenuItemFromOwnerItem({
+    id: "1",
+    name: "Wings",
+    category: "starter",
+    sectionTitle: "Sharables",
+  });
+  const b = publicMenuItemFromOwnerItem({
+    id: "2",
+    name: "Penne",
+    category: "main",
+    sectionTitle: "Perfect pastas",
+  });
+  const c = publicMenuItemFromOwnerItem({
+    id: "3",
+    name: "No section",
+    category: "main",
+    sectionTitle: "",
+  });
+  const { categories, menuItems } = buildGuestMenuSections([a, b, c]);
+  assert.equal(categories.length, 3);
+  assert.equal(categories[0].name, "Sharables");
+  assert.equal(categories[1].name, "Perfect pastas");
+  assert.equal(categories[2].name, "Mains");
+  assert.equal(menuItems[0].categoryId, categories[0].id);
+  assert.equal(menuItems[2].categoryId, "c_main");
 });

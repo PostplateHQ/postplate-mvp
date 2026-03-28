@@ -2,7 +2,8 @@
   const dataAdapter = globalScope.PostPlateDataAdapter;
   if (!dataAdapter) return;
 
-  const DEFAULT_STORE_ID = 'taco123';
+  /** Matches seed profile in backend/db/data.json (opaque NN-NNNN). */
+  const DEFAULT_STORE_ID = '01-7402';
   const ROUTES = ['home', 'live', 'campaigns', 'campaign-detail', 'content-studio', 'menu-import', 'create-campaign', 'create', 'analytics', 'settings', 'smart-reminders', 'reel-guide'];
   const CAMPAIGN_STATUSES = ['active', 'scheduled', 'drafts', 'completed'];
   const CONTENT_TABS = ['posts', 'reels', 'offers', 'drafts'];
@@ -92,6 +93,8 @@
       style: { template: 'modern', layout: 'one-column' },
       saveStatus: '',
       errorMessage: '',
+      reviewHint: '',
+      detectedBrandsFromScan: [],
     },
     campaignBuilder: {
       step: 1,
@@ -256,7 +259,8 @@
         const meatRaw = asString(row?.meatType, '').toLowerCase();
         const meatType = MENU_MEAT_TYPES.has(meatRaw) ? meatRaw : '';
         const truthyDiet = (v) => v === true || v === 1 || v === '1' || String(v).toLowerCase() === 'true';
-        return {
+        const sectionTitle = asString(row?.sectionTitle).slice(0, 80);
+        const base = {
           id: asString(row?.id, `menu_item_${Date.now()}_${index}`),
           name,
           category: ['starter', 'main', 'drink', 'dessert'].includes(category) ? category : 'main',
@@ -271,9 +275,42 @@
           dietaryContainsEgg: truthyDiet(row?.dietaryContainsEgg),
           dietaryDairyFree: truthyDiet(row?.dietaryDairyFree),
         };
+        if (sectionTitle) base.sectionTitle = sectionTitle;
+        return base;
       })
       .filter(Boolean)
       .slice(0, 20);
+  }
+
+  /** Registers a generated or remote image in the offer-designs asset store when possible; otherwise keeps `imageUrl` only. */
+  async function persistMenuItemImageFromUrl(menuItemRef, imageUrl, options = {}) {
+    const url = asString(imageUrl);
+    const saveStatusEl = options.saveStatusEl;
+    if (!menuItemRef || !url) return false;
+    if (options.skipAsset === true) {
+      menuItemRef.imageUrl = url;
+      menuItemRef.imageAssetId = '';
+      return true;
+    }
+    try {
+      if (saveStatusEl) saveStatusEl.textContent = 'Saving image to library…';
+      const mime = url.startsWith('data:image/jpeg') || url.startsWith('data:image/jpg')
+        ? 'image/jpeg'
+        : url.startsWith('data:image/webp')
+          ? 'image/webp'
+          : 'image/png';
+      const asset = await dataAdapter.uploadMenuItemAsset({ sourceUrl: url, mimeType: mime });
+      if (asset?.id) {
+        menuItemRef.imageAssetId = asString(asset.id);
+        menuItemRef.imageUrl = asString(asset.optimizedUrl || asset.sourceUrl || url);
+        return true;
+      }
+    } catch (_e) {
+      /* fall through to URL-only */
+    }
+    menuItemRef.imageAssetId = asString(menuItemRef.imageAssetId || '');
+    menuItemRef.imageUrl = url;
+    return true;
   }
 
   function menuItemToItemFoodProfile(row) {
@@ -359,6 +396,25 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  function persistPostplateStoreId(id) {
+    const s = asString(id, DEFAULT_STORE_ID);
+    try {
+      if (s === DEFAULT_STORE_ID) globalScope.sessionStorage?.removeItem('postplate_store_id');
+      else globalScope.sessionStorage?.setItem('postplate_store_id', s);
+    } catch (_e) { /* ignore */ }
+  }
+
+  function resolveInitialStoreId() {
+    const q = new URLSearchParams(globalScope.location?.search || '');
+    const urlStore = asString(q.get('store')).trim();
+    if (urlStore) return urlStore;
+    try {
+      const stored = asString(globalScope.sessionStorage?.getItem('postplate_store_id')).trim();
+      if (stored) return stored;
+    } catch (_e) { /* ignore */ }
+    return DEFAULT_STORE_ID;
   }
 
   function money(value) {
@@ -544,6 +600,9 @@
     if (params.openCreate) query.set('openCreate', params.openCreate); else query.delete('openCreate');
     if (params.mode) query.set('mode', params.mode); else query.delete('mode');
     if (params.intent) query.set('intent', params.intent); else query.delete('intent');
+    const sid = asString(state.storeId, DEFAULT_STORE_ID);
+    if (sid && sid !== DEFAULT_STORE_ID) query.set('store', sid);
+    else query.delete('store');
     history.replaceState(null, '', `?${query.toString()}`);
   }
 
@@ -2018,7 +2077,7 @@
     const displayName = asString(item.name, '') || 'Untitled item';
     const st = asString(item.status, 'regular').replaceAll('_', ' ');
     const cat = asString(item.category, 'main');
-    const imgLabel = item.imageAssetId ? 'Image' : 'No image';
+    const imgLabel = item.imageAssetId || item.imageUrl ? 'Image' : 'No image';
     return `
       <div class="pp-menu-item-compact" data-menu-row="${escapeHtml(String(index))}">
         <div class="pp-menu-item-compact-head">
@@ -2058,6 +2117,10 @@
             ${['starter', 'main', 'drink', 'dessert'].map((value) => `<option value="${value}" ${item.category === value ? 'selected' : ''}>${value}</option>`).join('')}
           </select>
         </label>
+        <label class="pp-form-field-full">Guest menu section
+          <input type="text" data-menu-field="sectionTitle" data-menu-index="${idx}" value="${escapeHtml(item.sectionTitle || '')}" placeholder="e.g. Sharables, Perfect pastas, Soups" maxlength="80" />
+        </label>
+        <p class="pp-muted-copy" style="grid-column:1/-1;font-size:12px;">Shown as a heading on your public ordering page. Leave blank to group only by category (Starters, Mains, …).</p>
         <label>Margin Band
           <select class="pp-select" data-menu-field="marginBand" data-menu-index="${idx}">
             ${['', 'high', 'medium', 'low'].map((value) => `<option value="${value}" ${item.marginBand === value ? 'selected' : ''}>${value || 'not set'}</option>`).join('')}
@@ -2085,10 +2148,13 @@
         <label>Contains egg<select class="pp-select" data-menu-field="dietaryContainsEgg" data-menu-index="${idx}"><option value="" ${!item.dietaryContainsEgg ? 'selected' : ''}>No</option><option value="1" ${item.dietaryContainsEgg ? 'selected' : ''}>Yes</option></select></label>
         <label>Dairy-free<select class="pp-select" data-menu-field="dietaryDairyFree" data-menu-index="${idx}"><option value="" ${!item.dietaryDairyFree ? 'selected' : ''}>No</option><option value="1" ${item.dietaryDairyFree ? 'selected' : ''}>Yes</option></select></label>
         <p class="pp-muted-copy" style="grid-column:1/-1;font-size:12px;">Trust tags show on each row. Campaign copy and posters use this so veg items never get meaty language.</p>
-        <div class="pp-inline-actions">
+        ${item.imageUrl ? `<div class="pp-menu-item-thumb-wrap" style="grid-column:1/-1;"><img class="pp-menu-item-thumb" src="${escapeHtml(item.imageUrl)}" alt="" loading="lazy" /></div>` : ''}
+        <div class="pp-inline-actions" style="grid-column:1/-1;">
+          <button type="button" class="pp-secondary-btn pp-inline-btn" data-menu-generate-image="${idx}" data-menu-generate-asset="1">Generate photo</button>
+          <button type="button" class="pp-link-btn" data-menu-generate-image="${idx}" data-menu-generate-asset="0">Use AI link only</button>
           <label class="pp-secondary-btn pp-inline-btn" for="menuImageUpload_${idx}">Upload Item Image</label>
           <input id="menuImageUpload_${idx}" data-menu-image-index="${idx}" type="file" accept="image/*" class="hidden" />
-          ${item.imageAssetId ? `<span class="pp-card-chip accent">image added</span>` : '<span class="pp-muted-copy">no image</span>'}
+          ${item.imageAssetId || item.imageUrl ? `<span class="pp-card-chip accent">image added</span>` : '<span class="pp-muted-copy">no image</span>'}
           ${removeBtn}
         </div>
     `;
@@ -2257,7 +2323,7 @@
             <div class="pp-wizard-check-row" data-wizard-item-index="${index}">
               <label class="pp-wizard-check-label">
                 <input type="checkbox" data-wizard-check="${index}" ${item.confirmed !== false ? 'checked' : ''} />
-                <input type="text" class="pp-wizard-item-name" data-wizard-name="${index}" value="${escapeHtml(item.name)}" />
+                <input type="text" class="pp-wizard-item-name" data-wizard-name="${index}" value="${escapeHtml(item.name)}" placeholder="Item name (required)" autocomplete="off" />
               </label>
               <span class="pp-card-chip">${escapeHtml(item.category)}</span>
             </div>
@@ -2705,6 +2771,8 @@
       style: { template: 'modern', layout: 'one-column' },
       saveStatus: '',
       errorMessage: '',
+      reviewHint: '',
+      detectedBrandsFromScan: [],
     };
   }
 
@@ -2787,7 +2855,7 @@
       <div class="pp-table-qr-modal-panel" role="dialog" aria-modal="true" aria-labelledby="ppTableOrderQrTitle">
         <button type="button" class="pp-table-qr-modal-close" data-close-table-qr-modal aria-label="Close">✕</button>
         <h2 id="ppTableOrderQrTitle" class="pp-table-qr-modal-title">Your table ordering QR</h2>
-        <p class="pp-table-qr-modal-sub">Guests scan to open your menu and checkout. Store <code>${escapeHtml(store)}</code></p>
+        <p class="pp-table-qr-modal-sub">Guests scan to open your menu and checkout. <strong>Store ID</strong> <code>${escapeHtml(store)}</code> — permanent link key; it does not change when you rename the restaurant.</p>
         <div id="ppTableOrderQrBody" class="pp-table-qr-modal-body">
           <p class="pp-muted-copy">Creating your QR…</p>
         </div>
@@ -2831,9 +2899,11 @@
    */
   function renderOwnerTableOrderQrPanel(surface) {
     const storeId = escapeHtml(asString(state.storeId, DEFAULT_STORE_ID));
+    const brandCode = escapeHtml(asString(state.profile?.brandId, '').trim() || '—');
+    const locationCode = escapeHtml(asString(state.profile?.locationId, 'primary'));
     const restaurantName = escapeHtml(asString(state.profile?.restaurantName, '').trim());
-    const restaurantLine = restaurantName
-      ? `<p class="pp-menu-qr-restaurant"><strong>Restaurant</strong> ${restaurantName}</p>`
+    const customerFacingLine = restaurantName
+      ? `<p class="pp-menu-qr-customer-name">Customer-facing name: <strong>${restaurantName}</strong> <span class="pp-menu-qr-codes-note">(this is not printed in the QR link)</span></p>`
       : '';
     const bullets = [
       {
@@ -2874,9 +2944,14 @@
         <p class="pp-menu-qr-kicker">Menu → orders</p>
         <h3 class="pp-menu-qr-title">${escapeHtml(title)}</h3>
         <p class="pp-menu-qr-lede">${escapeHtml(lede)}</p>
+        <div class="pp-menu-qr-hero-id" role="group" aria-label="Opaque store identifier">
+          <p class="pp-menu-qr-hero-id-label">Store ID — use on printed QRs (random code, not your restaurant name)</p>
+          <p class="pp-menu-qr-hero-id-code"><code class="pp-menu-qr-code pp-menu-qr-code--xl">${storeId}</code></p>
+          <p class="pp-menu-qr-hero-id-hint">Stays the same when you rename the business. One QR per store.</p>
+        </div>
+        ${customerFacingLine}
         <ul class="pp-menu-qr-benefits">${listHtml}</ul>
-        ${restaurantLine}
-        <p class="pp-menu-qr-store"><strong>Store ID</strong> <code class="pp-menu-qr-code">${storeId}</code> — <strong>one unique QR per store</strong>. Preview and download open right here (no new tab).</p>
+        <p class="pp-menu-qr-store pp-menu-qr-store--codes"><strong>Brand code</strong> <code class="pp-menu-qr-code">${brandCode}</code> · <strong>Location code</strong> <code class="pp-menu-qr-code">${locationCode}</code> <span class="pp-menu-qr-codes-note">— reporting only.</span></p>
         <div class="pp-menu-qr-actions">
           <button type="button" class="pp-primary-btn" data-open-table-order-qr="1">Create table ordering QR</button>
         </div>
@@ -2899,7 +2974,8 @@
     const grouped = {};
     items.forEach((item) => {
       const catLabel = { starter: 'Starters', main: 'Main Course', drink: 'Drinks', dessert: 'Desserts' }[item.category] || 'Other';
-      if (!grouped[catLabel]) grouped[catLabel] = [];
+      const sectionKey = asString(item.sectionTitle).trim() || catLabel;
+      if (!grouped[sectionKey]) grouped[sectionKey] = [];
       let itemName = item.name || '';
       let itemPrice = '';
       const dashMatch = itemName.match(/^(.+?)\s*—\s*(.+)$/);
@@ -2907,12 +2983,14 @@
       let desc = item.note || '';
       const priceInNote = desc.match(/^(.*?)\s*·\s*Price:\s*(.+)$/);
       if (priceInNote) { desc = priceInNote[1].trim(); if (!itemPrice) itemPrice = priceInNote[2].trim(); }
-      grouped[catLabel].push({
+      grouped[sectionKey].push({
         id: item.id || `item_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         name: itemName,
         price: itemPrice,
         description: desc,
         warnings: [],
+        imageAssetId: asString(item.imageAssetId),
+        imageUrl: asString(item.imageUrl),
       });
     });
     mi.sections = Object.entries(grouped).map(([name, sectionItems]) => ({
@@ -3029,6 +3107,7 @@
           </button>
         </div>
         <p class="pp-mi-format-note">Supported: JPG, PNG, PDF, CSV, Excel, Word · Max 10 MB</p>
+        <p class="pp-mi-format-note pp-mi-photo-tip">Photos: one restaurant per image is easiest. If two menus appear side by side, we still try to read both — check section names and merge or split in the next steps.</p>
       </section>
     `;
   }
@@ -3113,10 +3192,17 @@
 
   function renderMiReview41() {
     const info = state.menuImport.restaurantInfo;
+    const brands = state.menuImport.detectedBrandsFromScan || [];
+    const brandsLine = brands.length
+      ? `<p class="pp-mi-scan-hint" role="note">Text we read from headers/logos (for your reference only): ${brands.map((b) => escapeHtml(b)).join(', ')}</p>`
+      : '';
     return `
       <section class="pp-mi-review-step">
         <h2>Restaurant details</h2>
         <p class="pp-mi-subtitle">Confirm or update your restaurant information. We pre-filled what we could.</p>
+        <p class="pp-mi-scan-hint" role="note">Restaurant name from a menu scan is always a <strong>suggestion</strong> — set it to your real business name before saving.</p>
+        ${brandsLine}
+        <p class="pp-mi-scan-hint pp-mi-scan-hint--logo">We do <strong>not</strong> capture logo images from menu photos. Add your logo in <strong>Settings</strong> (Logo URL or upload).</p>
         <div class="pp-mi-form">
           <label class="pp-mi-field">
             <span>Restaurant name</span>
@@ -3162,16 +3248,19 @@
 
   function renderMiReview43() {
     const sections = state.menuImport.sections;
+    const hint = asString(state.menuImport.reviewHint);
     return `
       <section class="pp-mi-review-step">
         <h2>Review your items</h2>
         <p class="pp-mi-subtitle">Check names, prices, and descriptions. We've pre-filled what we could read.</p>
+        ${hint ? `<p class="pp-mi-review-hint" role="status">${escapeHtml(hint)}</p>` : ''}
         ${sections.map((section, sIdx) => `
           <div class="pp-mi-items-section">
             <h3 class="pp-mi-items-section-title">${escapeHtml(section.name)} <small>(${section.items.length})</small></h3>
             <div class="pp-mi-items-list">
               ${section.items.map((item, iIdx) => `
                 <div class="pp-mi-item-card${item.warnings?.length ? ' has-warning' : ''}" data-mi-item-section="${sIdx}" data-mi-item-index="${iIdx}">
+                  ${item.imageUrl ? `<div class="pp-mi-item-thumb-wrap"><img class="pp-mi-item-thumb" src="${escapeHtml(item.imageUrl)}" alt="" loading="lazy" /></div>` : ''}
                   <div class="pp-mi-item-main">
                     <input type="text" class="pp-mi-item-name" data-mi-field="name" value="${escapeHtml(item.name)}" placeholder="Item name" />
                     <input type="text" class="pp-mi-item-price" data-mi-field="price" value="${escapeHtml(item.price || '')}" placeholder="Price" />
@@ -3180,6 +3269,8 @@
                   ${item.warnings?.length ? `<p class="pp-mi-item-warning">${escapeHtml(item.warnings[0])}</p>` : ''}
                   <div class="pp-mi-item-actions">
                     <button type="button" class="pp-mi-text-btn" data-mi-ai-action="improve" data-mi-ai-section="${sIdx}" data-mi-ai-item="${iIdx}">Improve description</button>
+                    <button type="button" class="pp-mi-text-btn" data-mi-generate-image="${sIdx}:${iIdx}" data-mi-generate-asset="1">Generate photo</button>
+                    <button type="button" class="pp-mi-text-btn pp-mi-text-btn--subtle" data-mi-generate-image="${sIdx}:${iIdx}" data-mi-generate-asset="0">AI link only</button>
                     <button type="button" class="pp-mi-icon-btn danger" data-mi-remove-item="${sIdx}:${iIdx}" title="Remove">×</button>
                   </div>
                 </div>
@@ -3435,7 +3526,15 @@
         btn.addEventListener('click', () => {
           const sIdx = Number(btn.dataset.miAddItem);
           if (mi.sections[sIdx]) {
-            mi.sections[sIdx].items.push({ id: `item_${Date.now()}`, name: '', price: '', description: '', warnings: [] });
+            mi.sections[sIdx].items.push({
+              id: `item_${Date.now()}`,
+              name: '',
+              price: '',
+              description: '',
+              warnings: [],
+              imageAssetId: '',
+              imageUrl: '',
+            });
             renderMenuImportRoute();
           }
         });
@@ -3460,6 +3559,45 @@
           } else {
             btn.textContent = 'Improve description';
             btn.disabled = false;
+          }
+        });
+      });
+
+      refs.routeMount.querySelectorAll('[data-mi-generate-image]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const parts = asString(btn.dataset.miGenerateImage).split(':').map(Number);
+          const sIdx = parts[0];
+          const iIdx = parts[1];
+          const item = mi.sections[sIdx]?.items[iIdx];
+          if (!item || !asString(item.name).trim()) {
+            mi.reviewHint = 'Add an item name before generating a photo.';
+            renderMenuImportRoute();
+            return;
+          }
+          const storeAsset = asString(btn.dataset.miGenerateAsset, '1') !== '0';
+          mi.reviewHint = 'Generating photo…';
+          renderMenuImportRoute();
+          try {
+            const result = await dataAdapter.suggestMenuItemImage({
+              itemName: asString(item.name),
+              note: asString(item.description),
+              restaurantName: asString(mi.restaurantInfo.name || state.profile?.restaurantName),
+              cuisineType: asString(state.profile?.cuisineType),
+            });
+            if (result.skipped || !result.imageUrl) {
+              mi.reviewHint = result.reason === 'dev_mode'
+                ? 'Photo generation is off while DEV_MODE is on.'
+                : 'Could not generate a photo. Add OPENAI_API_KEY or try again.';
+            } else {
+              await persistMenuItemImageFromUrl(item, result.imageUrl, { skipAsset: !storeAsset });
+              mi.reviewHint = storeAsset
+                ? 'Photo added and saved to your image library. Continue, then save your menu.'
+                : 'Photo URL attached. For a stable copy in your library, use Generate photo instead of AI link only.';
+            }
+          } catch (_e) {
+            mi.reviewHint = 'Something went wrong. Try again.';
+          } finally {
+            renderMenuImportRoute();
           }
         });
       });
@@ -3499,6 +3637,7 @@
     if (action === 'start-upload') { mi.step = 1; renderMenuImportRoute(); }
     else if (action === 'edit-existing') {
       loadExistingMenuIntoImport();
+      mi.detectedBrandsFromScan = [];
       mi.step = 4;
       mi.reviewStep = 2;
       renderMenuImportRoute();
@@ -3596,6 +3735,7 @@
       mi.sections = Array.isArray(result.sections) ? result.sections : [];
       mi.parseConfidence = Number(result.confidence) || 0.7;
       mi.parseWarnings = Array.isArray(result.warnings) ? result.warnings : [];
+      mi.detectedBrandsFromScan = Array.isArray(result.detectedBrands) ? result.detectedBrands : [];
       if (result.restaurantName) mi.restaurantInfo.name = result.restaurantName;
       mi.step = 3;
       renderMenuImportRoute();
@@ -3604,6 +3744,21 @@
       mi.errorMessage = 'We could not read this file. Please try a different file or a clearer photo.';
       renderMenuImportRoute();
     }
+  }
+
+  function inferMenuCategoryFromSectionLabel(sectionName) {
+    const s = asString(sectionName).toLowerCase();
+    const exact = {
+      appetizers: 'starter', appetizer: 'starter', starters: 'starter', 'main course': 'main', mains: 'main', entrees: 'main',
+      drinks: 'drink', beverages: 'drink', desserts: 'dessert', sweets: 'dessert',
+    };
+    if (exact[s]) return exact[s];
+    if (/\b(appetizer|appetiser|starter|shareable|sharable|dip|sampler|wings?|nacho|eggroll)\b/.test(s)) return 'starter';
+    if (/\b(soup|chili|bisque)\b/.test(s)) return 'starter';
+    if (/\b(drink|beverage|wine|beer|cocktail|coffee|tea|smoothie|juice|soda)\b/.test(s)) return 'drink';
+    if (/\b(dessert|sweet|cake|pie|brownie|cookie)\b/.test(s)) return 'dessert';
+    if (/\b(kids?|children)\b/.test(s)) return 'main';
+    return 'main';
   }
 
   async function handleMiSave() {
@@ -3615,18 +3770,20 @@
     const categoryMap = { appetizers: 'starter', starters: 'starter', 'main course': 'main', mains: 'main', entrees: 'main', drinks: 'drink', beverages: 'drink', desserts: 'dessert', sweets: 'dessert' };
     mi.sections.forEach((section) => {
       const rawCat = asString(section.name).toLowerCase();
-      const category = categoryMap[rawCat] || 'main';
+      const category = categoryMap[rawCat] || inferMenuCategoryFromSectionLabel(section.name);
       section.items.forEach((item, index) => {
         if (!asString(item.name)) return;
+        const secTitle = asString(section.name).slice(0, 80);
         flatItems.push({
           id: item.id || `menu_item_${Date.now()}_${index}`,
           name: item.price ? `${asString(item.name)} — ${item.price}` : asString(item.name),
           category,
+          ...(secTitle ? { sectionTitle: secTitle } : {}),
           status: 'regular',
           marginBand: '',
           note: asString(item.description),
-          imageAssetId: '',
-          imageUrl: '',
+          imageAssetId: asString(item.imageAssetId),
+          imageUrl: asString(item.imageUrl),
           foodType: 'unspecified',
           meatType: '',
           dietaryHalal: false,
@@ -4030,11 +4187,31 @@
 
         <div class="pp-cb-image-keywords">
           <label class="pp-cb-label">Refine the photo</label>
-          <p class="pp-cb-hint">Describe what you want to see — the AI will regenerate the food photo based on your words.</p>
+          <p class="pp-cb-hint">Say how the <strong>picture</strong> should look (steam, light, props, background). This step only updates that photo — you add sound and motion when you post.</p>
           <div class="pp-cb-keywords-row">
             <input type="text" class="pp-cb-input" id="cbImageKeywords" placeholder="e.g. Indian Chai, steaming hot, rustic background" value="${escapeHtml(cb.imageKeywords)}" />
             <button type="button" class="pp-primary-btn pp-cb-keywords-go" data-cb-action="regen-keywords" ${cb.generating ? 'disabled' : ''}>Generate</button>
           </div>
+          <details class="pp-cb-reels-tips">
+            <summary class="pp-cb-reels-tips-summary">Ideas for Reels &amp; music (after you download)</summary>
+            <div class="pp-cb-reels-tips-body">
+              <p class="pp-cb-reels-tips-lead">Tiny animations and a good track make posts feel alive. You can do these in Instagram Reels or any simple editor:</p>
+              <p class="pp-cb-reels-tips-sub">Easy motion</p>
+              <ul class="pp-cb-reels-tips-list">
+                <li>Slow zoom or pan on your poster (often called Ken Burns).</li>
+                <li>Quick cut: poster for one beat, then a real clip of the dish or the pass.</li>
+                <li>Subtle loop: steam from a cup, pouring a drink, or hands setting the plate.</li>
+                <li>Stickers or on-beat text pops for the discount or “link in bio.”</li>
+              </ul>
+              <p class="pp-cb-reels-tips-sub">Music</p>
+              <ul class="pp-cb-reels-tips-list">
+                <li>Match the mood: upbeat for lunch or deals, warmer or jazzier for dinner, bright percussion for street food or snacks.</li>
+                <li>Try Instagram’s trending sounds — they often help reach.</li>
+                <li>If you talk on camera, pick something instrumental or low in the mix.</li>
+              </ul>
+              <p class="pp-cb-reels-tips-foot">That combo keeps things creative and human here while PostPlate focuses on your offer artwork.</p>
+            </div>
+          </details>
         </div>
 
         <div class="pp-cb-style-panel">
@@ -4626,6 +4803,7 @@
     else if (action === 'regen-poster' || action === 'regen-keywords') {
       syncStep4Inputs();
       cb.step = 3;
+      cb.generating = true;
       cb.processingPhase = 'Designing a new photo…';
       cb.errorMessage = '';
       renderCampaignBuilderRoute();
@@ -4638,13 +4816,21 @@
           imageKeywords: cb.imageKeywords,
           ...buildCampaignFoodPayload(),
         });
-        if (result.posterImageUrl) cb.generatedPoster = result.posterImageUrl;
+        const url = typeof result.posterImageUrl === 'string' ? result.posterImageUrl.trim() : '';
+        if (url) {
+          cb.generatedPoster = url;
+        } else {
+          cb.flashNotice = 'Could not refresh the photo. Try short visual phrases (steam, golden light, wood table) and tap Generate again. If it keeps failing, whoever set up PostPlate for you may need to enable image generation.';
+          cb.flashTone = 'error';
+        }
         cb.step = 4;
       } catch (_regenErr) {
         cb.processingPhase = '';
         cb.step = 4;
-        cb.flashNotice = 'Could not refresh the photo. Check your connection or adjust keywords and try again.';
+        cb.flashNotice = 'Something went wrong — check your connection, wait a moment, and try again.';
         cb.flashTone = 'error';
+      } finally {
+        cb.generating = false;
       }
       renderCampaignBuilderRoute();
     }
@@ -5066,13 +5252,33 @@
       </div>`
         : '';
     refs.routeMount.innerHTML = `
-      ${createSectionHeader('Settings', 'Settings', 'Manage profile, brand, channels, and notification preferences.')}
+      ${createSectionHeader(
+        'Settings',
+        'Settings',
+        'Manage profile, brand, channels, and notification preferences. Renaming the business updates what customers see; it does not change your store ID, menu URLs, or printed QRs.',
+      )}
       <section class="pp-grid pp-grid-2 pp-settings-layout-grid">
         <article class="pp-card pp-settings-profile-card">
           <div class="pp-card-head"><h3>Restaurant Profile</h3></div>
+          <div class="pp-settings-identity-flow" role="region" aria-label="How profile updates relate to links">
+            <p class="pp-settings-identity-flow__title">How this works</p>
+            <ol class="pp-settings-identity-flow__list">
+              <li><strong>Restaurant name</strong> — Shown on the dashboard, guest menu, and generated copy. Safe to change anytime (rebrand, typo fix, DBA).</li>
+              <li><strong>Location line</strong> — Human-readable area or address for copy; does not change technical links.</li>
+              <li><strong>Store ID</strong> — Random-style code (e.g. <code>01-7402</code>) in <code>?store=…</code> links. It never includes your business name and does not change when you rename; existing QRs keep working.</li>
+              <li><strong>Brand / location codes</strong> — For analytics grouping only. Profile saves bump a <strong>revision</strong> when tracked fields change; the store ID itself does not change.</li>
+            </ol>
+          </div>
           <form id="settingsProfileForm" class="pp-form-grid pp-settings-form-grid" novalidate>
-            <label>Restaurant Name<input id="settingsRestaurantName" type="text" value="${escapeHtml(profile.restaurantName || '')}" /></label>
-            <label>Location<input id="settingsRestaurantLocation" type="text" value="${escapeHtml(profile.restaurantLocation || '')}" /></label>
+            <label>Restaurant Name<input id="settingsRestaurantName" type="text" value="${escapeHtml(profile.restaurantName || '')}" autocomplete="organization" /></label>
+            <label>Location<input id="settingsRestaurantLocation" type="text" value="${escapeHtml(profile.restaurantLocation || '')}" autocomplete="address-line1" /></label>
+            <div class="pp-form-field-full pp-settings-readonly-ids">
+              <p class="pp-muted-copy pp-settings-readonly-ids__label">Your permanent keys (read-only)</p>
+              <p class="pp-settings-readonly-ids__row"><span>Store ID</span> <code class="pp-menu-qr-code">${escapeHtml(asString(state.storeId, DEFAULT_STORE_ID))}</code></p>
+              <p class="pp-settings-readonly-ids__row"><span>Brand code</span> <code class="pp-menu-qr-code">${escapeHtml(asString(profile.brandId, '').trim() || '—')}</code></p>
+              <p class="pp-settings-readonly-ids__row"><span>Location code</span> <code class="pp-menu-qr-code">${escapeHtml(asString(profile.locationId, 'primary'))}</code></p>
+              <p class="pp-settings-readonly-ids__row"><span>Profile revision</span> <code class="pp-menu-qr-code">${escapeHtml(String(Number(profile.profileRevision) || 0))}</code> <span class="pp-settings-readonly-ids__meta">increments when saved fields change</span></p>
+            </div>
             <label>Logo URL<input id="settingsLogoAsset" type="url" placeholder="https://..." value="${escapeHtml(profile.logoAsset || '')}" /></label>
             <label>Upload Logo<input id="settingsLogoUpload" type="file" accept="image/*" /></label>
             <label>Category<input id="settingsCategory" type="text" value="${escapeHtml(profile.category || '')}" /></label>
@@ -5198,11 +5404,11 @@
         await renderSettingsRoute();
         dataAdapter.trackMenuIntelligenceEvent?.({
           event: 'menu_profile_saved',
-          storeId: state.storeId,
+          storeId: asString(state.storeId, DEFAULT_STORE_ID),
           menuItemCount: payload.menuItems.length,
           bestSellerCount: payload.menuItems.filter((item) => item.status === 'best_seller').length,
           slowMoverCount: payload.menuItems.filter((item) => item.status === 'slow_mover').length,
-          withImageCount: payload.menuItems.filter((item) => item.imageAssetId).length,
+          withImageCount: payload.menuItems.filter((item) => item.imageAssetId || item.imageUrl).length,
         });
         const statusEl = document.getElementById('settingsSaveStatus');
         if (statusEl) {
@@ -5213,11 +5419,12 @@
               openTableOrderQrModal();
             });
           } else {
-            statusEl.textContent = 'Saved successfully.';
+            statusEl.textContent = 'Saved successfully. Store ID and existing QR/menu links are unchanged.';
           }
         }
-      } catch (_error) {
-        saveStatus.textContent = 'Save failed. Please try again.';
+      } catch (error) {
+        const msg = asString(error?.message, '');
+        saveStatus.textContent = msg && msg !== 'Request failed' ? msg : 'Save failed. Please try again.';
       } finally {
         const btn = document.getElementById('settingsSaveButton');
         if (btn) btn.disabled = false;
@@ -5249,6 +5456,7 @@
         name: '',
         status: 'regular',
         category: 'main',
+        sectionTitle: '',
         marginBand: '',
         note: '',
         imageAssetId: '',
@@ -5342,6 +5550,54 @@
           renderSettingsRoute();
         } catch (_error) {
           if (saveStatus) saveStatus.textContent = 'Menu image upload failed. Try another image.';
+        }
+      });
+    });
+
+    refs.routeMount.querySelectorAll('[data-menu-generate-image]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const idx = Number(btn.dataset.menuGenerateImage);
+        if (!Number.isFinite(idx) || !menuItemsDraft[idx]) return;
+        const item = menuItemsDraft[idx];
+        const name = asString(item.name);
+        const saveStatus = document.getElementById('settingsSaveStatus');
+        if (!name) {
+          if (saveStatus) saveStatus.textContent = 'Add an item name before generating a photo.';
+          return;
+        }
+        const storeAsset = asString(btn.dataset.menuGenerateAsset, '1') !== '0';
+        const prevLabel = btn.textContent;
+        btn.textContent = 'Generating…';
+        btn.disabled = true;
+        if (saveStatus) saveStatus.textContent = 'Generating dish photo…';
+        try {
+          const result = await dataAdapter.suggestMenuItemImage({
+            itemName: name,
+            note: asString(item.note),
+            restaurantName: asString(state.profile?.restaurantName),
+            cuisineType: asString(state.profile?.cuisineType),
+          });
+          if (result.skipped || !result.imageUrl) {
+            if (saveStatus) {
+              saveStatus.textContent = result.reason === 'dev_mode'
+                ? 'Image generation is off in dev mode. Disable DEV_MODE to generate photos.'
+                : 'Could not generate a photo. Check OPENAI_API_KEY or try again.';
+            }
+            return;
+          }
+          await persistMenuItemImageFromUrl(item, result.imageUrl, {
+            skipAsset: !storeAsset,
+            saveStatusEl: saveStatus,
+          });
+          if (saveStatus) {
+            saveStatus.textContent = storeAsset
+              ? 'Photo saved to your image library. Click Save profile to publish.'
+              : 'Photo URL set on this item. Click Save profile to publish (link may expire).';
+          }
+          renderSettingsRoute();
+        } finally {
+          btn.textContent = prevLabel;
+          btn.disabled = false;
         }
       });
     });
@@ -7266,6 +7522,12 @@
     state.route = parsed.route;
     state.routeParams = parsed.routeParams;
     state.campaignDetailTab = 'overview';
+    const explicitUrlStore = asString(new URLSearchParams(globalScope.location?.search || '').get('store')).trim();
+    const sessionFallback = resolveInitialStoreId();
+    const bootCtx = await dataAdapter.resolveBootOwnerContext(explicitUrlStore, sessionFallback);
+    state.storeId = bootCtx.storeId;
+    persistPostplateStoreId(state.storeId);
+    setUrl(state.route, state.routeParams);
 
     state.profile = await dataAdapter.getGrowthHubData({ storeId: state.storeId }).then((result) => result.profile);
     renderProfile();

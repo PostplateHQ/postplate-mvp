@@ -1,5 +1,30 @@
+const { OpenAIImageGenerationProvider } = require('../../engine/providerRegistry');
+
 function isDevMode() {
   return String(process.env.DEV_MODE || '').toLowerCase() === 'true';
+}
+
+function menuVisionModel() {
+  return String(process.env.OPENAI_MENU_VISION_MODEL || 'gpt-4o-mini').trim() || 'gpt-4o-mini';
+}
+
+function dataUrlImageMime(imageDataUrl) {
+  const m = String(imageDataUrl).match(/^data:(image\/[a-z0-9+.+-]+);base64,/i);
+  return m ? m[1] : 'image/jpeg';
+}
+
+function buildDishImagePrompt(itemName, note, restaurantName, cuisineType) {
+  const parts = [
+    'Food photo that looks human-shot and appetizing: natural light, shallow depth of field, believable texture and steam where appropriate,',
+    'not overly perfect or CGI-like; restaurant-quality plating, no text or logos, no watermarks.',
+    `Main subject: ${itemName}.`,
+  ];
+  if (note) parts.push(`Dish details: ${String(note).slice(0, 200)}.`);
+  if (cuisineType) parts.push(`Cuisine: ${String(cuisineType).trim().slice(0, 80)}.`);
+  if (restaurantName) {
+    parts.push(`Style suited for a restaurant like ${String(restaurantName).trim().slice(0, 80)} (no readable words in the image).`);
+  }
+  return parts.join(' ');
 }
 
 function registerMenuRoutes(app) {
@@ -69,6 +94,76 @@ function registerMenuRoutes(app) {
     }
   });
 
+  /**
+   * Returns a generated image URL for a single menu item (does not persist to profile).
+   * Owner UI should attach `imageUrl` to the item and save via profile/menu APIs.
+   */
+  app.post('/api/menu/suggest-item-image', async (req, res) => {
+    const body = req.body || {};
+    const itemName = typeof body.itemName === 'string' ? body.itemName.trim() : '';
+    const note = typeof body.note === 'string' ? body.note.trim() : '';
+    const restaurantName = typeof body.restaurantName === 'string' ? body.restaurantName.trim() : '';
+    const cuisineType = typeof body.cuisineType === 'string' ? body.cuisineType.trim() : '';
+
+    if (!itemName) {
+      return res.status(400).json({
+        error: 'itemName is required',
+        imageUrl: '',
+        skipped: true,
+        source: 'validation',
+      });
+    }
+
+    if (isDevMode()) {
+      console.log('[DEV_MODE] Skipping dish image generation — stub response ($0)');
+      return res.json({
+        imageUrl: '',
+        skipped: true,
+        source: 'dev',
+        reason: 'dev_mode',
+      });
+    }
+
+    const prompt = buildDishImagePrompt(itemName, note, restaurantName, cuisineType);
+    const generator = new OpenAIImageGenerationProvider();
+
+    try {
+      const result = await generator.generate(prompt, {
+        size: '1024x1024',
+        quality: 'high',
+      });
+
+      if (result.skipped || !result.imageUrl) {
+        const reason = result.reason || 'skipped';
+        const source = reason === 'missing_api_key' || reason === 'disabled' ? 'fallback' : 'skipped';
+        return res.json({
+          imageUrl: '',
+          skipped: true,
+          source,
+          reason,
+          provider: result.provider,
+        });
+      }
+
+      return res.json({
+        imageUrl: result.imageUrl,
+        skipped: false,
+        source: 'openai',
+        provider: result.provider,
+        promptId: result.promptId || '',
+      });
+    } catch (error) {
+      console.error('[menu] suggest-item-image failed:', error.message);
+      return res.json({
+        imageUrl: '',
+        skipped: true,
+        source: 'fallback',
+        reason: 'generation_failed',
+        details: error.statusCode ? String(error.statusCode) : undefined,
+      });
+    }
+  });
+
   app.post('/api/menu/import', async (req, res) => {
     const body = req.body || {};
     const fileDataUrl = typeof body.fileDataUrl === 'string' ? body.fileDataUrl : '';
@@ -126,7 +221,7 @@ async function extractMenuItemsFromImage(imageDataUrl) {
   }
 
   try {
-    const mediaType = imageDataUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+    const mediaType = dataUrlImageMime(imageDataUrl);
     const base64Content = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -136,17 +231,19 @@ async function extractMenuItemsFromImage(imageDataUrl) {
         Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 2048,
+        model: menuVisionModel(),
+        max_tokens: 8192,
         messages: [
           {
             role: 'system',
             content: [
               'You are a restaurant menu extraction assistant.',
-              'Given a photo of a restaurant menu, extract all menu item names.',
-              'For each item, return: name (string), category (one of: starter, main, drink, dessert), note (optional short description if visible).',
+              'Given a photo of one or more restaurant menus, extract every distinct food and drink item.',
+              'Scan the ENTIRE image: all columns, panels, and side-by-side pages. Multi-column and dense layouts are common — do not skip outer columns.',
+              'If TWO OR MORE different restaurant brands or menus appear in one image, still extract everything. Prefix each item name with the brand when needed to avoid duplicates, e.g. "Chili\'s — Santa Fe Chicken Salad" vs "Applebee\'s — Santa Fe Chicken Salad", OR put the brand only in the note field once per block.',
+              'For each item return: name (string), category (one of: starter, main, drink, dessert), note (optional: visible description and/or price text if shown).',
               'Return ONLY a JSON array of objects. No markdown, no explanation.',
-              'Example: [{"name":"Butter Chicken","category":"main","note":"creamy tomato curry"},{"name":"Mango Lassi","category":"drink","note":""}]',
+              'Example: [{"name":"Butter Chicken","category":"main","note":"creamy tomato curry $14"},{"name":"Mango Lassi","category":"drink","note":""}]',
               'If you cannot read the menu clearly, return an empty array: []',
             ].join(' '),
           },
@@ -159,7 +256,7 @@ async function extractMenuItemsFromImage(imageDataUrl) {
               },
               {
                 type: 'text',
-                text: 'Extract all menu items from this photo. Return JSON array only.',
+                text: 'Extract all menu items from this photo. Include items from every column and both sides if two menus are visible. Return JSON array only.',
               },
             ],
           },
@@ -212,7 +309,7 @@ async function extractStructuredMenuFromImage(imageDataUrl) {
   if (!openaiKey) return structuredMenuFallback('menu');
 
   try {
-    const mediaType = imageDataUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+    const mediaType = dataUrlImageMime(imageDataUrl);
     const base64Content = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -222,27 +319,39 @@ async function extractStructuredMenuFromImage(imageDataUrl) {
         Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 4096,
+        model: menuVisionModel(),
+        max_tokens: 16384,
         messages: [
           {
             role: 'system',
             content: [
               'You are a restaurant menu extraction assistant.',
-              'Given a photo of a restaurant menu, extract ALL menu items organized by section.',
+              'Given a photo of restaurant menu(s), extract ALL visible dishes and drinks organized by section.',
+              'CRITICAL — layout:',
+              '- Scan the ENTIRE image left-to-right and top-to-bottom, including ALL columns and side-by-side panels.',
+              '- Photos often show two menus or two pages next to each other; extract BOTH. Do not stop after one column.',
+              '- If two different restaurant brands appear (different logos/names), use separate section groups: prefix section names with the brand, e.g. "Chili\'s — Appetizers" and "Applebee\'s — Shareable appetizers".',
+              '- Field restaurantName: a SUGGESTION only for the owner profile. Use the single clearest brand if exactly one chain/menu header is visible; use an empty string if two+ distinct brands appear or you are unsure. Do not invent a name.',
+              '- Field detectedBrands: array of distinct chain/brand names you can read from logos or headers (0–4 strings). Empty array if none. Helps the product explain multi-brand photos.',
+              '- Do NOT attempt to export or encode logo images; text/brand names only.',
+              'CRITICAL — prices:',
+              '- Put the full price line in the "price" field as printed (e.g. "Cup $3.25 · Bowl $4.95", "From $12.99", "4.95").',
+              '- Do NOT truncate multi-size or combo prices; the field may be up to 120 characters.',
               'Return a JSON object with this structure:',
-              '{"restaurantName":"string or empty","sections":[{"name":"section name","items":[{"name":"item name","price":"price as shown","description":"short description if visible"}]}],"confidence":0.85,"warnings":["any issues found"]}',
-              'Group items into logical sections like Appetizers, Main Course, Drinks, Desserts, etc.',
-              'Include prices exactly as shown on the menu.',
-              'Return ONLY the JSON object. No markdown, no explanation.',
-              'If text is hard to read, still try your best and add a warning.',
+              '{"restaurantName":"string or empty — suggested single brand only","detectedBrands":["optional strings from headers/logos"],"sections":[{"name":"section name","items":[{"name":"item name","price":"string","description":"short description if visible"}]}],"confidence":0.0-1.0,"warnings":["issues e.g. multiple menus, blurry text, missing prices"]}',
+              'Group items into logical sections (Appetizers, Soups, Salads, Entrees, Kids, Drinks, Desserts, etc.).',
+              'Return ONLY valid JSON. No markdown fences, no commentary.',
+              'If text is hard to read, still extract what you can, lower confidence, and explain in warnings.',
             ].join(' '),
           },
           {
             role: 'user',
             content: [
               { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64Content}`, detail: 'high' } },
-              { type: 'text', text: 'Extract the full menu from this image. Return structured JSON with sections and items.' },
+              {
+                type: 'text',
+                text: 'Extract the full menu from this image. Include every column and both menus if two brands/panels are visible. Preserve full price strings. Return structured JSON only.',
+              },
             ],
           },
         ],
@@ -259,25 +368,32 @@ async function extractStructuredMenuFromImage(imageDataUrl) {
     if (!jsonMatch) return structuredMenuFallback('menu');
     const parsed = JSON.parse(jsonMatch[0]);
 
-    const sections = Array.isArray(parsed.sections) ? parsed.sections.map((sec) => ({
-      id: `sec_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    const sections = Array.isArray(parsed.sections) ? parsed.sections.map((sec, secIdx) => ({
+      id: `sec_${Date.now()}_${secIdx}_${Math.random().toString(36).slice(2, 6)}`,
       name: String(sec.name || 'Untitled Section').trim().slice(0, 80),
       items: Array.isArray(sec.items) ? sec.items
         .filter((item) => item && typeof item.name === 'string' && item.name.trim())
         .map((item, idx) => ({
-          id: `item_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
+          id: `item_${Date.now()}_${secIdx}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
           name: String(item.name).trim().slice(0, 120),
-          price: String(item.price || '').trim().slice(0, 20),
-          description: String(item.description || '').trim().slice(0, 200),
+          price: String(item.price || '').trim().slice(0, 120),
+          description: String(item.description || '').trim().slice(0, 400),
           warnings: [],
         })) : [],
     })).filter((sec) => sec.items.length > 0) : [];
 
     const warnings = Array.isArray(parsed.warnings) ? parsed.warnings.map((w) => String(w).slice(0, 200)) : [];
     const confidence = typeof parsed.confidence === 'number' ? Math.min(1, Math.max(0, parsed.confidence)) : 0.8;
+    const detectedBrands = Array.isArray(parsed.detectedBrands)
+      ? parsed.detectedBrands
+        .map((b) => String(b || '').trim().slice(0, 80))
+        .filter(Boolean)
+        .slice(0, 4)
+      : [];
 
     return {
       restaurantName: String(parsed.restaurantName || '').trim().slice(0, 120),
+      detectedBrands,
       sections,
       confidence,
       warnings,
@@ -291,6 +407,7 @@ async function extractStructuredMenuFromImage(imageDataUrl) {
 function structuredMenuFallback(fileName) {
   return {
     restaurantName: '',
+    detectedBrands: [],
     isDemo: true,
     sections: [
       {

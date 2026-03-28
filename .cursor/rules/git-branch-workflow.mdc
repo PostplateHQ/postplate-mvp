@@ -1,0 +1,16 @@
+---
+description: Use a new git branch for task work; avoid committing directly on main.
+alwaysApply: true
+---
+
+# Git branch workflow
+
+Before starting implementation work on a task (code changes, multi-file features, or fixes):
+
+1. **Sync base:** `git fetch origin` and `git checkout main` (or the agreed default branch), then `git pull origin main`.
+2. **Branch:** Create and switch to a **new branch** with a short, descriptive name, e.g. `feature/smart-actions-api`, `fix/home-asNumber`, `chore/deps-update`.
+   - Example: `git checkout -b feature/short-task-summary`
+3. **Work:** Make commits on that branch only. Do not implement tasks directly on `main` unless the user explicitly asks to work on `main`.
+4. **Finish:** Push the branch and open a PR, or merge to `main` only when the user asks to integrate.
+
+If the repo is not a git repo or the user forbids git operations, skip branching and say so briefly.

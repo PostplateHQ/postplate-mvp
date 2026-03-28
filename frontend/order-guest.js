@@ -88,6 +88,15 @@
     saveState(s);
   }
 
+  function analyticsDims(menu, state) {
+    return {
+      store_id: state.store,
+      brand_id: menu && menu.brandId ? menu.brandId : "",
+      location_id: menu && menu.locationId ? menu.locationId : "",
+      session_id: state.sessionId,
+    };
+  }
+
   function emitAnalytics(eventName, props) {
     var payload = Object.assign(
       { event: eventName, ts: new Date().toISOString() },
@@ -130,11 +139,20 @@
 
   function apiResponseToCanonical(api, q) {
     var cats = (api.categories || []).slice();
-    var items = (api.menuItems || []).map(function (row) {
+    var items = (api.menuItems || []).map(function (row, ix) {
       var price =
         row.price != null && Number.isFinite(Number(row.price)) ? Number(row.price) : 0;
+      var rawId = row.id != null ? String(row.id).trim() : "";
+      var stableId =
+        rawId ||
+        "guest_item_" +
+          ix +
+          "_" +
+          String(row.name || "item")
+            .slice(0, 32)
+            .replace(/\s+/g, "_");
       return {
-        id: row.id,
+        id: stableId,
         name: row.name,
         price: price,
         priceCents: row.priceCents,
@@ -159,6 +177,8 @@
         logoUrl: api.logoUrl || "",
         initials: api.businessInitials || "PP",
       },
+      brandId: api.brandId || "",
+      locationId: api.locationId || "primary",
       offer: api.offer || null,
       categories: cats,
       items: items,
@@ -231,15 +251,21 @@
       });
   }
 
+  function normalizeLineItemId(itemId) {
+    if (itemId == null || itemId === "") return "";
+    return String(itemId);
+  }
+
   function findItem(menu, itemId) {
+    var want = normalizeLineItemId(itemId);
     for (var i = 0; i < menu.items.length; i++) {
-      if (menu.items[i].id === itemId) return menu.items[i];
+      if (String(menu.items[i].id) === want) return menu.items[i];
     }
     return null;
   }
 
   function lineSubtotal(line, menu) {
-    var it = findItem(menu, line.itemId);
+    var it = findItem(menu, normalizeLineItemId(line.itemId));
     if (!it) return 0;
     var p = it.price;
     if (p == null || !Number.isFinite(p)) return 0;
@@ -278,12 +304,12 @@
 
   function complementCandidates(menu, lines) {
     var cartIds = {};
-    for (var i = 0; i < lines.length; i++) cartIds[lines[i].itemId] = true;
+    for (var i = 0; i < lines.length; i++) cartIds[normalizeLineItemId(lines[i].itemId)] = true;
     if (!cartHasTag(lines, menu, "main")) return [];
     var out = [];
     for (var j = 0; j < menu.items.length; j++) {
       var item = menu.items[j];
-      if (cartIds[item.id]) continue;
+      if (cartIds[String(item.id)]) continue;
       var isComp =
         item.tags &&
         (item.tags.indexOf("drink") !== -1 || item.tags.indexOf("side") !== -1);
@@ -329,27 +355,55 @@
           escapeHtml(restaurant.logoUrl) +
           '" alt="" />'
         : "";
-    return (
-      '<div class="og-item__img og-item__img--brand-placeholder" aria-hidden="true">' +
-      logo +
-      '<span class="og-placeholder-initials">' +
-      initials +
-      '</span><span class="og-placeholder-hint">Photo soon</span></div>'
+      return (
+        '<div class="og-item__img og-item__img--brand-placeholder" aria-hidden="true">' +
+        logo +
+        '<span class="og-placeholder-initials">' +
+        initials +
+        '</span><span class="og-placeholder-hint">Owner adds photo</span></div>'
     );
   }
 
+  function venueInitials(name) {
+    return String(name || "R")
+      .trim()
+      .split(/\s+/)
+      .map(function (w) {
+        return w[0];
+      })
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "R";
+  }
+
   function injectOrderChrome(restaurantName, logoUrl) {
+    var hero = document.getElementById("ogMenuHero");
+    if (hero) {
+      var nm = restaurantName || "Restaurant";
+      var ini = venueInitials(nm);
+      hero.innerHTML =
+        '<div class="og-menu-hero__visual">' +
+        (logoUrl
+          ? '<img class="og-menu-hero__img" src="' +
+            escapeHtml(logoUrl) +
+            '" alt="" loading="eager" />'
+          : '<div class="og-menu-hero__initials" aria-hidden="true">' +
+            escapeHtml(ini) +
+            "</div>") +
+        "</div>" +
+        '<h1 class="og-menu-hero__title">' +
+        escapeHtml(nm) +
+        "</h1>" +
+        '<p class="og-menu-hero__note">Photos and prices are set by the restaurant in PostPlate.</p>';
+      initOrderTheme();
+      return;
+    }
     var shell = document.querySelector(".og-shell");
     if (!shell || shell.querySelector(".og-chrome")) return;
     var bar = document.createElement("header");
     bar.className = "og-chrome";
     bar.setAttribute("role", "banner");
     bar.innerHTML =
-      '<div class="og-chrome__brand">' +
-      '<span class="og-chrome__pp-logo" aria-hidden="true">PP</span>' +
-      '<div class="og-chrome__brand-text">' +
-      '<span class="og-chrome__pp-name">PostPlate</span>' +
-      '<span class="og-chrome__sponsor">Ordering powered by PostPlate</span></div></div>' +
       '<div class="og-chrome__venue">' +
       (logoUrl
         ? '<img class="og-chrome__venue-logo" src="' +
@@ -387,16 +441,28 @@
       window.location.replace("menu.html" + queryStringFrom(q));
       return;
     }
-    emitAnalytics("intro_viewed", { store_id: q.store });
+    var introDims = { store_id: q.store, brand_id: "", location_id: "" };
+    function emitIntroViewed() {
+      emitAnalytics("intro_viewed", {
+        store_id: introDims.store_id,
+        brand_id: introDims.brand_id,
+        location_id: introDims.location_id,
+      });
+    }
     var splash = document.getElementById("introSplash");
     var rest = document.getElementById("introRestaurant");
     var nameEl = document.getElementById("introRestaurantName");
     var logoEl = document.getElementById("introRestaurantLogo");
+    var splashDone = false;
 
-    global.setTimeout(function () {
+    function revealIntroRestaurant() {
+      if (splashDone) return;
+      splashDone = true;
       if (splash) splash.classList.add("og-intro-splash--done");
       if (rest) rest.classList.remove("og-intro-restaurant--hidden");
-    }, 2000);
+    }
+
+    global.setTimeout(revealIntroRestaurant, 1400);
 
     fetch("/api/public/menu?store=" + encodeURIComponent(q.store))
       .then(function (r) {
@@ -404,18 +470,35 @@
       })
       .then(function (api) {
         if (api.restaurantName && nameEl) nameEl.textContent = api.restaurantName;
+        if (api.restaurantName) {
+          try {
+            document.title = api.restaurantName + " · Menu";
+          } catch (e) {}
+        }
         if (api.logoUrl && logoEl) {
           logoEl.src = api.logoUrl;
+          logoEl.alt = (api.restaurantName || "Restaurant") + " logo";
           logoEl.classList.remove("og-intro-logo--hidden");
         }
+        introDims.brand_id = api.brandId || "";
+        introDims.location_id = api.locationId || "";
+        emitIntroViewed();
+        revealIntroRestaurant();
       })
-      .catch(function () {});
+      .catch(function () {
+        emitIntroViewed();
+        revealIntroRestaurant();
+      });
 
     var cont = document.getElementById("introContinue");
     if (cont) {
       cont.addEventListener("click", function () {
         sessionStorage.setItem(INTRO_KEY_PREFIX + q.store, "1");
-        emitAnalytics("intro_completed", { store_id: q.store });
+        emitAnalytics("intro_completed", {
+          store_id: q.store,
+          brand_id: introDims.brand_id,
+          location_id: introDims.location_id,
+        });
         window.location.href = "menu.html" + queryStringFrom(q);
       });
     }
@@ -448,11 +531,12 @@
         tmr = setTimeout(function () {
           searchFilter = searchEl.value.trim().toLowerCase();
           if (searchFilter)
-            emitAnalytics("menu_search", {
-              store_id: state.store,
-              session_id: state.sessionId,
-              q_len: searchFilter.length,
-            });
+            emitAnalytics(
+              "menu_search",
+              Object.assign({}, analyticsDims(menuRef, state), {
+                q_len: searchFilter.length,
+              })
+            );
           renderMenuSections();
         }, 200);
       });
@@ -463,12 +547,6 @@
       var blob = (item.name + " " + (item.description || "")).toLowerCase();
       return blob.indexOf(searchFilter) !== -1;
     }
-
-    emitAnalytics("menu_viewed", {
-      store_id: state.store,
-      offer_id: state.offerId || null,
-      session_id: state.sessionId,
-    });
 
     var menuRef = null;
 
@@ -516,7 +594,7 @@
                 badge +
                 "</div></div>" +
                 '<button type="button" class="og-btn-add" data-add-id="' +
-                escapeHtml(item.id) +
+                escapeHtml(String(item.id)) +
                 '" aria-label="Add ' +
                 escapeHtml(item.name) +
                 '">+</button></div>'
@@ -533,6 +611,8 @@
             escapeHtml(cat.id) +
             '" data-category="' +
             escapeHtml(cat.id) +
+            '" data-accent="' +
+            escapeHtml(cat.accent || "") +
             '">' +
             '<h2 class="og-section-title">' +
             escapeHtml(cat.name) +
@@ -544,8 +624,9 @@
         .join("");
 
       sectionsEl.querySelectorAll("[data-add-id]").forEach(function (b) {
-        b.addEventListener("click", function () {
-          addLine(b.getAttribute("data-add-id"));
+        b.addEventListener("click", function (ev) {
+          var id = normalizeLineItemId(ev.currentTarget.getAttribute("data-add-id"));
+          addLine(id, ev.currentTarget);
         });
       });
     }
@@ -553,6 +634,13 @@
     loadMenuData().then(function (result) {
       var menu = result.menu;
       menuRef = menu;
+
+      emitAnalytics(
+        "menu_viewed",
+        Object.assign({}, analyticsDims(menu, state), {
+          offer_id: state.offerId || null,
+        })
+      );
 
       injectOrderChrome(menu.restaurant.name, menu.restaurant.logoUrl);
       if (restaurantEl) restaurantEl.textContent = menu.restaurant.name;
@@ -574,7 +662,7 @@
 
       if (hostEl) {
         hostEl.innerHTML = hostBlock(
-          "Hey! Browse below — search or tap a category. Tap <strong>+</strong> to add."
+          "Hey! Browse below — search or tap a category. Tap <strong>+</strong> to add. Dish photos show here when the restaurant adds them in PostPlate; “—” means price isn’t listed yet."
         );
       }
 
@@ -605,39 +693,42 @@
         }
       }
 
-      function addLine(itemId) {
+      function addLine(itemId, pulseBtn) {
+        var idKey = normalizeLineItemId(itemId);
+        if (!idKey) return;
         var existing = null;
         for (var i = 0; i < state.lines.length; i++) {
-          if (state.lines[i].itemId === itemId) {
+          if (normalizeLineItemId(state.lines[i].itemId) === idKey) {
             existing = state.lines[i];
             break;
           }
         }
         if (existing) existing.qty += 1;
         else {
-          var it = findItem(menu, itemId);
+          var it = findItem(menu, idKey);
           state.lines.push({
-            itemId: itemId,
-            name: it ? it.name : itemId,
+            itemId: idKey,
+            name: it ? it.name : idKey,
             qty: 1,
           });
         }
         saveState(state);
         renderCartBar();
-        emitAnalytics("item_added", {
-          item_id: itemId,
-          store_id: state.store,
-          offer_id: state.offerId || null,
-          session_id: state.sessionId,
-        });
-        var it2 = findItem(menu, itemId);
+        emitAnalytics(
+          "item_added",
+          Object.assign({}, analyticsDims(menu, state), {
+            item_id: idKey,
+            offer_id: state.offerId || null,
+          })
+        );
+        var it2 = findItem(menu, idKey);
         var hint =
           it2 && it2.tags && it2.tags.indexOf("main") !== -1
             ? "Nice choice — add a drink from your cart suggestions."
             : "Added! Keep browsing.";
         showToast(toastEl, hint);
-        var btn = document.querySelector('[data-add-id="' + itemId + '"]');
-        if (btn) {
+        var btn = pulseBtn || null;
+        if (btn && btn.classList) {
           btn.classList.remove("is-pulse");
           void btn.offsetWidth;
           btn.classList.add("is-pulse");
@@ -718,12 +809,6 @@
     saveState(state);
     initOrderTheme();
 
-    emitAnalytics("cart_viewed", {
-      store_id: state.store,
-      offer_id: state.offerId || null,
-      session_id: state.sessionId,
-    });
-
     var root = document.getElementById("ogCartRoot");
     var complementsEl = document.getElementById("ogComplements");
     var linesEl = document.getElementById("ogLines");
@@ -733,6 +818,12 @@
 
     loadMenuData().then(function (result) {
       var menu = result.menu;
+      emitAnalytics(
+        "cart_viewed",
+        Object.assign({}, analyticsDims(menu, state), {
+          offer_id: state.offerId || null,
+        })
+      );
       injectOrderChrome(menu.restaurant.name, menu.restaurant.logoUrl);
 
       function carouselImg(c) {
@@ -774,13 +865,14 @@
             complementsEl.hidden = true;
           } else {
             complementsEl.hidden = false;
-            emitAnalytics("complement_impression", {
-              store_id: state.store,
-              session_id: state.sessionId,
-              complement_ids: comps.map(function (c) {
-                return c.id;
-              }),
-            });
+            emitAnalytics(
+              "complement_impression",
+              Object.assign({}, analyticsDims(menu, state), {
+                complement_ids: comps.map(function (c) {
+                  return c.id;
+                }),
+              })
+            );
             complementsEl.innerHTML =
               '<div class="og-complements">' +
               '<div class="og-complements__head">' +
@@ -812,26 +904,26 @@
               b.addEventListener("click", function () {
                 var id = b.getAttribute("data-comp-id");
                 var existing = null;
+                var idKey = normalizeLineItemId(id);
                 for (var i = 0; i < state.lines.length; i++) {
-                  if (state.lines[i].itemId === id) {
+                  if (normalizeLineItemId(state.lines[i].itemId) === idKey) {
                     existing = state.lines[i];
                     break;
                   }
                 }
-                var it = findItem(menu, id);
+                var it = findItem(menu, idKey);
                 if (existing) existing.qty += 1;
                 else
                   state.lines.push({
-                    itemId: id,
-                    name: it ? it.name : id,
+                    itemId: idKey,
+                    name: it ? it.name : idKey,
                     qty: 1,
                   });
                 saveState(state);
-                emitAnalytics("complement_added", {
-                  item_id: id,
-                  store_id: state.store,
-                  session_id: state.sessionId,
-                });
+                emitAnalytics(
+                  "complement_added",
+                  Object.assign({}, analyticsDims(menu, state), { item_id: id })
+                );
                 render();
               });
             });
@@ -954,14 +1046,15 @@
     try {
       sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
     } catch (e) {}
-    emitAnalytics("payment_completed", {
-      order_id: orderId,
-      store_id: state.store,
-      offer_id: state.offerId || null,
-      session_id: state.sessionId,
-      revenue_cents: Math.round(total * 100),
-      payment_method: method || "demo",
-    });
+    emitAnalytics(
+      "payment_completed",
+      Object.assign({}, analyticsDims(menu, state), {
+        order_id: orderId,
+        offer_id: state.offerId || null,
+        revenue_cents: Math.round(total * 100),
+        payment_method: method || "demo",
+      })
+    );
     fetch("/api/public/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -984,12 +1077,6 @@
     var state = loadState();
     initOrderTheme();
 
-    emitAnalytics("checkout_started", {
-      store_id: state.store,
-      offer_id: state.offerId || null,
-      session_id: state.sessionId,
-    });
-
     var root = document.getElementById("ogCheckoutRoot");
     var toggle = document.getElementById("ogSummaryToggle");
     var body = document.getElementById("ogSummaryBody");
@@ -999,6 +1086,12 @@
 
     loadMenuData().then(function (result) {
       var menu = result.menu;
+      emitAnalytics(
+        "checkout_started",
+        Object.assign({}, analyticsDims(menu, state), {
+          offer_id: state.offerId || null,
+        })
+      );
       injectOrderChrome(menu.restaurant.name, menu.restaurant.logoUrl);
 
       if (state.lines.length === 0) {
@@ -1051,11 +1144,10 @@
       }
 
       function pay(method) {
-        emitAnalytics("payment_method_selected", {
-          method: method,
-          store_id: state.store,
-          session_id: state.sessionId,
-        });
+        emitAnalytics(
+          "payment_method_selected",
+          Object.assign({}, analyticsDims(menu, state), { method: method })
+        );
         if (payCard) payCard.disabled = true;
         if (payApple) payApple.disabled = true;
         completeOrder(menu, state, q, subtotal, disc, total, method);
@@ -1149,12 +1241,14 @@
         form.addEventListener("submit", function (ev) {
           ev.preventDefault();
           var fd = new FormData(form);
-          emitAnalytics("receipt_requested", {
-            order_id: orderId,
-            store_id: q.store,
-            has_email: !!fd.get("email"),
-            has_phone: !!fd.get("phone"),
-          });
+          emitAnalytics(
+            "receipt_requested",
+            Object.assign({}, analyticsDims(result.menu, { store: q.store, sessionId: order.sessionId }), {
+              order_id: orderId,
+              has_email: !!fd.get("email"),
+              has_phone: !!fd.get("phone"),
+            })
+          );
           fetch("/api/public/order-guest/receipt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1191,13 +1285,13 @@
       };
     }
 
-    emitAnalytics("order_status_viewed", {
-      order_id: orderId || null,
-      store_id: q.store,
-      session_id: (order && order.sessionId) || q.session || null,
-    });
-
     loadMenuData().then(function (r) {
+      emitAnalytics(
+        "order_status_viewed",
+        Object.assign({}, analyticsDims(r.menu, { store: q.store, sessionId: (order && order.sessionId) || q.session || null }), {
+          order_id: orderId || null,
+        })
+      );
       injectOrderChrome(order.restaurant || r.menu.restaurant.name, r.menu.restaurant.logoUrl);
     });
 

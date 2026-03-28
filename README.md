@@ -24,3 +24,10 @@ PostPlate helps restaurants launch promotions, track redemptions, and turn walk-
   - custom_rule_added, ai_orchestrator_requested, ai_option_selected
   - campaign_published, channel_asset_published
 - Tags and recommendation metadata are passed for future multi-store learning.
+
+## Testing
+
+- `npm test` — Node unit + API-style tests under `tests/`.
+- `npm run test:e2e` — Black-box API suite (`tests/e2e-blackbox-suite.test.js`, LLM menu contracts).
+- `npm run test:playwright` — Browser E2E (starts server on **port 3456** with `DEV_MODE=true`). First time: `npm run playwright:install` (installs **chromium** + **chromium-headless-shell**). `playwright.config.js` **always** sets `PLAYWRIGHT_BROWSERS_PATH` to `node_modules/.cache/ms-playwright` so IDE/sandbox caches cannot point at the wrong CPU arch.
+- QA matrix and BA gaps: [docs/qa/E2E_AND_BA_CHECKLIST.md](docs/qa/E2E_AND_BA_CHECKLIST.md).

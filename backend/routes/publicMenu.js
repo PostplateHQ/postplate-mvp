@@ -18,29 +18,95 @@ function stripNamePriceSuffix(name) {
   return s;
 }
 
+/** Remove trailing "· Price: $10" often pasted into notes; price belongs in priceCents. */
+function stripNotePriceSuffix(note) {
+  return String(note || "")
+    .replace(/\s*[·•]\s*Price:\s*\$?\s*[\d,.]+\s*$/i, "")
+    .trim();
+}
+
+function parsePriceCentsFromNote(note) {
+  const m = String(note || "").match(/\bPrice:\s*\$?\s*([\d,]+\.?[\d]*)\s*$/i);
+  if (!m) return null;
+  const n = parseFloat(m[1].replace(/,/g, ""));
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100);
+}
+
+function slugGuestSectionId(label) {
+  const s = String(label || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .slice(0, 48);
+  return s || "menu";
+}
+
 function publicMenuItemFromOwnerItem(item) {
   const tags = [];
   if (item.category === "main") tags.push("main");
   if (item.category === "drink") tags.push("drink");
   if (item.category === "starter") tags.push("side");
   if (item.category === "dessert") tags.push("dessert");
-  const price = item.priceCents != null ? item.priceCents / 100 : null;
+  const rawNote = String(item.note || "");
+  let priceCents = item.priceCents != null && Number.isFinite(Number(item.priceCents)) ? Math.round(Number(item.priceCents)) : null;
+  if (priceCents == null) {
+    const fromNote = parsePriceCentsFromNote(rawNote);
+    if (fromNote != null) priceCents = fromNote;
+  }
+  const description = stripNotePriceSuffix(rawNote).slice(0, 240);
+  const price = priceCents != null ? priceCents / 100 : null;
   const displayPrice =
-    item.displayPrice ||
-    (item.priceCents != null ? `$${(item.priceCents / 100).toFixed(2)}` : "");
+    String(item.displayPrice || "").trim() ||
+    (priceCents != null ? `$${(priceCents / 100).toFixed(2)}` : "");
   return {
     id: item.id,
     name: stripNamePriceSuffix(item.name),
     displayPrice,
     price,
-    priceCents: item.priceCents != null ? item.priceCents : null,
+    priceCents: priceCents != null ? priceCents : null,
     category: item.category,
     categoryId: item.category,
     imageUrl: item.imageUrl || "",
-    description: String(item.note || "").slice(0, 240),
+    description,
     tags,
     offerEligibleTag: item.status === "best_seller" ? "featured" : "",
+    sectionTitle: String(item.sectionTitle || "").trim().slice(0, 80),
   };
+}
+
+const GUEST_SECTION_ACCENTS = ["violet", "coral", "teal", "rose"];
+
+/** Assign display `categoryId` per item and build ordered section chips (pastas, sharables, …). */
+function buildGuestMenuSections(menuItems) {
+  const order = [];
+  const meta = new Map();
+
+  for (let i = 0; i < menuItems.length; i += 1) {
+    const it = menuItems[i];
+    const st = String(it.sectionTitle || "").trim();
+    const baseCat = it.category;
+    const fallbackName = CATEGORY_LABELS[baseCat] ? CATEGORY_LABELS[baseCat].name : "Menu";
+    const displayName = st || fallbackName;
+    const key = st ? `s_${slugGuestSectionId(st)}` : `c_${baseCat}`;
+    if (!meta.has(key)) {
+      meta.set(key, {
+        name: displayName,
+        accent: GUEST_SECTION_ACCENTS[meta.size % GUEST_SECTION_ACCENTS.length],
+      });
+      order.push(key);
+    }
+    it.categoryId = key;
+  }
+
+  const categories = order.map((id) => ({
+    id,
+    name: meta.get(id).name,
+    accent: meta.get(id).accent,
+  }));
+
+  return { categories, menuItems };
 }
 
 function registerPublicMenuRoutes(app, deps) {
@@ -57,11 +123,8 @@ function registerPublicMenuRoutes(app, deps) {
     const data = loadData();
     const profile = getOwnerProfile(data, store);
     const rawItems = Array.isArray(profile.menuItems) ? profile.menuItems : [];
-    const menuItems = rawItems.map(publicMenuItemFromOwnerItem);
-
-    const catOrder = ["starter", "main", "drink", "dessert"];
-    const present = new Set(menuItems.map((m) => m.category));
-    const categories = catOrder.filter((c) => present.has(c)).map((c) => CATEGORY_LABELS[c]);
+    const mapped = rawItems.map(publicMenuItemFromOwnerItem);
+    const { categories, menuItems } = buildGuestMenuSections(mapped);
 
     let offer = null;
     const offerId = String(req.query.offerId || "").trim();
@@ -87,6 +150,8 @@ function registerPublicMenuRoutes(app, deps) {
     res.json({
       success: true,
       storeId: profile.storeId,
+      brandId: profile.brandId || "",
+      locationId: profile.locationId || "primary",
       restaurantName: profile.restaurantName,
       logoUrl,
       businessInitials: profile.businessInitials || "PP",
@@ -100,4 +165,8 @@ function registerPublicMenuRoutes(app, deps) {
   });
 }
 
-module.exports = { registerPublicMenuRoutes, publicMenuItemFromOwnerItem };
+module.exports = {
+  registerPublicMenuRoutes,
+  publicMenuItemFromOwnerItem,
+  buildGuestMenuSections,
+};

@@ -1,5 +1,6 @@
 (function attachPostPlateDataAdapter(globalScope) {
-  const DEFAULT_STORE_ID = 'taco123';
+  /** Matches seed profile in backend/db/data.json (opaque NN-NNNN). */
+  const DEFAULT_STORE_ID = '01-7402';
 
   function asNumber(value, fallback = 0) {
     const parsed = Number(value);
@@ -50,7 +51,7 @@
   }
 
   async function fetchJson(pathname) {
-    const response = await fetch(apiUrl(pathname));
+    const response = await fetch(apiUrl(pathname), { credentials: 'same-origin' });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const error = new Error(data.error || 'Request failed');
@@ -65,6 +66,7 @@
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload || {}),
+      credentials: 'same-origin',
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -80,6 +82,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload || {}),
+      credentials: 'same-origin',
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -92,6 +95,8 @@
 
   const mockStoreProfile = {
     storeId: DEFAULT_STORE_ID,
+    brandId: 'rasa-kitchen',
+    locationId: 'primary',
     restaurantName: 'Spice Taco House',
     restaurantLocation: 'Primary location',
     category: 'Restaurant',
@@ -285,6 +290,30 @@
     } catch (_error) {
       return deepClone(mockStoreProfile);
     }
+  }
+
+  /**
+   * Boot: optional ?store= wins; else GET /owner/profile without query (session cookie or server default); else loadProfile(fallback).
+   */
+  async function resolveBootOwnerContext(explicitUrlStore = '', sessionFallbackStore = DEFAULT_STORE_ID) {
+    const explicit = asString(explicitUrlStore).trim();
+    if (explicit) {
+      const profile = await loadProfile(explicit);
+      return { storeId: explicit, profile };
+    }
+    try {
+      const response = await fetch(apiUrl('/owner/profile'), { credentials: 'same-origin' });
+      const data = await response.json().catch(() => ({}));
+      if (data.success && data.profile) {
+        const sid = asString(data.profile.storeId, sessionFallbackStore).trim() || sessionFallbackStore;
+        return { storeId: sid, profile: data.profile };
+      }
+    } catch (_e) { /* ignore */ }
+    const profile = await loadProfile(sessionFallbackStore);
+    return {
+      storeId: asString(profile?.storeId, sessionFallbackStore),
+      profile,
+    };
   }
 
   async function loadOffers(storeId = DEFAULT_STORE_ID, options = {}) {
@@ -786,6 +815,29 @@
     }
   }
 
+  async function suggestMenuItemImage({ itemName = '', note = '', restaurantName = '', cuisineType = '' } = {}) {
+    try {
+      const response = await fetch(apiUrl('/api/menu/suggest-item-image'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemName, note, restaurantName, cuisineType }),
+        credentials: 'same-origin',
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        return {
+          imageUrl: '',
+          skipped: true,
+          source: 'error',
+          reason: asString(data.error, `http_${response.status}`),
+        };
+      }
+      return data;
+    } catch (_error) {
+      return { imageUrl: '', skipped: true, source: 'error', reason: 'network' };
+    }
+  }
+
   async function importMenuFile({ fileDataUrl = '', fileName = '', fileType = '' } = {}) {
     try {
       const response = await postJson('/api/menu/import', {
@@ -882,6 +934,7 @@
   }
 
   globalScope.PostPlateDataAdapter = {
+    resolveBootOwnerContext,
     getGrowthHubData,
     getEligibleReminders,
     sendReminderBatch,
@@ -897,6 +950,7 @@
     extractMenuFromPhoto,
     importMenuFile,
     improveMenuItemDescription,
+    suggestMenuItemImage,
     generateCampaignContent,
     regenerateCampaignContent,
     trackCreateIntentInputUsed,

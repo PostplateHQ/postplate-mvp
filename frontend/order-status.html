@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order status | PostPlate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assets/order-guest/order-guest.css" />
+</head>
+<body class="pp-guest-flow pp-order-flow">
+  <div class="og-shell">
+    <header class="og-topbar">
+      <span style="width:44px" aria-hidden="true"></span>
+      <div class="og-progress" aria-label="Complete">
+        <span class="og-progress-dot is-done"></span>
+        <span class="og-progress-dot is-done"></span>
+        <span class="og-progress-dot is-done"></span>
+      </div>
+      <span style="width:44px" aria-hidden="true"></span>
+    </header>
+
+    <div class="og-success-icon" aria-hidden="true">✓</div>
+    <h1 id="ogOrderTitle" style="text-align:center;margin:0 0 8px;font-size:1.5rem;font-weight:800">Order placed!</h1>
+    <p id="ogOrderRef" class="og-order-ref">Reference</p>
+
+    <div class="og-host og-host--fade" style="margin-bottom:20px">
+      <div class="og-host__avatar" aria-hidden="true">✦</div>
+      <p class="og-host__text">We’ll update this as your order moves along. Thanks for ordering with us!</p>
+    </div>
+
+    <h2 style="font-size:1rem;font-weight:800;margin:0 0 12px">Status</h2>
+    <ul class="og-timeline" id="ogTimeline"></ul>
+
+    <a class="og-cta" href="#" id="ogBackMenu" style="display:block;text-align:center;text-decoration:none;margin-top:28px;line-height:52px">Back to menu</a>
+  </div>
+
+  <p class="micro-copy og-foot-note">Powered by PostPlate</p>
+
+  <script src="order-guest.js"></script>
+  <script>
+    (function () {
+      var q = PPOrderGuest.getQuery();
+      document.getElementById("ogBackMenu").href = "menu.html" + PPOrderGuest.queryStringFrom(q);
+    })();
+    PPOrderGuest.initStatus();
+  </script>
+</body>
+</html>

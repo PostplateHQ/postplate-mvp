@@ -45,6 +45,12 @@
     campaigns: { status: 'active', items: [], totals: {} },
     campaignListSearch: '',
     liveListSearch: '',
+    globalSearchIndexAt: 0,
+    globalSearchIndexEntries: null,
+    globalSearchResults: [],
+    globalSearchSelected: 0,
+    globalSearchDebounce: null,
+    globalSearchPanelOpen: false,
     livePageItems: [],
     liveLearningFeed: [],
     campaignDetail: null,
@@ -197,6 +203,8 @@
     businessAvatar: document.getElementById('appBusinessAvatar'),
     primaryCreateButton: document.getElementById('appPrimaryCreateButton'),
     globalSearchInput: document.getElementById('appGlobalSearch'),
+    globalSearchWrap: document.getElementById('appGlobalSearchWrap'),
+    globalSearchPanel: document.getElementById('appGlobalSearchPanel'),
     accountButton: document.getElementById('appAccountButton'),
 
     createModal: document.getElementById('unifiedCreateModal'),
@@ -231,6 +239,9 @@
     return Number.isFinite(parsed) ? parsed : fallback;
   }
 
+  const MENU_FOOD_TYPES = new Set(['veg', 'non_veg', 'egg_based', 'vegan', 'jain', 'unspecified']);
+  const MENU_MEAT_TYPES = new Set(['', 'chicken', 'mutton', 'beef', 'seafood']);
+
   function normalizeMenuItems(list = []) {
     if (!Array.isArray(list)) return [];
     return list
@@ -240,6 +251,11 @@
         const category = asString(row?.category, 'main').toLowerCase();
         const status = asString(row?.status, 'regular').toLowerCase();
         const marginBand = asString(row?.marginBand, '').toLowerCase();
+        const foodTypeRaw = asString(row?.foodType, 'unspecified').toLowerCase().replace(/-/g, '_');
+        const foodType = MENU_FOOD_TYPES.has(foodTypeRaw) ? foodTypeRaw : 'unspecified';
+        const meatRaw = asString(row?.meatType, '').toLowerCase();
+        const meatType = MENU_MEAT_TYPES.has(meatRaw) ? meatRaw : '';
+        const truthyDiet = (v) => v === true || v === 1 || v === '1' || String(v).toLowerCase() === 'true';
         return {
           id: asString(row?.id, `menu_item_${Date.now()}_${index}`),
           name,
@@ -249,10 +265,70 @@
           note: asString(row?.note),
           imageAssetId: asString(row?.imageAssetId),
           imageUrl: asString(row?.imageUrl),
+          foodType,
+          meatType,
+          dietaryHalal: truthyDiet(row?.dietaryHalal),
+          dietaryContainsEgg: truthyDiet(row?.dietaryContainsEgg),
+          dietaryDairyFree: truthyDiet(row?.dietaryDairyFree),
         };
       })
       .filter(Boolean)
       .slice(0, 20);
+  }
+
+  function menuItemToItemFoodProfile(row) {
+    if (!row || typeof row !== 'object') return {};
+    return {
+      type: asString(row.foodType, 'unspecified'),
+      meatType: asString(row.meatType, ''),
+      dietaryFlags: {
+        halal: Boolean(row.dietaryHalal),
+        containsEgg: Boolean(row.dietaryContainsEgg),
+        dairyFree: Boolean(row.dietaryDairyFree),
+      },
+    };
+  }
+
+  function getProfileRestaurantFoodProfile() {
+    const r = state.profile?.restaurantFoodProfile;
+    if (r && typeof r === 'object') {
+      return {
+        type: asString(r.type, 'unspecified'),
+        meatType: asString(r.meatType, ''),
+        dietaryFlags: {
+          halal: Boolean(r.dietaryFlags?.halal),
+          containsEgg: Boolean(r.dietaryFlags?.containsEgg),
+          dairyFree: Boolean(r.dietaryFlags?.dairyFree),
+        },
+      };
+    }
+    return { type: 'unspecified', meatType: '', dietaryFlags: { halal: false, containsEgg: false, dairyFree: false } };
+  }
+
+  function buildCampaignFoodPayload() {
+    const cb = state.campaignBuilder;
+    const profile = state.profile || {};
+    let itemRow = null;
+    const items = Array.isArray(profile.menuItems) ? profile.menuItems : [];
+    if (cb.selectedItemId) itemRow = items.find((m) => m.id === cb.selectedItemId) || null;
+    if (!itemRow && cb.selectedItem) itemRow = items.find((m) => m.name === cb.selectedItem) || null;
+    return {
+      restaurantFoodProfile: getProfileRestaurantFoodProfile(),
+      itemFoodProfile: itemRow ? menuItemToItemFoodProfile(itemRow) : {},
+    };
+  }
+
+  function menuItemTrustTagsHtml(item) {
+    const t = asString(item.foodType, 'unspecified');
+    const chips = [];
+    if (t === 'veg') chips.push('Veg friendly');
+    if (t === 'vegan') chips.push('Vegan');
+    if (t === 'jain') chips.push('Jain');
+    if (t === 'egg_based') chips.push('Egg-based');
+    if (t === 'non_veg') chips.push('Non-veg');
+    if (item.dietaryHalal) chips.push('Halal');
+    if (!chips.length) return '';
+    return chips.map((c) => `<span class="pp-menu-pill trust">${escapeHtml(c)}</span>`).join('');
   }
 
   function menuSignalsSummary(menuItems = []) {
@@ -509,7 +585,7 @@
         const onDetail = state.route === 'campaign-detail';
         const detail = state.campaignDetail;
         const detailIsLive = onDetail && detail && asString(detail.status, '').toLowerCase() === 'active';
-        button.classList.toggle('active', r === state.route || (onDetail && r === 'campaigns') || (detailIsLive && r === 'live'));
+        button.classList.toggle('active', r === state.route || (onDetail && r === 'campaigns') || (detailIsLive && r === 'campaigns') || (state.route === 'live' && r === 'campaigns'));
       });
     }
     mark(refs.sidebarNav);
@@ -528,7 +604,9 @@
     }
     refs.businessAvatar.textContent = name.split(' ').map((x) => x[0]).join('').slice(0, 2).toUpperCase();
     if (refs.topNavSub) {
-      refs.topNavSub.textContent = name;
+      const loc = asString(profile.restaurantLocation, '');
+      const locShort = loc && loc !== 'Primary location' ? loc : '';
+      refs.topNavSub.textContent = locShort ? `${name} · ${locShort}` : `${name} · Offers & growth`;
     }
   }
 
@@ -640,9 +718,9 @@
         </div>
         <p class="pp-live-offer-line">${escapeHtml(campaign.offerValue)}</p>
         <div class="pp-live-metrics">
-          <div class="pp-live-metric"><span>Customers gained</span><strong>${escapeHtml(String(campaign.customersGained ?? 0))}</strong></div>
-          <div class="pp-live-metric"><span>Engagement lift</span><strong>${escapeHtml(String(campaign.engagementLift ?? 0))}%</strong></div>
-          <div class="pp-live-metric"><span>Revenue (est.)</span><strong>${escapeHtml(money(asNumber(campaign.revenueImpact)))}</strong></div>
+          <div class="pp-live-metric"><span>Claims</span><strong>${escapeHtml(String(campaign.claimCount ?? 0))}</strong></div>
+          <div class="pp-live-metric"><span>Redeemed</span><strong>${escapeHtml(String(campaign.redemptionCount ?? campaign.customersGained ?? 0))}</strong></div>
+          <div class="pp-live-metric"><span>QR → redeem</span><strong>${escapeHtml(String(asNumber(campaign.conversionRate ?? campaign.engagementLift)))}%</strong></div>
         </div>
         <p class="pp-live-ai-insight"><strong>Tip:</strong> ${escapeHtml(insight)}</p>
         <div class="pp-inline-actions pp-live-actions">
@@ -1044,85 +1122,282 @@
     else if (live.length > 1) statusChip = `${live.length} campaigns running`;
     else if (totals.drafts > 0) statusChip = `${totals.drafts} draft${totals.drafts === 1 ? '' : 's'} ready`;
 
-    const revenueTotal = live.reduce((s, c) => s + asNumber(c.revenueImpact), 0);
-    const custTotal = live.reduce((s, c) => s + asNumber(c.customersGained), 0);
-    const avgLift = live.length
-      ? Math.round(live.reduce((s, c) => s + asNumber(c.engagementLift), 0) / live.length)
-      : 0;
-    const sortedRev = [...live].sort((a, b) => asNumber(b.revenueImpact) - asNumber(a.revenueImpact));
-    const topCamp = sortedRev[0];
-    const topTitle = topCamp ? asString(topCamp.title, 'Top campaign') : '—';
+    const st = hub.storeStats || {};
+    const claimsTotal = Number.isFinite(Number(st.totalRedemptions))
+      ? Number(st.totalRedemptions)
+      : live.reduce((s, c) => s + asNumber(c.claimCount), 0);
+    const redeemedTotal = Number.isFinite(Number(st.redeemedCount))
+      ? Number(st.redeemedCount)
+      : live.reduce((s, c) => s + asNumber(c.redemptionCount), 0);
+    const pendingTotal = Number.isFinite(Number(st.pendingCount))
+      ? Number(st.pendingCount)
+      : live.reduce((s, c) => s + asNumber(c.pendingRedemptionCount), 0);
 
-    const kpis = [
+    const scanTotal = live.reduce((s, c) => s + asNumber(c.qrScanCount), 0);
+
+    let estNetSum = 0;
+    let hasEstimates = false;
+    live.forEach((c) => {
+      const v = c.estimatedNetImpact;
+      if (v != null && Number.isFinite(Number(v))) {
+        estNetSum += Number(v);
+        hasEstimates = true;
+      }
+    });
+
+    const sortedByActivity = [...live].sort((a, b) => {
+      const rd = asNumber(b.redemptionCount) - asNumber(a.redemptionCount);
+      if (rd !== 0) return rd;
+      return asNumber(b.claimCount) - asNumber(a.claimCount);
+    });
+    const topCamp = sortedByActivity[0];
+
+    const weekRhythmDays = [
+      { label: 'Mon', value: 14 },
+      { label: 'Tue', value: 18 },
+      { label: 'Wed', value: 16 },
+      { label: 'Thu', value: 22 },
+      { label: 'Fri', value: 27 },
+      { label: 'Sat', value: 36, highlight: true },
+      { label: 'Sun', value: 21 },
+    ];
+
+    const storeConv = claimsTotal > 0
+      ? Math.min(100, Math.round((100 * redeemedTotal) / claimsTotal))
+      : null;
+
+    let healthTone = 'good';
+    let healthTitle = 'Marketing is responding';
+    let healthSub = 'Keep converting claims into visits.';
+    if (!live.length && !claimsTotal) {
+      healthTone = 'bad';
+      healthTitle = 'Publish your first offer';
+      healthSub = 'Unlock revenue, guest, and conversion signals in seconds.';
+    } else if (live.length && !scanTotal) {
+      healthTone = 'warn';
+      healthTitle = 'Low QR visibility';
+      healthSub = 'Guests need a clear scan path at the wait and pickup zones.';
+    } else if (pendingTotal > 8 && storeConv != null && storeConv < 20) {
+      healthTone = 'warn';
+      healthTitle = 'Claims outpace visits';
+      healthSub = 'Remind pending guests while the offer is still fresh.';
+    }
+
+    const impactSignal = (() => {
+      if (!live.length && !claimsTotal) {
+        return {
+          level: 'low',
+          badge: 'Low impact',
+          explainer: 'Nothing is moving the needle yet. Publish a live offer and place QR where guests wait — then this row will light up.',
+        };
+      }
+      if (live.length && !scanTotal) {
+        return {
+          level: 'low',
+          badge: 'Low impact',
+          explainer: 'Confirmed: 0 QR scans on live offers. Revenue and funnel stay muted until guests can find and scan your codes.',
+        };
+      }
+      if (healthTone === 'warn' && pendingTotal > 8) {
+        return {
+          level: 'moderate',
+          badge: 'Needs follow-through',
+          explainer: 'Claims are ahead of visits — reminders usually unlock the next chunk of revenue.',
+        };
+      }
+      if (hasEstimates && estNetSum > 0 && storeConv != null && storeConv >= 40 && healthTone === 'good') {
+        return {
+          level: 'strong',
+          badge: 'Strong signal',
+          explainer: 'Modeled revenue and conversion look healthy — keep QR tight and repeat what worked.',
+        };
+      }
+      return {
+        level: 'moderate',
+        badge: 'Building momentum',
+        explainer: 'Signals are mixed or early. Watch scans and claim → redeem; nudge wherever either stalls.',
+      };
+    })();
+
+    const estRevStrength = !hasEstimates || estNetSum <= 0 ? 'low' : estNetSum >= 120 ? 'strong' : 'moderate';
+    const guestStrength = claimsTotal <= 0 ? 'low' : claimsTotal >= 12 ? 'strong' : 'moderate';
+    let convStrength = 'moderate';
+    if (storeConv == null || claimsTotal === 0) convStrength = 'low';
+    else if (storeConv >= 45) convStrength = 'strong';
+    else if (storeConv < 18) convStrength = 'low';
+
+    const revTrendTone = hasEstimates && estNetSum > 0 ? 'good' : undefined;
+    const revTrend = hasEstimates && estNetSum > 0 ? `↑ ${money(estNetSum)} modeled on live offers` : undefined;
+    const guestSub = redeemedTotal ? `${redeemedTotal} completed at counter` : undefined;
+    const guestTrend = claimsTotal ? `↑ ${claimsTotal} offers claimed` : undefined;
+    const guestTrendTone = claimsTotal > 2 ? 'good' : undefined;
+    let convTrend;
+    let convTrendTone;
+    if (storeConv != null) {
+      if (storeConv >= 45) {
+        convTrend = '↑ Strong claim → visit';
+        convTrendTone = 'good';
+      } else if (storeConv < 15 && claimsTotal > 2) {
+        convTrend = '↓ Nudge pending guests';
+        convTrendTone = 'warn';
+      }
+    }
+
+    const healthImpact = {
+      health: {
+        tone: healthTone,
+        title: healthTitle,
+        subtitle: healthSub,
+      },
+      impactSignal,
+      trendSpark: weekRhythmDays.map((d) => d.value),
+      funnelSnapshot: {
+        scans: scanTotal,
+        claimed: claimsTotal,
+        redeemed: redeemedTotal,
+      },
+      conversionPercent: storeConv,
+      estimatedRevenue: {
+        value: hasEstimates ? money(estNetSum) : '—',
+        label: 'Estimated revenue',
+        trend: revTrend,
+        trendTone: revTrendTone,
+        strength: estRevStrength,
+      },
+      guestsDriven: {
+        value: String(claimsTotal),
+        label: 'Guests (claimed)',
+        subValue: guestSub,
+        trend: guestTrend,
+        trendTone: guestTrendTone,
+        strength: guestStrength,
+      },
+      claimToRedeem: {
+        value: storeConv != null ? `${storeConv}%` : '—',
+        label: 'Claim → redeem',
+        trend: convTrend,
+        trendTone: convTrendTone,
+        strength: convStrength,
+      },
+    };
+
+    const moneyStory = (() => {
+      const parts = [];
+      if (hasEstimates && estNetSum > 0) parts.push(`${money(estNetSum)} influenced (modeled)`);
+      if (claimsTotal) parts.push(`+${claimsTotal} guest${claimsTotal === 1 ? '' : 's'} with a claim`);
+      if (redeemedTotal) parts.push(`+${redeemedTotal} visit${redeemedTotal === 1 ? '' : 's'} completed`);
+      if (!parts.length) return null;
+      return {
+        headline: `This period: ${parts.join(' · ')}`,
+        detail: topCamp ? `Top live offer: ${asString(topCamp.title, 'Offer')}` : undefined,
+      };
+    })();
+
+    const weeklyRhythmSteps = [
       {
-        id: 'kpi_rev',
-        label: 'Revenue from campaigns',
-        value: money(revenueTotal),
-        hint: live.length ? 'Influenced this cycle' : 'Publish a live offer to populate',
-        barPct: live.length ? Math.min(95, 38 + Math.round(revenueTotal / Math.max(1, live.length) / 50)) : 18,
+        when: 'Sun–Mon',
+        title: 'Plan',
+        detail: 'Pick one weekly focus: a slow patch (lunch, early dinner, or midweek) plus one lever — new trial or bring-backs.',
       },
       {
-        id: 'kpi_cust',
-        label: 'Customers engaged',
-        value: live.length ? String(custTotal) : '—',
-        hint: live.length ? 'Scans and redemptions' : 'Waiting on first activity',
-        barPct: live.length ? Math.min(95, 30 + custTotal * 2) : 14,
+        when: 'Tue–Wed',
+        title: 'Launch',
+        detail: 'Publish your live offer and place QR where guests already wait (counter, pickup, table tents).',
       },
       {
-        id: 'kpi_conv',
-        label: 'Conversion rate',
-        value: live.length ? `${avgLift}%` : '—',
-        hint: 'Across live offers',
-        barPct: live.length ? Math.min(92, 28 + avgLift) : 20,
+        when: 'Wed–Thu',
+        title: 'Engage',
+        detail: 'Use guest reminders to nudge visits — reminders are nudges, not a second offer unless you intend one.',
       },
       {
-        id: 'kpi_top',
-        label: 'Top campaign',
-        value: topTitle,
-        hint: topCamp ? asString(topCamp.offerValue, asString(topCamp.headline, 'Leads the pack')) : 'No live data yet',
-        barPct: topCamp ? Math.min(95, 45 + asNumber(topCamp.engagementLift)) : 12,
+        when: 'Fri',
+        title: 'Read',
+        detail: 'Check claims, redemptions, and QR → redeem in the KPI ribbon — real signals only, no vanity lift.',
       },
       {
-        id: 'kpi_active',
-        label: 'Active campaigns',
-        value: String(totals.active ?? live.length),
-        hint: 'Live right now',
-        barPct: Math.min(90, 22 + (totals.active || live.length) * 18),
-      },
-      {
-        id: 'kpi_draft',
-        label: 'Drafts ready',
-        value: String(totals.drafts ?? 0),
-        hint: totals.drafts ? 'Ready to ship' : 'None waiting',
-        barPct: totals.drafts ? Math.min(92, 24 + totals.drafts * 14) : 16,
+        when: 'Fri–Sat',
+        title: 'Adjust',
+        detail: 'Pause weak tests, extend what works, duplicate a winner, or queue next week’s draft before the rush.',
       },
     ];
 
     const weekly = {
-      label: 'Weekly campaign rhythm',
-      trendLabel: live.length ? 'Planning guide' : 'Sample curve',
-      chartCaption: live.length
-        ? 'Bar pattern is illustrative — use it to time posts; detailed analytics will reflect your store soon.'
-        : 'Illustrative week shape until live campaigns feed real weekly stats.',
-      days: [
-        { label: 'Mon', value: 14 },
-        { label: 'Tue', value: 18 },
-        { label: 'Wed', value: 16 },
-        { label: 'Thu', value: 22 },
-        { label: 'Fri', value: 27 },
-        { label: 'Sat', value: 36, highlight: true },
-        { label: 'Sun', value: 21 },
+      label: 'Weekly flow',
+      eyebrow: 'Weekly flow',
+      flowSteps: [
+        { range: 'Mon–Tue', title: 'Plan' },
+        { range: 'Wed–Thu', title: 'Launch' },
+        { range: 'Fri', title: 'Track' },
+        { range: 'Sat', title: 'Peak', highlight: true },
+        { range: 'Sun', title: 'Sustain' },
       ],
+      weeklyInsightLine: 'Most stores like yours peak Saturday evening — load posts, QR, and reminders before the rush.',
+      dataAttribution: live.length
+        ? 'Bars show illustrative timing weights — real dollars and visits are in Today’s impact above.'
+        : 'Illustrative rhythm until day-level performance streams in.',
+      purpose:
+        'This block is your weekly marketing playbook — not a scoreboard. The curve below is a typical week shape so you can time posts and promos; your actual results live in the impact bar and redemption log.',
+      marketingIntent:
+        'Marketing on PostPlate is meant to fill quiet hours, make first visits easy, and bring people back — aligned with your menu and margin, not random daily discounts.',
+      slowHoursTip:
+        'Slow-hour wins: time-bound lunch Tue–Thu or an early-seat dinner Mon–Thu often beat a flat % off all week. Launch with one counter QR plus one social post, then read redemptions.',
+      rhythmSteps: weeklyRhythmSteps,
+      trendLabel: live.length ? 'Your rhythm' : 'Sample week shape',
+      chartCaption: 'Hover the highlighted bar for the peak-night tip.',
+      days: weekRhythmDays,
     };
 
-    const spotlightCampaign = sortedRev[0] || null;
+    const spotlightCampaign = sortedByActivity[0] || null;
     const insightLine = (learningFeed[0] && (learningFeed[0].detail || learningFeed[0].title))
       || 'Performs best after 6 PM — pair counter QR with a story reminder.';
-    const redemptionLabel = spotlightCampaign ? String(asNumber(spotlightCampaign.customersGained) || 0) : '0';
-    const reachN = spotlightCampaign
-      ? Math.max(400, Math.round(600 + asNumber(spotlightCampaign.engagementLift) * 85 + asNumber(spotlightCampaign.customersGained) * 12))
-      : 0;
-    const reachLabel = reachN >= 1000 ? `${(reachN / 1000).toFixed(1)}k` : String(reachN);
+    const redemptionLabel = spotlightCampaign ? String(asNumber(spotlightCampaign.redemptionCount ?? spotlightCampaign.customersGained) || 0) : '0';
+    const reachLabel = spotlightCampaign ? String(Math.max(0, asNumber(spotlightCampaign.qrScanCount))) : '—';
+    const scClaims = spotlightCampaign ? asNumber(spotlightCampaign.claimCount) : 0;
+    const scRedeems = spotlightCampaign ? asNumber(spotlightCampaign.redemptionCount) : 0;
+    const scConv = scClaims > 0 ? Math.min(100, Math.round((100 * scRedeems) / scClaims)) : null;
+    const scEstRaw = spotlightCampaign && spotlightCampaign.estimatedNetImpact != null && Number.isFinite(Number(spotlightCampaign.estimatedNetImpact))
+      ? Number(spotlightCampaign.estimatedNetImpact)
+      : null;
+    const scRevenueLabel = scEstRaw != null ? money(scEstRaw) : '—';
+
+    const spotlightIntel = {
+      insight: insightLine,
+      risk: spotlightCampaign && asNumber(spotlightCampaign.qrScanCount) === 0 && live.length
+        ? 'No QR scans yet — visibility is the bottleneck.'
+        : undefined,
+      suggestion: spotlightCampaign && asNumber(spotlightCampaign.qrScanCount) === 0
+        ? 'Add QR near pickup counter and the wait line.'
+        : undefined,
+    };
+
+    let perfLine = 'On track — nudge anyone who has not visited yet.';
+    let perfTone = 'good';
+    if (spotlightCampaign && asNumber(spotlightCampaign.qrScanCount) === 0) {
+      perfLine = 'Needs a visibility boost before the weekend rush.';
+      perfTone = 'warn';
+    } else if (scConv != null && scConv >= 45) {
+      perfLine = 'Performing ahead of typical benchmarks this week.';
+      perfTone = 'good';
+    } else if (scConv != null && scConv < 20 && scClaims > 3) {
+      perfLine = 'Room to lift claim → visit — reminders usually help.';
+      perfTone = 'warn';
+    }
+
+    const activeCampaign = spotlightCampaign
+      ? {
+        campaignId: asString(spotlightCampaign.id, ''),
+        name: asString(spotlightCampaign.title, 'Live offer'),
+        offerSummary: asString(
+          spotlightCampaign.offerValue || spotlightCampaign.headline || spotlightCampaign.goal,
+          'Active offer',
+        ),
+        redeemed: scRedeems,
+        claimed: scClaims,
+        estRevenueLabel: scRevenueLabel,
+        performanceLine: perfLine,
+        performanceTone: perfTone,
+      }
+      : null;
 
     const spotlight = {
       campaign: spotlightCampaign
@@ -1133,27 +1408,33 @@
             offerValue: asString(spotlightCampaign.offerValue, ''),
             headline: asString(spotlightCampaign.headline, ''),
             status: asString(spotlightCampaign.status, 'active'),
-            customersGained: asNumber(spotlightCampaign.customersGained),
-            engagementLift: asNumber(spotlightCampaign.engagementLift),
+            customersGained: asNumber(spotlightCampaign.redemptionCount ?? spotlightCampaign.customersGained),
+            engagementLift: asNumber(spotlightCampaign.conversionRate ?? spotlightCampaign.engagementLift),
             revenueImpact: asNumber(spotlightCampaign.revenueImpact),
             channels: Array.isArray(spotlightCampaign.channels) ? spotlightCampaign.channels : [],
           }
         : null,
       insight: insightLine,
-      peakTimeLabel: '6–9 PM',
-      reachLabel: spotlightCampaign ? reachLabel : '—',
+      intelligence: spotlightIntel,
+      peakTimeLabel: 'Sat · eve typical',
+      reachLabel: spotlightCampaign ? reachLabel : '0',
       redemptionLabel,
+      claimLabel: spotlightCampaign ? String(scClaims) : '0',
+      conversionLabel: scConv != null ? `${scConv}%` : '—',
+      revenueEstLabel: scRevenueLabel,
     };
 
     const attention = [];
-    const weakSort = [...live].sort((a, b) => asNumber(a.engagementLift) - asNumber(b.engagementLift));
+    const weakSort = [...live].sort((a, b) => asNumber(a.conversionRate) - asNumber(b.conversionRate));
     const weak = weakSort[0];
-    if (weak && live.length && asNumber(weak.engagementLift) < 16) {
+    const strong = weakSort.length ? weakSort[weakSort.length - 1] : null;
+    if (weak && strong && live.length > 1 && asNumber(weak.qrScanCount) >= 5
+      && asNumber(weak.conversionRate) < asNumber(strong.conversionRate)) {
       attention.push({
         id: `under_${weak.id}`,
-        title: `${asString(weak.title, 'One offer')} is softer than your other live runs`,
-        detail: 'Tighten the hook or refresh creative — small edits often lift redemptions.',
-        cta: 'Fix now',
+        title: `${asString(weak.title, 'One offer')} is converting scans lower than your other live run`,
+        detail: 'Refresh the hook or placement — compare to what is working on your top offer.',
+        cta: 'Improve',
         action: { targetRoute: 'create', intent: 'improve_campaign', metadata: { mode: 'offer', sourceCampaignId: weak.id } },
         tone: 'warm',
       });
@@ -1167,6 +1448,8 @@
         cta: sa.ctaLabel,
         action: sa.action,
         tone: i === 0 ? 'warm' : 'default',
+        urgency: i === 0 ? 'Best within 48 hours' : undefined,
+        impact: i === 0 ? 'Can lift walk-ins ~12% when placement matches wait zones' : undefined,
       });
     });
 
@@ -1174,18 +1457,20 @@
       attention.push({
         id: 'drafts_queue',
         title: `${totals.drafts} draft${totals.drafts === 1 ? '' : 's'} ready to publish`,
-        detail: 'Ship one before the weekend rush.',
+        detail: 'Pair one post with a counter QR so guests have a reason to walk in.',
         cta: 'Publish draft',
         action: { targetRoute: 'campaigns', metadata: { filter: 'drafts' } },
+        urgency: 'Do this before Friday 6 PM',
+        impact: 'Weekend posts timed with dinner rush lift traffic up to ~12%',
       });
     }
 
     attention.push({
       id: 'qr_nudge',
-      title: 'Add QR where guests already wait',
-      detail: 'Counter and pickup zones lift scans without extra ad spend.',
-      cta: 'See Live',
-      action: { targetRoute: 'live' },
+      title: 'Place QR where guests wait',
+      detail: 'Counter and pickup zones lift scans faster than another discount.',
+      cta: 'View live offers',
+      action: { targetRoute: 'campaigns', metadata: { filter: 'active' } },
     });
 
     const attentionTrim = attention.slice(0, 4);
@@ -1219,28 +1504,69 @@
       });
     }
 
-    const scheduleRows = [];
-    if (totals.scheduled > 0) {
-      scheduleRows.push({ label: 'Scheduled launches', value: `${totals.scheduled} queued` });
+    const todayFocus = [];
+    if (live.length && !scanTotal) {
+      todayFocus.push({
+        id: 'tf_boost_scan',
+        icon: '🚀',
+        title: 'Boost weekend traffic',
+        reason: 'Your live offers have no QR scans yet — guests need a clear path to redeem.',
+        steps: [
+          'Open Campaigns → Active and grab the QR poster for each live offer.',
+          'Print or display on a tablet at eye level: pickup counter, host stand, and waiting area.',
+          'Train a 5-second line: “Scan for tonight’s deal — it’s faster at checkout.”',
+          'Drop the same QR into an Instagram Story with a “Scan before you pay” sticker.',
+          'Re-check this home card in 24–48h — scans should show up once placement is obvious.',
+        ],
+        cta: 'Boost',
+        action: { targetRoute: 'create', intent: 'boost_weekend_traffic', metadata: { preset: 'weekend_combo' } },
+      });
     }
     if (totals.drafts > 0) {
-      scheduleRows.push({ label: 'Drafts ready', value: `${totals.drafts} to publish` });
+      todayFocus.push({
+        id: 'tf_drafts',
+        icon: '📣',
+        title: `${totals.drafts} draft${totals.drafts === 1 ? '' : 's'} ready`,
+        reason: 'Publish before Friday dinner while intent is highest.',
+        cta: 'Publish',
+        action: { targetRoute: 'campaigns', metadata: { filter: 'drafts' } },
+      });
     }
-    scheduleRows.push({ label: 'Reminder', value: 'Review Live before Friday dinner' });
+    if (pendingTotal > 0) {
+      todayFocus.push({
+        id: 'tf_pending',
+        icon: '🔔',
+        title: `${pendingTotal} guest${pendingTotal === 1 ? '' : 's'} pending`,
+        reason: 'Claimed but not redeemed — reminders nudge visits without a new discount.',
+        cta: 'Send reminder',
+        action: { targetRoute: 'smart-reminders' },
+      });
+    }
+    if (!todayFocus.length) {
+      todayFocus.push({
+        id: 'tf_default',
+        icon: '✨',
+        title: 'Queue your next win',
+        reason: 'Spin up a weekend combo or duplicate a top performer while the kitchen is calm.',
+        cta: 'Create',
+        action: { targetRoute: 'create', intent: 'create_offer', metadata: { mode: 'offer' } },
+      });
+    }
 
     return {
       businessName,
       location,
-      tagline: 'Your growth control center — clarity first, then confident moves.',
+      tagline: 'Less tracking, more guiding — money, guests, and the very next move.',
       statusChip,
       storefrontImageUrl,
-      kpis,
-      kpiFootnote: 'KPI counts match your campaign list. Weekly bars are a visual guide, not a revenue forecast.',
+      healthImpact,
+      moneyStory,
+      activeCampaign,
       weekly,
       spotlight,
       attention: attentionTrim,
-      quickActions,
-      schedule: scheduleRows.length ? { title: 'On your radar', rows: scheduleRows } : null,
+      quickActions: quickActions.slice(0, 8),
+      todayFocus,
       menuHint: {
         show: FEATURE_FLAGS.menu_intelligence_v1 && menuItemsCount < 3,
         itemCount: menuItemsCount,
@@ -1702,6 +2028,7 @@
               <span class="pp-menu-pill">${escapeHtml(st)}</span>
               <span class="pp-menu-pill muted">${escapeHtml(cat)}</span>
               <span class="pp-menu-pill muted">${escapeHtml(imgLabel)}</span>
+              ${menuItemTrustTagsHtml(item)}
             </div>
           </div>
           <div class="pp-menu-item-compact-actions">
@@ -1737,6 +2064,27 @@
           </select>
         </label>
         <label>Note<input type="text" data-menu-field="note" data-menu-index="${idx}" value="${escapeHtml(item.note || '')}" placeholder="Optional context" /></label>
+        <label>Dietary type
+          <select class="pp-select" data-menu-field="foodType" data-menu-index="${idx}">
+            ${[
+              ['unspecified', 'Auto / not set'],
+              ['veg', 'Vegetarian'],
+              ['non_veg', 'Non-vegetarian'],
+              ['egg_based', 'Egg-based'],
+              ['vegan', 'Vegan'],
+              ['jain', 'Jain'],
+            ].map(([value, label]) => `<option value="${value}" ${asString(item.foodType, 'unspecified') === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Protein (non-veg)
+          <select class="pp-select" data-menu-field="meatType" data-menu-index="${idx}">
+            ${['', 'chicken', 'mutton', 'beef', 'seafood'].map((value) => `<option value="${value}" ${asString(item.meatType, '') === value ? 'selected' : ''}>${value ? escapeHtml(value) : '—'}</option>`).join('')}
+          </select>
+        </label>
+        <label>Halal-friendly<select class="pp-select" data-menu-field="dietaryHalal" data-menu-index="${idx}"><option value="" ${!item.dietaryHalal ? 'selected' : ''}>No</option><option value="1" ${item.dietaryHalal ? 'selected' : ''}>Yes</option></select></label>
+        <label>Contains egg<select class="pp-select" data-menu-field="dietaryContainsEgg" data-menu-index="${idx}"><option value="" ${!item.dietaryContainsEgg ? 'selected' : ''}>No</option><option value="1" ${item.dietaryContainsEgg ? 'selected' : ''}>Yes</option></select></label>
+        <label>Dairy-free<select class="pp-select" data-menu-field="dietaryDairyFree" data-menu-index="${idx}"><option value="" ${!item.dietaryDairyFree ? 'selected' : ''}>No</option><option value="1" ${item.dietaryDairyFree ? 'selected' : ''}>Yes</option></select></label>
+        <p class="pp-muted-copy" style="grid-column:1/-1;font-size:12px;">Trust tags show on each row. Campaign copy and posters use this so veg items never get meaty language.</p>
         <div class="pp-inline-actions">
           <label class="pp-secondary-btn pp-inline-btn" for="menuImageUpload_${idx}">Upload Item Image</label>
           <input id="menuImageUpload_${idx}" data-menu-image-index="${idx}" type="file" accept="image/*" class="hidden" />
@@ -2036,6 +2384,7 @@
             <p><strong>Your priority:</strong> ${escapeHtml(goalLabel)}</p>
           </div>
           ${status ? `<p class="pp-wizard-status">${escapeHtml(status)}</p>` : ''}
+          ${status && String(status).includes('live') ? renderOwnerTableOrderQrPanel('wizard') : ''}
         </div>
       </section>
     `;
@@ -2068,6 +2417,7 @@
     }
     else if (step === 6) {
       refs.wizardBody.innerHTML = renderWizardStep6();
+      bindTableOrderQrClicks(refs.wizardBody);
       refs.wizardNext.textContent = 'Close';
     }
   }
@@ -2381,6 +2731,166 @@
 
   function hasExistingMenu() {
     return Array.isArray(state.profile?.menuItems) && state.profile.menuItems.length > 0;
+  }
+
+  function closeTableOrderQrModal() {
+    const m = document.getElementById("ppTableOrderQrModal");
+    if (m && m._ppEsc) {
+      document.removeEventListener("keydown", m._ppEsc);
+    }
+    m?.remove();
+  }
+
+  /** Match `ui-data-adapter.js` apiUrl so QR fetch hits the backend when opened from file:// or same-origin. */
+  function growthApiFetchUrl(pathAndQuery) {
+    const p = pathAndQuery.startsWith("/") ? pathAndQuery : `/${pathAndQuery}`;
+    if (globalScope.location?.protocol === "file:") {
+      return `http://localhost:3000${p}`;
+    }
+    return p;
+  }
+
+  async function fetchMenuOrderQrPayload(store) {
+    const qsMenu = new URLSearchParams({ store }).toString();
+    const qsQr = new URLSearchParams({ menuOnly: "1", store }).toString();
+    const urls = [
+      growthApiFetchUrl(`/api/qr/menu-order?${qsMenu}`),
+      growthApiFetchUrl(`/qr?${qsQr}`),
+    ];
+    let last = null;
+    for (const url of urls) {
+      const r = await fetch(url);
+      const data = await r.json().catch(() => ({}));
+      last = { r, data };
+      const img =
+        typeof data.menuOrderQrDataUrl === "string" && data.menuOrderQrDataUrl.startsWith("data:image/")
+          ? data.menuOrderQrDataUrl
+          : "";
+      if (r.ok && img) return data;
+    }
+    const msg =
+      last?.data?.error ||
+      (last?.r ? `Could not generate QR (HTTP ${last.r.status}).` : "Could not generate QR.");
+    throw new Error(msg);
+  }
+
+  async function openTableOrderQrModal() {
+    closeTableOrderQrModal();
+    const shell = document.getElementById("growthAppShell") || document.body;
+    const store = asString(state.storeId, DEFAULT_STORE_ID);
+    const safeFile = String(store).replace(/[^a-zA-Z0-9-_]/g, "_") || "store";
+    const wrap = document.createElement("div");
+    wrap.id = "ppTableOrderQrModal";
+    wrap.className = "pp-table-qr-modal visible";
+    wrap.innerHTML = `
+      <div class="pp-table-qr-modal-backdrop" data-close-table-qr-modal></div>
+      <div class="pp-table-qr-modal-panel" role="dialog" aria-modal="true" aria-labelledby="ppTableOrderQrTitle">
+        <button type="button" class="pp-table-qr-modal-close" data-close-table-qr-modal aria-label="Close">✕</button>
+        <h2 id="ppTableOrderQrTitle" class="pp-table-qr-modal-title">Your table ordering QR</h2>
+        <p class="pp-table-qr-modal-sub">Guests scan to open your menu and checkout. Store <code>${escapeHtml(store)}</code></p>
+        <div id="ppTableOrderQrBody" class="pp-table-qr-modal-body">
+          <p class="pp-muted-copy">Creating your QR…</p>
+        </div>
+      </div>
+    `;
+    shell.appendChild(wrap);
+    wrap.querySelectorAll("[data-close-table-qr-modal]").forEach((el) => {
+      el.addEventListener("click", () => closeTableOrderQrModal());
+    });
+    const onEsc = (e) => {
+      if (e.key === "Escape") closeTableOrderQrModal();
+    };
+    wrap._ppEsc = onEsc;
+    document.addEventListener("keydown", onEsc);
+
+    const bodyEl = wrap.querySelector("#ppTableOrderQrBody");
+    try {
+      const data = await fetchMenuOrderQrPayload(store);
+      const imgSrc = data.menuOrderQrDataUrl;
+      const urlText = escapeHtml(data.menuOrderUrl || "");
+      bodyEl.innerHTML = `
+        <div class="pp-table-qr-modal-preview-wrap">
+          <img class="pp-table-qr-modal-img" src="${imgSrc}" width="240" height="240" alt="Ordering QR code" />
+        </div>
+        <p class="pp-table-qr-modal-url-label">Customer link</p>
+        <p class="pp-table-qr-modal-url">${urlText}</p>
+        <div class="pp-table-qr-modal-actions">
+          <a class="pp-primary-btn pp-table-qr-download" href="${imgSrc}" download="${escapeHtml(safeFile)}-menu-order-qr.png">Download PNG</a>
+        </div>
+        <p class="pp-table-qr-modal-hint">Print or add to table tents — same code at every table for this store.</p>
+      `;
+    } catch (err) {
+      const msg = err?.message || "Network error. Try again.";
+      bodyEl.innerHTML = `<p class="pp-table-qr-modal-error">${escapeHtml(msg)}</p>`;
+    }
+  }
+
+  /**
+   * Product copy: post-menu “liquid” flow — table QR, value props, unique store code.
+   * @param {'import-saved'|'settings'|'wizard'} surface
+   */
+  function renderOwnerTableOrderQrPanel(surface) {
+    const storeId = escapeHtml(asString(state.storeId, DEFAULT_STORE_ID));
+    const restaurantName = escapeHtml(asString(state.profile?.restaurantName, '').trim());
+    const restaurantLine = restaurantName
+      ? `<p class="pp-menu-qr-restaurant"><strong>Restaurant</strong> ${restaurantName}</p>`
+      : '';
+    const bullets = [
+      {
+        head: 'Butter-smooth for guests',
+        body: 'Scan → your real menu → cart → pay on their phone. No app download, no awkward handoffs.',
+      },
+      {
+        head: 'Easy flow, easier tickets',
+        body: 'Orders land in one journey; staff spend less time repeating specials and more time cooking.',
+      },
+      {
+        head: 'Built for tables & tents',
+        body: 'Print once, drop on tables or checks. Same QR everywhere in this store — always your menu.',
+      },
+    ];
+    const listHtml = bullets
+      .map(
+        (b) => `
+        <li class="pp-menu-qr-benefit">
+          <span class="pp-menu-qr-benefit-mark" aria-hidden="true">✓</span>
+          <span class="pp-menu-qr-benefit-text"><strong>${escapeHtml(b.head)}</strong><span>${escapeHtml(b.body)}</span></span>
+        </li>`,
+      )
+      .join('');
+    const title =
+      surface === 'settings'
+        ? 'Want a QR code for easy table ordering?'
+        : 'Ready to let guests order from the table?';
+    const lede =
+      surface === 'wizard'
+        ? 'Your menu is live in PostPlate. Add a scan-to-order QR so the path from seat to check feels effortless.'
+        : 'Your digital menu is saved. Want customers to order fast without flagging someone down?';
+    const wrapClass =
+      surface === 'settings' ? 'pp-menu-qr-panel pp-menu-qr-panel--settings' : 'pp-menu-qr-panel pp-menu-qr-panel--hero';
+
+    return `
+      <div class="${wrapClass}">
+        <p class="pp-menu-qr-kicker">Menu → orders</p>
+        <h3 class="pp-menu-qr-title">${escapeHtml(title)}</h3>
+        <p class="pp-menu-qr-lede">${escapeHtml(lede)}</p>
+        <ul class="pp-menu-qr-benefits">${listHtml}</ul>
+        ${restaurantLine}
+        <p class="pp-menu-qr-store"><strong>Store ID</strong> <code class="pp-menu-qr-code">${storeId}</code> — <strong>one unique QR per store</strong>. Preview and download open right here (no new tab).</p>
+        <div class="pp-menu-qr-actions">
+          <button type="button" class="pp-primary-btn" data-open-table-order-qr="1">Create table ordering QR</button>
+        </div>
+        <p class="pp-menu-qr-foot">After you download, add it to <strong>table tents</strong>, cards, or a stand — guests scan, you serve.</p>
+      </div>
+    `;
+  }
+
+  function bindTableOrderQrClicks(root) {
+    root?.querySelectorAll("[data-open-table-order-qr]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        openTableOrderQrModal();
+      });
+    });
   }
 
   function loadExistingMenuIntoImport() {
@@ -2762,18 +3272,20 @@
       return `
         <section class="pp-mi-saved">
           <span class="pp-mi-success-icon large">✓</span>
-          <h2>Menu saved successfully</h2>
-          <p class="pp-mi-subtitle">Your menu is now part of your restaurant profile. It powers smarter campaign suggestions, better poster designs, and targeted promotions.</p>
+          <h2>Menu saved — nice work</h2>
+          <p class="pp-mi-subtitle">Your menu is live on your profile. Campaigns, posters, and suggestions all use what you just saved.</p>
+          ${renderOwnerTableOrderQrPanel('import-saved')}
           <div class="pp-mi-next-steps">
-            <p class="pp-mi-strength-label">What happens next:</p>
+            <p class="pp-mi-strength-label">Also unlocked</p>
             <div class="pp-mi-next-list">
-              <div class="pp-mi-next-item"><strong>Smarter campaigns</strong><span>AI suggestions now use your real menu data</span></div>
-              <div class="pp-mi-next-item"><strong>Better posters</strong><span>Offer designs reference your actual items</span></div>
-              <div class="pp-mi-next-item"><strong>Edit anytime</strong><span>Update your menu from Settings whenever you need</span></div>
+              <div class="pp-mi-next-item"><strong>Smarter campaigns</strong><span>Suggestions grounded in your real dishes</span></div>
+              <div class="pp-mi-next-item"><strong>Sharper creatives</strong><span>Posters can reference actual menu items</span></div>
+              <div class="pp-mi-next-item"><strong>Edit anytime</strong><span>Settings → Menu items whenever you need</span></div>
             </div>
           </div>
           <div class="pp-mi-saved-actions">
-            <button type="button" class="pp-primary-btn" data-mi-action="go-home">Go to Dashboard</button>
+            <button type="button" class="pp-primary-btn" data-mi-action="open-menu-qr-tool">Create table ordering QR</button>
+            <button type="button" class="pp-secondary-btn" data-mi-action="go-home">Go to Dashboard</button>
             <button type="button" class="pp-secondary-btn" data-mi-action="create-campaign">New campaign</button>
           </div>
         </section>
@@ -2978,6 +3490,8 @@
         });
       });
     }
+
+    bindTableOrderQrClicks(refs.routeMount);
   }
 
   function handleMiAction(action) {
@@ -3025,6 +3539,9 @@
     else if (action === 'save-publish' || action === 'save-draft') { handleMiSave(); }
     else if (action === 'go-home') { navigate('home'); }
     else if (action === 'create-campaign') { resetCampaignBuilder(); navigate('create-campaign'); }
+    else if (action === "open-menu-qr-tool") {
+      openTableOrderQrModal();
+    }
   }
 
   async function handleMiFileSelect(file) {
@@ -3110,6 +3627,11 @@
           note: asString(item.description),
           imageAssetId: '',
           imageUrl: '',
+          foodType: 'unspecified',
+          meatType: '',
+          dietaryHalal: false,
+          dietaryContainsEgg: false,
+          dietaryDairyFree: false,
         });
       });
     });
@@ -3125,6 +3647,11 @@
         cuisineType: state.profile?.cuisineType || '',
         businessHours: state.profile?.businessHours || '',
         brandTone: state.profile?.brandTone || '',
+        restaurantFoodProfile: state.profile?.restaurantFoodProfile || {
+          type: 'unspecified',
+          meatType: '',
+          dietaryFlags: { halal: false, containsEgg: false, dairyFree: false },
+        },
         menuItems: flatItems.slice(0, 50),
         menuImportedAt: new Date().toISOString(),
         peakHours: state.profile?.peakHours || [],
@@ -3934,6 +4461,7 @@
             discountValue: cb.discountValue, comboDescription: cb.comboDescription, tone: cb.tone,
             restaurantName: state.profile?.restaurantName || '', cuisineType: state.profile?.cuisineType || '',
             brandTone: state.profile?.brandTone || '', audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
+            ...buildCampaignFoodPayload(),
           });
           if (result.headline) cb.headline = result.headline;
           if (result.offerLine) cb.offerLine = result.offerLine;
@@ -4108,6 +4636,7 @@
           restaurantName: state.profile?.restaurantName || '', cuisineType: state.profile?.cuisineType || '',
           brandTone: state.profile?.brandTone || '', audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
           imageKeywords: cb.imageKeywords,
+          ...buildCampaignFoodPayload(),
         });
         if (result.posterImageUrl) cb.generatedPoster = result.posterImageUrl;
         cb.step = 4;
@@ -4176,7 +4705,7 @@
     }
     else if (action === 'go-home') { navigate('home'); }
     else if (action === 'view-drafts') { navigate('campaigns', { status: 'drafts' }); }
-    else if (action === 'view-live') { navigate('live'); }
+    else if (action === 'view-live') { navigate('campaigns', { status: 'active' }); }
     else if (action === 'create-another') { resetCampaignBuilder(); renderCampaignBuilderRoute(); }
   }
 
@@ -4387,6 +4916,7 @@
         brandTone: state.profile?.brandTone || '', storeId: state.storeId,
         audiencePrimary: cb.audiencePrimary, campaignGoal: cb.campaignGoal,
         imageKeywords: cb.imageKeywords,
+        ...buildCampaignFoodPayload(),
       });
 
       await new Promise((r) => setTimeout(r, 2000));
@@ -4553,6 +5083,27 @@
               <label>Brand Tone<input id="settingsBrandTone" type="text" value="${escapeHtml(profile.brandTone || '')}" placeholder="e.g. fun, premium, neighborhood" /></label>
               <p class="pp-muted-copy pp-form-hint">How we describe your vibe in generated copy and visuals.</p>
             </div>
+            <label class="pp-form-field-full">Kitchen default (campaigns &amp; new items)
+              <select id="settingsRestaurantFoodType" class="pp-select">
+                ${[
+                  ['unspecified', 'Auto from each item name'],
+                  ['veg', 'Mostly vegetarian'],
+                  ['non_veg', 'Mostly non-vegetarian'],
+                  ['vegan', 'Mostly vegan'],
+                  ['jain', 'Jain-friendly kitchen'],
+                ].map(([value, label]) => {
+                  const cur = asString(profile.restaurantFoodProfile?.type, 'unspecified');
+                  return `<option value="${escapeHtml(value)}" ${cur === value ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+                }).join('')}
+              </select>
+            </label>
+            <label class="pp-form-field-full">Default halal-friendly
+              <select id="settingsRestaurantHalal" class="pp-select">
+                <option value="" ${!(profile.restaurantFoodProfile?.dietaryFlags?.halal) ? 'selected' : ''}>No default</option>
+                <option value="1" ${profile.restaurantFoodProfile?.dietaryFlags?.halal ? 'selected' : ''}>Yes — prefer halal-safe copy &amp; cues</option>
+              </select>
+            </label>
+            <p class="pp-muted-copy pp-form-field-full pp-form-hint">Per-item dietary tags below override this. We block unsafe words in AI copy (e.g. no “chicken” on veg items, no pork when halal).</p>
             <label class="pp-form-field-full">Default audience for new campaigns
               <select id="settingsAudiencePrimary" class="pp-select">
                 ${CB_AUDIENCE_CHIPS.map((a) => `
@@ -4572,6 +5123,8 @@
                 <h3>Menu items (${menuItemsDraft.length})</h3>
                 <button id="settingsAddMenuItem" type="button" class="pp-secondary-btn pp-inline-btn">+ Add item</button>
               </div>
+              ${renderOwnerTableOrderQrPanel('settings')}
+              <p class="pp-muted-copy pp-form-hint">Guest ordering menu updates when you click <strong>Save profile</strong> — new items and edits are not live for customers until then.</p>
               <div class="pp-muted-copy">Items are grouped by category—use each section header to expand or collapse. With multiple groups, use <strong>Jump to section</strong>. Click <strong>Edit</strong> on a row to change details or upload a photo. Bulk import: <button type="button" class="pp-link-btn" data-open-menu-wizard>Menu Setup Wizard</button></div>
               ${settingsMenuJumpToolbar}
               <div id="settingsMenuItemsMount" class="pp-card-stack pp-menu-items-scroll-region">
@@ -4601,6 +5154,8 @@
       btn.addEventListener('click', () => navigate('settings', { tab: asString(btn.dataset.settingsTab, '') }));
     });
 
+    bindTableOrderQrClicks(refs.routeMount);
+
     refs.routeMount.querySelector('#settingsProfileForm')?.addEventListener('submit', async (event) => {
       event.preventDefault();
       const saveButton = document.getElementById('settingsSaveButton');
@@ -4616,16 +5171,31 @@
         businessHours: asString(document.getElementById('settingsBusinessHours')?.value),
         brandTone: asString(document.getElementById('settingsBrandTone')?.value),
         audiencePrimary: asString(document.getElementById('settingsAudiencePrimary')?.value, 'general'),
+        restaurantFoodProfile: {
+          type: asString(document.getElementById('settingsRestaurantFoodType')?.value, 'unspecified'),
+          meatType: '',
+          dietaryFlags: {
+            halal: asString(document.getElementById('settingsRestaurantHalal')?.value) === '1',
+            containsEgg: false,
+            dairyFree: false,
+          },
+        },
         menuItems: normalizeMenuItems(menuItemsDraft),
       };
 
       saveButton.disabled = true;
       saveStatus.textContent = 'Saving...';
       try {
-        // Integration point: this already maps to backend profile endpoint.
         state.profile = await dataAdapter.saveRestaurantProfile(payload);
-        state.settings = null;
+        const savedMenu = Array.isArray(state.profile.menuItems)
+          ? state.profile.menuItems
+          : payload.menuItems;
+        state.settings = {
+          menuItemsDraft: normalizeMenuItems(savedMenu || []),
+          menuExpandedIndex: null,
+        };
         renderProfile();
+        await renderSettingsRoute();
         dataAdapter.trackMenuIntelligenceEvent?.({
           event: 'menu_profile_saved',
           storeId: state.storeId,
@@ -4634,11 +5204,23 @@
           slowMoverCount: payload.menuItems.filter((item) => item.status === 'slow_mover').length,
           withImageCount: payload.menuItems.filter((item) => item.imageAssetId).length,
         });
-        saveStatus.textContent = 'Saved successfully.';
+        const statusEl = document.getElementById('settingsSaveStatus');
+        if (statusEl) {
+          if (payload.menuItems.length > 0) {
+            statusEl.innerHTML =
+              'Saved — guest menu updated. <button type="button" class="pp-settings-save-qr-btn" data-open-table-order-qr="1">Create table ordering QR</button>';
+            statusEl.querySelector('[data-open-table-order-qr]')?.addEventListener('click', () => {
+              openTableOrderQrModal();
+            });
+          } else {
+            statusEl.textContent = 'Saved successfully.';
+          }
+        }
       } catch (_error) {
         saveStatus.textContent = 'Save failed. Please try again.';
       } finally {
-        saveButton.disabled = false;
+        const btn = document.getElementById('settingsSaveButton');
+        if (btn) btn.disabled = false;
       }
     });
 
@@ -4671,6 +5253,11 @@
         note: '',
         imageAssetId: '',
         imageUrl: '',
+        foodType: asString(state.profile?.restaurantFoodProfile?.type, 'unspecified'),
+        meatType: '',
+        dietaryHalal: Boolean(state.profile?.restaurantFoodProfile?.dietaryFlags?.halal),
+        dietaryContainsEgg: false,
+        dietaryDairyFree: false,
       });
       state.settings.menuExpandedIndex = menuItemsDraft.length - 1;
       renderSettingsRoute();
@@ -4692,7 +5279,9 @@
         const field = asString(event.target.dataset.menuField);
         if (!Number.isFinite(idx) || !menuItemsDraft[idx]) return;
         menuItemsDraft[idx][field] = asString(event.target.value);
-        if (field === 'category') renderSettingsRoute();
+        if (field === 'category' || field === 'foodType' || field === 'meatType' || field.startsWith('dietary')) {
+          renderSettingsRoute();
+        }
       });
     });
 
@@ -6143,6 +6732,7 @@
           }
           setCreateNotice('Campaign is now live with QR and final poster.', 'success');
           closeCreateFlow();
+          invalidateGlobalSearchIndex();
           navigate('campaigns', { status: 'active' });
         } catch (_error) {
           setCreateNotice('Go live failed. Please try again.', 'error');
@@ -6262,6 +6852,245 @@
     renderCreateFlow();
   }
 
+  const GLOBAL_SEARCH_INDEX_TTL_MS = 90000;
+
+  const GLOBAL_SEARCH_PAGES = [
+    { id: 'nav_home', route: 'home', title: 'Home', subtitle: 'Growth hub and decisions' },
+    { id: 'nav_campaigns', route: 'campaigns', title: 'Campaigns', subtitle: 'Live, drafts, scheduled, and history', params: { status: 'active' } },
+    { id: 'nav_new_campaign', route: 'create-campaign', title: 'Create', subtitle: 'New campaign wizard' },
+    { id: 'nav_reminders', route: 'smart-reminders', title: 'Customers', subtitle: 'Reminders and redemption nudges' },
+    { id: 'nav_studio', route: 'content-studio', title: 'Content', subtitle: 'Posts, reels, and drafts', params: { tab: 'posts' } },
+    { id: 'nav_analytics', route: 'analytics', title: 'Insights', subtitle: 'Performance overview' },
+    { id: 'nav_menu', route: 'menu-import', title: 'Menu', subtitle: 'Import and manage menu items' },
+    { id: 'nav_settings', route: 'settings', title: 'Settings', subtitle: 'Business profile and defaults' },
+    { id: 'nav_reel', route: 'reel-guide', title: 'Reel guide', subtitle: 'Short-form video shot list' },
+    { id: 'nav_live', route: 'live', title: 'Live offers (legacy)', subtitle: 'Same as Campaigns → Active' },
+  ];
+
+  function globalSearchUsesListFilterOnly() {
+    return state.route === 'campaigns' || state.route === 'live';
+  }
+
+  function invalidateGlobalSearchIndex() {
+    state.globalSearchIndexAt = 0;
+    state.globalSearchIndexEntries = null;
+  }
+
+  function closeGlobalSearchPanel() {
+    state.globalSearchPanelOpen = false;
+    state.globalSearchResults = [];
+    state.globalSearchSelected = 0;
+    if (state.globalSearchDebounce) {
+      clearTimeout(state.globalSearchDebounce);
+      state.globalSearchDebounce = null;
+    }
+    if (refs.globalSearchPanel) {
+      refs.globalSearchPanel.classList.add('hidden');
+      refs.globalSearchPanel.setAttribute('hidden', '');
+      refs.globalSearchPanel.innerHTML = '';
+    }
+    refs.globalSearchInput?.setAttribute('aria-expanded', 'false');
+  }
+
+  function renderGlobalSearchPanel(rows) {
+    if (!refs.globalSearchPanel) return;
+    if (!rows.length) {
+      refs.globalSearchPanel.innerHTML = '<p class="pp-global-search-empty">No matches — try another word or open a section from the nav.</p>';
+      refs.globalSearchPanel.classList.remove('hidden');
+      refs.globalSearchPanel.removeAttribute('hidden');
+      refs.globalSearchInput?.setAttribute('aria-expanded', 'true');
+      state.globalSearchPanelOpen = true;
+      return;
+    }
+    const typeLabel = {
+      page: 'Go to',
+      action: 'Quick action',
+      smart: 'Suggested',
+      campaign: 'Campaign',
+      asset: 'Content',
+    };
+    refs.globalSearchPanel.innerHTML = rows.map((row, i) => `
+      <button type="button" role="option" class="pp-global-search-row${i === state.globalSearchSelected ? ' pp-global-search-row--active' : ''}" data-global-search-idx="${i}" aria-selected="${i === state.globalSearchSelected ? 'true' : 'false'}">
+        <span class="pp-global-search-row-type">${escapeHtml(typeLabel[row.type] || 'Open')}</span>
+        <span class="pp-global-search-row-title">${escapeHtml(row.title)}</span>
+        <span class="pp-global-search-row-sub">${escapeHtml(row.subtitle || '')}</span>
+      </button>
+    `).join('');
+    refs.globalSearchPanel.querySelectorAll('[data-global-search-idx]').forEach((btn) => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
+      btn.addEventListener('click', () => {
+        const idx = asNumber(btn.dataset.globalSearchIdx, -1);
+        if (idx >= 0) runGlobalSearchResult(idx);
+      });
+    });
+    refs.globalSearchPanel.classList.remove('hidden');
+    refs.globalSearchPanel.removeAttribute('hidden');
+    refs.globalSearchInput?.setAttribute('aria-expanded', 'true');
+    state.globalSearchPanelOpen = true;
+  }
+
+  function runGlobalSearchResult(index) {
+    const row = state.globalSearchResults[index];
+    if (!row || typeof row.run !== 'function') return;
+    closeGlobalSearchPanel();
+    if (refs.globalSearchInput) refs.globalSearchInput.value = '';
+    row.run();
+  }
+
+  function updateGlobalSearchSelection(delta) {
+    const n = state.globalSearchResults.length;
+    if (!n) return;
+    state.globalSearchSelected = (state.globalSearchSelected + delta + n) % n;
+    refs.globalSearchPanel?.querySelectorAll('[data-global-search-idx]').forEach((btn, i) => {
+      btn.classList.toggle('pp-global-search-row--active', i === state.globalSearchSelected);
+      btn.setAttribute('aria-selected', i === state.globalSearchSelected ? 'true' : 'false');
+    });
+  }
+
+  function globalSearchMatches(haystack, query) {
+    const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return false;
+    const h = haystack.toLowerCase();
+    return tokens.every((t) => h.includes(t));
+  }
+
+  async function rebuildGlobalSearchIndex() {
+    const entries = [];
+    GLOBAL_SEARCH_PAGES.forEach((p) => {
+      entries.push({
+        id: p.id,
+        type: 'page',
+        title: p.title,
+        subtitle: p.subtitle,
+        haystack: `${p.title} ${p.subtitle} ${p.route}`,
+        run: () => navigate(p.route, p.params || {}),
+      });
+    });
+
+    try {
+      const hub = await dataAdapter.getGrowthHubData({ storeId: state.storeId });
+      state.growthHub = hub;
+      (hub.quickActions || []).forEach((q) => {
+        const id = asString(q.id, q.title);
+        entries.push({
+          id: `qa_${id}`,
+          type: 'action',
+          title: asString(q.title, 'Quick action'),
+          subtitle: 'From your quick actions',
+          haystack: `${q.title} quick action shortcut`,
+          run: () => handleAction(q.action),
+        });
+      });
+      (hub.smartActions || []).forEach((sa) => {
+        entries.push({
+          id: `sa_${asString(sa.id, sa.title)}`,
+          type: 'smart',
+          title: asString(sa.title, 'Suggested action'),
+          subtitle: asString(sa.reason, '').slice(0, 96),
+          haystack: `${sa.title} ${sa.reason || ''} smart suggested`,
+          run: () => handleAction(sa.action),
+        });
+      });
+    } catch (_e) { /* ignore */ }
+
+    try {
+      const list = await dataAdapter.getCampaignList({ storeId: state.storeId, status: 'all' });
+      (list.items || []).slice(0, 250).forEach((c) => {
+        const title = asString(c.title, 'Campaign');
+        const offer = asString(c.offerValue || c.headline, '');
+        const st = asString(c.status, '');
+        entries.push({
+          id: `camp_${asString(c.id)}`,
+          type: 'campaign',
+          title,
+          subtitle: [st, offer].filter(Boolean).join(' · ').slice(0, 120),
+          haystack: `${title} ${offer} ${st} campaign offer`,
+          run: () => navigate('campaign-detail', { campaignId: asString(c.id) }),
+        });
+      });
+    } catch (_e) { /* ignore */ }
+
+    try {
+      const tabs = ['posts', 'reels', 'offers', 'drafts'];
+      for (let i = 0; i < tabs.length; i += 1) {
+        const tab = tabs[i];
+        const res = await dataAdapter.getContentStudioAssets(tab);
+        (res.items || []).slice(0, 15).forEach((a) => {
+          const t = asString(a.title, 'Asset');
+          entries.push({
+            id: `asset_${asString(a.id)}_${tab}`,
+            type: 'asset',
+            title: t,
+            subtitle: `Content Studio · ${tab}`,
+            haystack: `${t} ${tab} content studio post reel draft`,
+            run: () => navigate('content-studio', { tab }),
+          });
+        });
+      }
+    } catch (_e) { /* ignore */ }
+
+    return entries;
+  }
+
+  async function ensureGlobalSearchIndex() {
+    const now = Date.now();
+    if (state.globalSearchIndexEntries && now - state.globalSearchIndexAt < GLOBAL_SEARCH_INDEX_TTL_MS) {
+      return state.globalSearchIndexEntries;
+    }
+    const built = await rebuildGlobalSearchIndex();
+    state.globalSearchIndexEntries = built;
+    state.globalSearchIndexAt = Date.now();
+    return built;
+  }
+
+  function filterGlobalSearchEntries(entries, query) {
+    const q = asString(query, '');
+    if (!q.trim()) return [];
+    const scored = entries
+      .map((e) => {
+        const hay = e.haystack || `${e.title} ${e.subtitle || ''}`;
+        if (!globalSearchMatches(hay, q)) return null;
+        const t = q.trim().toLowerCase();
+        const title = (e.title || '').toLowerCase();
+        let score = 40;
+        if (title.startsWith(t)) score += 80;
+        else if (title.includes(t)) score += 40;
+        if (e.type === 'page') score += 5;
+        return { ...e, _score: score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b._score - a._score);
+    return scored.slice(0, 18);
+  }
+
+  async function runGlobalSearchQuery(raw) {
+    if (globalSearchUsesListFilterOnly()) return;
+    const q = asString(raw, '');
+    if (!q.trim()) {
+      closeGlobalSearchPanel();
+      return;
+    }
+    try {
+      const entries = await ensureGlobalSearchIndex();
+      state.globalSearchResults = filterGlobalSearchEntries(entries, q);
+      state.globalSearchSelected = 0;
+      renderGlobalSearchPanel(state.globalSearchResults);
+    } catch (_e) {
+      closeGlobalSearchPanel();
+    }
+  }
+
+  function scheduleGlobalSearchQuery(raw) {
+    if (globalSearchUsesListFilterOnly()) return;
+    if (state.globalSearchDebounce) clearTimeout(state.globalSearchDebounce);
+    state.globalSearchDebounce = setTimeout(() => {
+      state.globalSearchDebounce = null;
+      runGlobalSearchQuery(raw);
+    }, 220);
+  }
+
   function bindGlobalEvents() {
     function bindNav(container) {
       if (!container) return;
@@ -6296,6 +7125,19 @@
     });
 
     document.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        const t = event.target;
+        const tag = t && t.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !t?.isContentEditable) {
+          event.preventDefault();
+          refs.globalSearchInput?.focus();
+        }
+      }
+      if (event.key === 'Escape' && state.globalSearchPanelOpen) {
+        event.preventDefault();
+        closeGlobalSearchPanel();
+        return;
+      }
       if (event.key === 'Escape' && refs.imageLightbox?.getAttribute('aria-hidden') === 'false') {
         closeImageLightbox();
         return;
@@ -6305,35 +7147,84 @@
       }
     });
 
+    document.addEventListener('mousedown', (event) => {
+      if (!state.globalSearchPanelOpen || !refs.globalSearchWrap) return;
+      if (refs.globalSearchWrap.contains(event.target)) return;
+      closeGlobalSearchPanel();
+    }, true);
+
+    refs.globalSearchInput?.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        return;
+      }
+      if (globalSearchUsesListFilterOnly()) return;
+      if (!state.globalSearchPanelOpen) return;
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        updateGlobalSearchSelection(1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        updateGlobalSearchSelection(-1);
+      } else if (event.key === 'Enter') {
+        if (state.globalSearchResults.length) {
+          event.preventDefault();
+          runGlobalSearchResult(state.globalSearchSelected);
+        }
+      }
+    });
+
     refs.globalSearchInput?.addEventListener('input', () => {
       const v = asString(refs.globalSearchInput?.value, '');
       if (state.route === 'campaigns') {
         state.campaignListSearch = v;
         remountCampaignCardsOnly();
-      } else if (state.route === 'live') {
+        return;
+      }
+      if (state.route === 'live') {
         state.liveListSearch = v;
         remountLiveCardsOnly();
+        return;
       }
+      scheduleGlobalSearchQuery(v);
+    });
+
+    refs.globalSearchInput?.addEventListener('focus', () => {
+      const v = asString(refs.globalSearchInput?.value, '');
+      if (!globalSearchUsesListFilterOnly() && v.trim()) {
+        scheduleGlobalSearchQuery(v);
+      }
+    });
+
+    refs.globalSearchInput?.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (document.activeElement && refs.globalSearchPanel?.contains(document.activeElement)) return;
+        if (globalSearchUsesListFilterOnly()) return;
+        closeGlobalSearchPanel();
+      }, 160);
     });
   }
 
   function syncGlobalSearchPlaceholder() {
     if (!refs.globalSearchInput) return;
     const map = {
-      campaigns: 'Search all campaigns by name, offer, or channel…',
-      home: 'Search actions, campaigns, assets…',
-      live: 'Search live campaigns by name or offer…',
-      'content-studio': 'Search posts, reels, and drafts…',
-      'campaign-detail': 'Search actions, campaigns, assets…',
-      'create-campaign': 'Search actions, campaigns, assets…',
-      'menu-import': 'Search actions, campaigns, assets…',
-      analytics: 'Search actions, campaigns, assets…',
-      settings: 'Search actions, campaigns, assets…',
-      'smart-reminders': 'Search actions, campaigns, assets…',
-      'reel-guide': 'Search actions, campaigns, assets…',
-      create: 'Search actions, campaigns, assets…',
+      campaigns: 'Filter campaigns by name, offer, or channel…',
+      home: 'Search pages, campaigns, quick actions, Content Studio…',
+      live: 'Filter live offers by name or copy…',
+      'content-studio': 'Search pages, campaigns, studio assets…',
+      'campaign-detail': 'Search pages, campaigns, actions…',
+      'create-campaign': 'Search pages, campaigns, actions…',
+      'menu-import': 'Search pages, campaigns, menu…',
+      analytics: 'Search pages, campaigns, analytics…',
+      settings: 'Search pages, settings, campaigns…',
+      'smart-reminders': 'Search pages, reminders, campaigns…',
+      'reel-guide': 'Search pages, reel guide, campaigns…',
+      create: 'Search pages, campaigns, actions…',
     };
-    refs.globalSearchInput.placeholder = map[state.route] || 'Search actions, campaigns, assets…';
+    refs.globalSearchInput.placeholder = map[state.route] || 'Search pages, campaigns, and actions…';
+    refs.globalSearchInput.title = globalSearchUsesListFilterOnly()
+      ? ''
+      : 'Search across the app — ⌘K or Ctrl+K to focus. Arrow keys and Enter when results are open.';
   }
 
   async function refreshRoute() {

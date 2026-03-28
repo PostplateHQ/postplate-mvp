@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your cart | PostPlate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assets/order-guest/order-guest.css" />
+</head>
+<body class="pp-guest-flow pp-order-flow">
+  <div class="og-shell">
+    <header class="og-topbar">
+      <a class="og-back" href="#" id="ogBackMenu" aria-label="Back to menu">←</a>
+      <div class="og-progress" aria-label="Step 2 of 3">
+        <span class="og-progress-dot is-done" title="Menu"></span>
+        <span class="og-progress-dot is-active" title="Cart"></span>
+        <span class="og-progress-dot" title="Pay"></span>
+      </div>
+      <span style="width:44px" aria-hidden="true"></span>
+    </header>
+
+    <div class="og-host og-host--fade" style="margin-bottom:12px">
+      <div class="og-host__avatar" aria-hidden="true">✦</div>
+      <p class="og-host__text">Here’s everything in your cart. Add a drink or side if you like — then we’ll head to payment.</p>
+    </div>
+
+    <div id="ogCartRoot">
+      <div id="ogComplements"></div>
+      <div id="ogLines"></div>
+      <div class="og-savings" id="ogSavingsRow" hidden></div>
+      <div class="og-total" id="ogTotal"></div>
+      <button type="button" class="og-cta" id="ogContinuePay">Continue to payment</button>
+    </div>
+  </div>
+
+  <p class="micro-copy og-foot-note">Powered by PostPlate</p>
+
+  <script src="order-guest.js"></script>
+  <script>
+    (function () {
+      var q = PPOrderGuest.getQuery();
+      document.getElementById("ogBackMenu").href = "menu.html" + PPOrderGuest.queryStringFrom(q);
+    })();
+    PPOrderGuest.initCart();
+  </script>
+</body>
+</html>

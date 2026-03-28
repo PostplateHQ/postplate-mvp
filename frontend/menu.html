@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order · Menu | PostPlate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assets/order-guest/order-guest.css" />
+</head>
+<body class="pp-guest-flow pp-order-flow">
+  <button type="button" class="og-cart-fab" id="ogCartFab" hidden aria-label="View cart">
+    <span class="og-cart-fab__icon" aria-hidden="true">🛒</span>
+    <span class="og-cart-fab__badge" id="ogCartFabCount">0</span>
+  </button>
+
+  <div class="og-shell">
+    <header class="og-topbar">
+      <span class="og-back" aria-hidden="true" style="visibility:hidden"></span>
+      <div class="og-progress" aria-label="Step 1 of 3">
+        <span class="og-progress-dot is-active" title="Menu"></span>
+        <span class="og-progress-dot" title="Cart"></span>
+        <span class="og-progress-dot" title="Pay"></span>
+      </div>
+      <span class="og-back" style="visibility:hidden" aria-hidden="true"></span>
+    </header>
+
+    <span id="ogRestaurantName" class="og-sr-only">Menu</span>
+
+    <div class="og-menu-search-wrap">
+      <label class="og-search-label" for="ogMenuSearch">Search menu</label>
+      <input type="search" id="ogMenuSearch" class="og-menu-search" placeholder="Search dishes…" autocomplete="off" enterkeyhint="search" />
+    </div>
+
+    <div id="ogHost"></div>
+    <div id="ogOffer"></div>
+    <div id="ogChips" class="og-chips" role="tablist" aria-label="Menu categories"></div>
+    <div id="ogSections"></div>
+
+    <div class="og-toast" id="ogToast" role="status" aria-live="polite"></div>
+
+    <div class="og-cart-bar" id="ogCartBar" hidden>
+      <button type="button" class="og-cart-bar__btn">
+        <span>View cart</span>
+        <span>
+          <span class="og-cart-bar__count" id="ogCartCount">0 items</span>
+          ·
+          <span id="ogCartSubtotal">$0.00</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <p class="micro-copy og-foot-note">Powered by PostPlate</p>
+
+  <script src="order-guest.js"></script>
+  <script>
+    PPOrderGuest.initMenu();
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="ppHeroA" x1="0" y1="0" x2="320" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e8fbf8"/>
+      <stop offset="0.45" stop-color="#fff8ec"/>
+      <stop offset="1" stop-color="#fdeecf"/>
+    </linearGradient>
+    <linearGradient id="ppHeroB" x1="40" y1="120" x2="280" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0d8a82" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#c9a227" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="160" rx="28" fill="url(#ppHeroA)"/>
+  <ellipse cx="220" cy="48" rx="72" ry="52" fill="url(#ppHeroB)" opacity="0.9"/>
+  <circle cx="88" cy="96" r="44" fill="#0d8a82" fill-opacity="0.12"/>
+  <path d="M48 128c24-18 52-28 84-28s68 12 92 32" stroke="#0d8a82" stroke-opacity="0.25" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="252" cy="112" r="8" fill="#c9a227" fill-opacity="0.55"/>
+  <circle cx="228" cy="96" r="5" fill="#0d8a82" fill-opacity="0.35"/>
+</svg>

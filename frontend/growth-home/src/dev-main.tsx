@@ -1,0 +1,192 @@
+import { mountGrowthHome } from "./main";
+import type { GrowthHomeData } from "./types";
+
+const el = document.getElementById("root");
+if (el) {
+  const sample: GrowthHomeData = {
+    businessName: "Rasa Kitchen",
+    location: "Fort Lauderdale",
+    tagline: "Less tracking, more guiding — your next best move is always visible.",
+    statusChip: "Campaign running",
+    storefrontImageUrl: null,
+    healthImpact: {
+      health: {
+        tone: "warn",
+        title: "Low QR visibility",
+        subtitle: "Guests need a clear scan path at the wait and pickup zones.",
+      },
+      impactSignal: {
+        level: "low",
+        badge: "Low impact",
+        explainer:
+          "Confirmed: 0 QR scans on live offers. Revenue and funnel stay muted until guests can find and scan your codes.",
+      },
+      trendSpark: [12, 18, 15, 22, 28, 36, 20],
+      funnelSnapshot: { scans: 0, claimed: 14, redeemed: 8 },
+      conversionPercent: 57,
+      estimatedRevenue: {
+        value: "$184",
+        label: "Estimated revenue",
+        trend: "↑ 12% vs last week",
+        trendTone: "good",
+        strength: "strong",
+      },
+      guestsDriven: {
+        value: "14",
+        label: "Guests (claimed)",
+        subValue: "8 completed at counter",
+        trend: "↑ 3 vs prior week",
+        trendTone: "good",
+        strength: "moderate",
+      },
+      claimToRedeem: {
+        value: "57%",
+        label: "Claim → redeem",
+        trend: "↑ Healthy funnel",
+        trendTone: "good",
+        strength: "strong",
+      },
+    },
+    moneyStory: {
+      headline: "This period: $312 influenced (modeled) · +14 guests with a claim · +8 visits completed",
+      detail: "Top live offer: Chicken Bowl Combo",
+    },
+    activeCampaign: {
+      campaignId: "demo_1",
+      name: "Chicken Bowl Combo",
+      offerSummary: "10% weekend offer",
+      redeemed: 8,
+      claimed: 14,
+      estRevenueLabel: "$96",
+      performanceLine: "Performing better than last week — keep the QR in the wait line.",
+      performanceTone: "good",
+    },
+    weekly: {
+      label: "Weekly flow",
+      eyebrow: "Weekly rhythm",
+      flowSteps: [
+        { range: "Mon–Tue", title: "Plan" },
+        { range: "Wed–Thu", title: "Launch" },
+        { range: "Fri", title: "Track" },
+        { range: "Sat", title: "Peak", highlight: true },
+        { range: "Sun", title: "Sustain" },
+      ],
+      weeklyInsightLine: "Your store peaks on Saturday — mirror that energy with posts and counter QR.",
+      dataAttribution: "Bars blend illustrative timing with typical restaurant demand curves.",
+      trendLabel: "Your rhythm",
+      chartCaption: "Hover Saturday for the peak-night tip.",
+      days: [
+        { label: "Mon", value: 12 },
+        { label: "Tue", value: 18 },
+        { label: "Wed", value: 15 },
+        { label: "Thu", value: 22 },
+        { label: "Fri", value: 28 },
+        { label: "Sat", value: 36, highlight: true },
+        { label: "Sun", value: 20 },
+      ],
+    },
+    spotlight: {
+      campaign: {
+        id: "demo_1",
+        title: "Chicken Bowl Combo",
+        offerValue: "10% weekend offer",
+        goal: "Lift weekend covers",
+        customersGained: 8,
+        engagementLift: 18,
+        revenueImpact: 96,
+      },
+      insight: "Combo framing increased redemption by 18% vs flat discounts in similar stores.",
+      intelligence: {
+        insight: "Combo framing increased redemption by 18% vs flat discounts in similar stores.",
+        risk: "No QR scans yet → visibility issue",
+        suggestion: "Add QR near pickup counter and the wait line.",
+      },
+      peakTimeLabel: "Sat · 5–9 PM",
+      reachLabel: "0",
+      redemptionLabel: "8",
+      claimLabel: "14",
+      conversionLabel: "57%",
+      revenueEstLabel: "$96",
+    },
+    attention: [
+      {
+        id: "a1",
+        title: "Boost weekend traffic",
+        detail: "Counter cards + one story while plates are moving.",
+        cta: "Launch",
+        urgency: "Do this before Friday 6 PM",
+        impact: "Can increase traffic by ~12%",
+        action: { targetRoute: "create", intent: "boost_weekend_traffic", metadata: { preset: "weekend_combo" } },
+        tone: "warm",
+      },
+      {
+        id: "a2",
+        title: "6 guests haven’t redeemed",
+        detail: "Send a reminder — no new discount required.",
+        cta: "Send reminder",
+        action: { targetRoute: "smart-reminders" },
+      },
+      {
+        id: "a3",
+        title: "12 drafts ready",
+        detail: "Publish the strongest one before the dinner rush.",
+        cta: "Publish",
+        urgency: "Ship before Friday dinner",
+        impact: "~12% lift when timed with rush",
+        action: { targetRoute: "campaigns", metadata: { filter: "drafts" } },
+      },
+    ],
+    quickActions: [
+      { id: "q1", title: "Weekend offer", icon: "☀", action: { targetRoute: "create", intent: "boost_weekend_traffic", metadata: {} } },
+      { id: "q2", title: "Content Studio", icon: "▤", action: { targetRoute: "content-studio", metadata: { tab: "posts" } } },
+      { id: "q3", title: "Reel guide", icon: "▶", action: { targetRoute: "reel-guide" } },
+    ],
+    todayFocus: [
+      {
+        id: "t1",
+        icon: "🚀",
+        title: "Boost weekend traffic",
+        reason: "Your campaign has 0 QR scans — guests need a visible path.",
+        steps: [
+          "Open Campaigns → Active and grab the QR poster for each live offer.",
+          "Print or display on a tablet at eye level: pickup counter, host stand, and waiting area.",
+          "Train a 5-second line: “Scan for tonight’s deal — it’s faster at checkout.”",
+          "Drop the same QR into an Instagram Story with a “Scan before you pay” sticker.",
+          "Re-check this home card in 24–48h — scans should show up once placement is obvious.",
+        ],
+        cta: "Boost",
+        action: { targetRoute: "create", intent: "boost_weekend_traffic", metadata: { preset: "weekend_combo" } },
+      },
+      {
+        id: "t2",
+        icon: "📣",
+        title: "12 drafts ready",
+        reason: "Post before Friday dinner while intent is highest.",
+        cta: "Publish",
+        action: { targetRoute: "campaigns", metadata: { filter: "drafts" } },
+      },
+      {
+        id: "t3",
+        icon: "🔔",
+        title: "6 guests pending",
+        reason: "Claimed but not redeemed — reminders nudge visits.",
+        cta: "Send reminder",
+        action: { targetRoute: "smart-reminders" },
+      },
+    ],
+    menuHint: { show: false, itemCount: 5, onUploadPath: false },
+  };
+
+  mountGrowthHome(el, {
+    data: sample,
+    bridge: {
+      navigate: (route, params) => console.log("nav", route, params),
+      onAction: (a) => console.log("action", a),
+      onNewCampaign: () => console.log("new"),
+      onOpenMenuWizard: () => console.log("wizard"),
+      onEditBusiness: () => console.log("settings"),
+      onViewCampaign: (id) => console.log("view", id),
+      onPauseCampaign: async (id) => console.log("pause", id),
+    },
+  });
+}

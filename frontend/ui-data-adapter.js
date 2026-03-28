@@ -101,6 +101,11 @@
     brandTone: 'friendly_local',
     audiencePrimary: 'general',
     primaryGoal: '',
+    restaurantFoodProfile: {
+      type: 'unspecified',
+      meatType: '',
+      dietaryFlags: { halal: false, containsEgg: false, dairyFree: false },
+    },
     menuItems: [],
     menuSignalsSummary: {
       totalItems: 0,
@@ -180,9 +185,17 @@
       offerValue: 'Save 20% This Lunch Window',
       headline: 'Lunch Combo Deal',
       cta: 'Scan to redeem',
+      claimCount: 48,
+      redemptionCount: 42,
+      pendingRedemptionCount: 6,
+      qrScanCount: 120,
+      conversionRate: 35,
+      redeemedRate: 88,
+      emailCaptureRate: 72,
       customersGained: 42,
-      engagementLift: 18,
+      engagementLift: 35,
       revenueImpact: 1240,
+      estimatedNetImpact: 1240,
       bestChannel: 'Instagram Stories',
       whatWorked: 'Lunch urgency headline + combo value improved scan rate.',
       whatToImprove: 'Add a reel variant for evening traffic.',
@@ -199,9 +212,17 @@
       offerValue: 'Feed 4 for $24.99',
       headline: 'Family Weekend Pack',
       cta: 'Order now',
+      claimCount: 0,
+      redemptionCount: 0,
+      pendingRedemptionCount: 0,
+      qrScanCount: 0,
+      conversionRate: 0,
+      redeemedRate: 0,
+      emailCaptureRate: 0,
       customersGained: 0,
       engagementLift: 0,
       revenueImpact: 0,
+      estimatedNetImpact: null,
       bestChannel: 'N/A',
       whatWorked: 'N/A',
       whatToImprove: 'N/A',
@@ -218,9 +239,17 @@
       offerValue: 'Limited First-Week Launch',
       headline: 'Try Our New Special',
       cta: 'Available now',
+      claimCount: 0,
+      redemptionCount: 0,
+      pendingRedemptionCount: 0,
+      qrScanCount: 0,
+      conversionRate: 0,
+      redeemedRate: 0,
+      emailCaptureRate: 0,
       customersGained: 0,
       engagementLift: 0,
       revenueImpact: 0,
+      estimatedNetImpact: null,
       bestChannel: 'N/A',
       whatWorked: 'N/A',
       whatToImprove: 'Finalize visual and publish timing.',
@@ -263,26 +292,42 @@
     try {
       const response = await fetchJson(`/offers/${encodeURIComponent(storeId)}`);
       if (Array.isArray(response)) {
-        return response.map((row) => ({
-          id: row.id,
-          title: row.name || 'Untitled Campaign',
-          goal: row.offerType || 'Drive traffic',
-          status: detectStatus(row),
-          dateRange: row.endDate ? `${new Date(row.createdAt || Date.now()).toLocaleDateString()} - ${new Date(row.endDate).toLocaleDateString()}` : 'Active now',
-          channels: ['Instagram', 'In-store QR'],
-          performanceState: detectStatus(row) === 'active' ? 'Live' : 'In progress',
-          offerValue: row.reward || row.offerType || 'Limited offer',
-          headline: row.name || 'Offer headline',
-          cta: 'Scan to redeem',
-          customersGained: asNumber(row.repeatCustomerCount),
-          engagementLift: Math.round(asNumber(row.conversionRate) * 100) || 12,
-          revenueImpact: asNumber(row.estimatedRevenue || row.estimatedNetImpact),
-          bestChannel: 'Instagram Stories',
-          whatWorked: 'Clear value headline and QR call-to-action.',
-          whatToImprove: 'Test a reel-first variant.',
-          createdAt: row.createdAt || new Date().toISOString(),
-          sourceOfferId: row.id,
-        }));
+        return response.map((row) => {
+          const claimCount = asNumber(row.claimCount);
+          const redemptionCount = asNumber(row.redemptionCount);
+          const qrScanCount = asNumber(row.qrScanCount);
+          const conversionRate = asNumber(row.conversionRate);
+          const netImpact = row.estimatedNetImpact;
+          const netNum = netImpact != null && netImpact !== '' ? Number(netImpact) : null;
+          return {
+            id: row.id,
+            title: row.name || 'Untitled Campaign',
+            goal: row.offerType || 'Drive traffic',
+            status: detectStatus(row),
+            dateRange: row.endDate ? `${new Date(row.createdAt || Date.now()).toLocaleDateString()} - ${new Date(row.endDate).toLocaleDateString()}` : 'Active now',
+            channels: ['Instagram', 'In-store QR'],
+            performanceState: detectStatus(row) === 'active' ? 'Live' : 'In progress',
+            offerValue: row.reward || row.offerType || 'Limited offer',
+            headline: row.name || 'Offer headline',
+            cta: 'Scan to redeem',
+            claimCount,
+            redemptionCount,
+            pendingRedemptionCount: asNumber(row.pendingRedemptionCount),
+            qrScanCount,
+            conversionRate,
+            redeemedRate: asNumber(row.redeemedRate),
+            emailCaptureRate: asNumber(row.emailCaptureRate),
+            customersGained: redemptionCount,
+            engagementLift: conversionRate,
+            revenueImpact: Number.isFinite(netNum) ? netNum : 0,
+            estimatedNetImpact: Number.isFinite(netNum) ? netNum : null,
+            bestChannel: 'Instagram Stories',
+            whatWorked: 'Clear value headline and QR call-to-action.',
+            whatToImprove: 'Test a reel-first variant.',
+            createdAt: row.createdAt || new Date().toISOString(),
+            sourceOfferId: row.id,
+          };
+        });
       }
       if (strict) throw new Error('Campaign data format is invalid.');
       return deepClone(mockCampaigns);
@@ -320,23 +365,37 @@
     return postJson(`/send-reminders/${encodeURIComponent(storeId)}`, {});
   }
 
+  async function getStoreStats(storeId = DEFAULT_STORE_ID) {
+    try {
+      return await fetchJson(`/stats/${encodeURIComponent(storeId)}`);
+    } catch (_e) {
+      return null;
+    }
+  }
+
   async function getGrowthHubData({ storeId = DEFAULT_STORE_ID } = {}) {
-    const [profile, campaigns, smartBundle] = await Promise.all([
+    const [profile, campaigns, smartBundle, storeStats] = await Promise.all([
       loadProfile(storeId),
       loadOffers(storeId, { strict: true }),
       fetchSmartActionsBundle(storeId),
+      getStoreStats(storeId),
     ]);
 
     const activeCount = campaigns.filter((row) => row.status === 'active').length;
-    const revenueImpact = campaigns.reduce((sum, row) => sum + asNumber(row.revenueImpact), 0);
+    const revenueImpact = campaigns
+      .filter((row) => row.status === 'active')
+      .reduce((sum, row) => sum + asNumber(row.revenueImpact), 0);
+    const redeemedTotal = storeStats ? asNumber(storeStats.redeemedCount) : campaigns.reduce((s, r) => s + asNumber(r.redemptionCount), 0);
+    const claimsTotal = storeStats ? asNumber(storeStats.totalRedemptions) : campaigns.reduce((s, r) => s + asNumber(r.claimCount), 0);
 
     return {
       profile,
+      storeStats,
       pulse: [
-        { id: 'pulse_status', label: 'Today Status', value: activeCount > 1 ? 'Busy' : 'Normal', note: 'Based on active promotions + redemptions' },
-        { id: 'pulse_revenue', label: 'Revenue Trend', value: '+12%', note: `${money(revenueImpact)} influenced this cycle` },
-        { id: 'pulse_campaigns', label: 'Active Campaigns', value: String(activeCount), note: 'Live this week' },
-        { id: 'pulse_customers', label: 'Customers Today', value: '87', note: 'Est. walk-ins + redeemers' },
+        { id: 'pulse_status', label: 'Today Status', value: activeCount > 1 ? 'Busy' : 'Normal', note: 'Based on live offers + redemption log' },
+        { id: 'pulse_revenue', label: 'Est. net (live)', value: money(revenueImpact), note: revenueImpact > 0 ? 'Sum of modeled net on live offers' : 'Add item price on offers to model impact' },
+        { id: 'pulse_campaigns', label: 'Active Campaigns', value: String(activeCount), note: 'Live right now' },
+        { id: 'pulse_customers', label: 'Claims · Redeemed', value: `${claimsTotal} · ${redeemedTotal}`, note: 'From your redemption records' },
       ],
       smartActions: smartBundle.smartActions,
       smartActionsMeta: smartBundle.smartActionsMeta,

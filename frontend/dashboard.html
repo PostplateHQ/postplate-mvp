@@ -27,13 +27,12 @@
         <div class="pp-sidebar-group">
           <p class="pp-sidebar-heading">Workspace</p>
           <button class="pp-nav-link" data-route="home" type="button"><span class="pp-nav-icon">◫</span><span>Home</span></button>
-          <button class="pp-nav-link" data-route="live" type="button"><span class="pp-nav-icon">◉</span><span>Live</span></button>
-          <button class="pp-nav-link" data-route="campaigns" type="button"><span class="pp-nav-icon">◎</span><span>Manage campaigns</span></button>
-          <button class="pp-nav-link" data-route="smart-reminders" type="button"><span class="pp-nav-icon">✉</span><span>Guest reminders</span></button>
-          <button class="pp-nav-link" data-route="create-campaign" type="button"><span class="pp-nav-icon">＋</span><span>New campaign</span></button>
+          <button class="pp-nav-link" data-route="campaigns" type="button"><span class="pp-nav-icon">◎</span><span>Campaigns</span></button>
+          <button class="pp-nav-link" data-route="create-campaign" type="button"><span class="pp-nav-icon">＋</span><span>Create</span></button>
+          <button class="pp-nav-link" data-route="smart-reminders" type="button"><span class="pp-nav-icon">✉</span><span>Customers</span></button>
+          <button class="pp-nav-link" data-route="content-studio" type="button"><span class="pp-nav-icon">▤</span><span>Content</span></button>
+          <button class="pp-nav-link" data-route="analytics" type="button"><span class="pp-nav-icon">▣</span><span>Insights</span></button>
           <button class="pp-nav-link" data-route="menu-import" type="button"><span class="pp-nav-icon">☰</span><span>Menu</span></button>
-          <button class="pp-nav-link" data-route="content-studio" type="button"><span class="pp-nav-icon">▤</span><span>Content Studio</span></button>
-          <button class="pp-nav-link" data-route="analytics" type="button"><span class="pp-nav-icon">▣</span><span>Analytics</span></button>
           <button class="pp-nav-link" data-route="settings" type="button"><span class="pp-nav-icon">⌂</span><span>Settings</span></button>
         </div>
       </nav>
@@ -44,16 +43,15 @@
         <div class="pp-app-chrome-primary">
           <div class="pp-app-brand-block">
             <span class="pp-app-brand-title">PostPlate</span>
-            <span class="pp-app-brand-sub" id="appTopNavSub">Your Restaurant</span>
+            <span class="pp-app-brand-sub" id="appTopNavSub">Offers &amp; growth</span>
           </div>
           <nav id="appTopNav" class="pp-primary-topnav" aria-label="Primary">
             <button type="button" class="pp-topnav-link" data-route="home">Home</button>
-            <button type="button" class="pp-topnav-link" data-route="live">Live</button>
             <button type="button" class="pp-topnav-link" data-route="campaigns">Campaigns</button>
-            <button type="button" class="pp-topnav-link" data-route="smart-reminders">Reminders</button>
-            <button type="button" class="pp-topnav-link" data-route="content-studio">Content Studio</button>
-            <button type="button" class="pp-topnav-link" data-route="analytics">Analytics</button>
-            <button type="button" class="pp-topnav-link pp-topnav-link--quiet" data-route="menu-import">Menu</button>
+            <button type="button" class="pp-topnav-link" data-route="create-campaign">Create</button>
+            <button type="button" class="pp-topnav-link" data-route="smart-reminders">Customers</button>
+            <button type="button" class="pp-topnav-link" data-route="content-studio">Content</button>
+            <button type="button" class="pp-topnav-link" data-route="analytics">Insights</button>
             <button type="button" class="pp-topnav-link" data-route="settings">Settings</button>
           </nav>
           <div class="pp-app-chrome-actions">
@@ -63,9 +61,20 @@
           </div>
         </div>
         <div class="pp-app-chrome-search">
-          <div class="pp-topbar-search pp-topbar-search--full">
-            <span class="pp-search-icon">⌕</span>
-            <input id="appGlobalSearch" type="search" placeholder="Search actions, campaigns, assets..." />
+          <div class="pp-global-search-wrap" id="appGlobalSearchWrap">
+            <div class="pp-topbar-search pp-topbar-search--full">
+              <span class="pp-search-icon">⌕</span>
+              <input
+                id="appGlobalSearch"
+                type="search"
+                placeholder="Search actions, campaigns, assets..."
+                autocomplete="off"
+                aria-autocomplete="list"
+                aria-controls="appGlobalSearchPanel"
+                aria-expanded="false"
+              />
+            </div>
+            <div id="appGlobalSearchPanel" class="pp-global-search-panel hidden" role="listbox" aria-label="Search results" hidden></div>
           </div>
         </div>
       </header>

@@ -10,6 +10,8 @@ const { registerProfileRoutes } = require("./routes/profile");
 const { registerRedemptionRoutes } = require("./routes/redemptions");
 const { registerLegacyPromoRoutes } = require("./routes/promo");
 const { registerQrRoutes } = require("./routes/qr");
+const { registerPublicMenuRoutes } = require("./routes/publicMenu");
+const { registerOrderGuestPublicRoutes } = require("./routes/orderGuestPublic");
 const { registerMenuRoutes } = require("./routes/menu");
 const { registerCampaignRoutes } = require("./routes/campaign");
 const { registerSmartActionsRoutes } = require("./routes/smart-actions");
@@ -49,6 +51,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+registerOrderGuestPublicRoutes(app);
 
 app.use((error, _req, res, next) => {
   if (error && error.type === "entity.too.large") {
@@ -299,6 +303,12 @@ registerOfferRoutes(app, {
   getOfferMetrics,
 });
 
+registerPublicMenuRoutes(app, {
+  loadData,
+  getOwnerProfile,
+  getOfferById,
+});
+
 registerLegacyPromoRoutes(app, {
   listPresetCatalog,
   buildPreview,
@@ -308,6 +318,7 @@ registerQrRoutes(app, {
   QRCode,
   loadData,
   getOfferById,
+  getOwnerProfile,
 });
 
 registerRedemptionRoutes(app, {
